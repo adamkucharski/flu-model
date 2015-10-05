@@ -1,0 +1,6 @@
+R CMD SHLIB c_model.c
+
+dyn.load("c_model.so")
+
+
+Kucharski AJ, Althaus CL. The role of superspreading in Middle East respiratory syn- drome coronavirus (MERS-CoV) transmission. Eurosurveillance
