@@ -1,4 +1,4 @@
-/* Set up likelihood for vector of infection history */
+ /* Set up likelihood for vector of infection history */
 
 #include <math.h>
 #include <stdio.h>
@@ -29,7 +29,7 @@ void c_model2(int *nin, int *nsin, double *x, double *x1, double *titre, double 
 		
 		xx2=0;
 
-		/* Calculate expected titre	*/
+		/* Calculate expected titre	- note k indexed from 0 */
 
 		for (i=0; i<n; i++){
 			x1[i] =  mu[0] * dd[k*n+i] * x[i];

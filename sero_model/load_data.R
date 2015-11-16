@@ -7,7 +7,7 @@ options(StringsAsFactors=F)
 data1=read.csv("datasets/HaNamCohort.csv", as.is=T)
 
 # List test strains
-nstrains=length(data1)-2
+nstrains=length(data1)-2 # remove subject and sample year
 strain_names=names(data1)[3:(nstrains+2)]
 test.index=c(1:nstrains)
 
@@ -29,16 +29,16 @@ year
 }
 ))
 
-strain_years_unique=sort(unique(strain_years))
+strain_years_unique=sort(unique(strain_years)) # years of samples tested against
 
 # Gather participants and infection years
 
-n_part=max(data1$Subject.number)
+n_part=max(data1$Subject.number) # number of participants
 inf_years=seq(min(strain_years),max(strain_years)) #annual infection model
-inf.n=length(inf_years)
+inf.n=length(inf_years) # number of possible infecting strains
 
-test.years=unique(data1$Sample.year)
-test.n=length(test.years)
+test_years=unique(data1$Sample.year) # year of testing
+test.n=length(test_years) # number of test years
 
 # Set up list of test data for quick access
 
@@ -52,7 +52,7 @@ i.list=list()
 
 for(jj in 1:test.n){
 
-testyr=test.years[jj]
+testyr=test_years[jj]
 dataI=data.Test[data1$Subject.number==subjectn & data1$Sample.year==testyr,]
 i.list[[jj]]=rbind(rep(testyr,nstrains),
       dataI[,!is.na(dataI)],
@@ -63,5 +63,7 @@ i.list[[jj]]=rbind(rep(testyr,nstrains),
 }
 
 test.list[[ii]]=i.list
+
+save(test_years,inf_years,strain_years,n_part,test.list,file=paste("R_datasets/HaNam_data.RData",sep=""))
 
 }
