@@ -21,13 +21,15 @@ void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre,
 	// This to be made an argument of the function
 	int t_sample = n; 
   
-  double yrTitre[n*nsamp]; 	
+  double yrTitre[n*nsamp];
+  int maskedInfectionHistory[n];
 
 	/* Add for loop over k*/
 	
 	int k;
 	int i;
 	int j;
+	int m;
 	
 	double xx2; 
 	
@@ -37,10 +39,19 @@ void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre,
 	
 		xx2=0;
 
+	  // Make a masked infection history
+	  for (m=0;m<n;m++) {
+	    if (m <= j) {
+	      maskedInfectionHistory[m]=x[m];
+	    } else {
+	      maskedInfectionHistory[m]=0;
+	    }
+	  }
+	    
 		/* Calculate expected titre	- note k indexed from 0 */
 
 		for (i=0; i<n; i++){
-			x1[i] =  mu[0] * dd[k*n+i] * x[i];
+			x1[i] =  mu[0] * dd[k*n+i] * maskedInfectionHistory[i];
 		}
 	
 		for (i=0; i<n; i++){

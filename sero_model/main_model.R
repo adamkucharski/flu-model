@@ -1,7 +1,8 @@
 # Model of serological dynamics - uses PLOS Biology model (Kucharski et al. 2015)
 # Author: AJ Kucharski (2015)
 
-setwd("~/Documents/flu-model/sero_model/")
+# setwd("~/Documents/flu-model/sero_model/")
+# setwd("./sero_model")
 
 library(reshape2)
 library(foreach)
