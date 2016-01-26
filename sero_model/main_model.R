@@ -49,5 +49,5 @@ run_mcmc(test.yr=2010,runs=1000,hist.true=NULL,varpart_prob=vp1,test_years,inf_y
 #historytabSim
 
 # Plot posteriors and compare to simulation
-source("simulation_diagnostics.R",local=TRUE)
+#source("simulation_diagnostics.R",local=TRUE)
 
