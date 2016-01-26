@@ -57,7 +57,9 @@ outputdmatrix<-function(theta,inf_years){
 compile.c<-function(){
   setwd("c_code")
   system("R CMD SHLIB c_model2.c")
+  system("R CMD SHLIB c_model2_sr.c")
   dyn.load("./c_model2.so")
+  dyn.load("./c_model2_sr.so")
   setwd("..")
 }
 
@@ -76,6 +78,18 @@ func1 <- function(x,titredat,dd,mu) {
             dd=as.double(dd),
             mu=as.double(mu)
   )
+  out2 <- .C("c_model2_sr",
+            n=as.integer(length(x)),
+            nsample=as.integer(length(titredat)),
+            x=as.double(x),
+            x1=as.double(rep(0,length(x))),
+            titre=as.double(titredat),
+            titrepred=as.double(rep(0,length(titredat))),
+            dd=as.double(dd),
+            mu=as.double(mu)
+  )
+  # browser()
+  # out$titrepred - out2$titrepred
   return(out$titrepred)
 }
 
