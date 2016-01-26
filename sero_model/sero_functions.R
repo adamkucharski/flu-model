@@ -37,7 +37,7 @@ setuphistIC<-function(ii,jj,inf.n,test.list){ # ii=participant | jj=test year
       
   }
   pos.hist=(hist0>0)
-  if(sum(hist0)==0){hist0[sample(1:inf.n,1)]=1}
+  if(sum(hist0)==0){hist0[sample(1:inf.n,1)]=1} # Make sure at least one infection
   hist0
   
 }
@@ -134,7 +134,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
   #strain_years=seq(1968,2010,4)
   
   # Set year of birth
-  birth.yr=2012-sample(1:80,n_part,replace = TRUE)
+  age.yr=sample(1:80,n_part,replace = TRUE)
   
   test.n=length(test_years)
   inf.n=length(inf_years)
@@ -152,7 +152,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
     historytabSim=NULL
     for(ii in 1:n_part){
       hist0=(runif(inf.n)<attack.yr)+0
-      alive=(birth.yr[ii]<=inf_years)
+      alive=((max(test_years)-age.yr[ii])<=inf_years)
       historytabSim=rbind(historytabSim,hist0*alive)
     }
   }else{
@@ -195,28 +195,23 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
   }
   # Export data
   if(is.null(historytabPost)){
-    save(test_years,inf_years,strain_years,n_part,test.list,birth.yr,historytabSim,file=paste("R_datasets/Simulated_data.RData",sep=""))
+    save(test_years,inf_years,strain_years,n_part,test.list,age.yr,historytabSim,file=paste("R_datasets/Simulated_data.RData",sep=""))
   }else{
-    save(test_years,inf_years,strain_years,n_part,test.list,birth.yr,file=paste("R_datasets/Simulated_dataPost.RData",sep=""))
+    save(test_years,inf_years,strain_years,n_part,test.list,age.yr,file=paste("R_datasets/Simulated_dataPost.RData",sep=""))
   }
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Resample infection history - included birthA table in case needed later
+# Resample infection history - included ageA table in case needed later
 
-SampleHistory<-function(historyA,pick,inf.n,birthA,inf_years){
+SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
   
   infvector=c(1:inf.n)
   infvector2=rev(infvector)
-  
-  # generate random numbers
-  rand01=runif(length(pick))
-  rand02=runif(length(pick))
 
   for(ii in pick){
   #ls_pick=foreach(ii=(1:length(pick))) %dopar% {  # Parallel loop - slower to farm out
-    
-    rand1=rand01[ii]
+    rand1=runif(1)
     x=historyA[ii,]
 
     # Remove infection
@@ -246,9 +241,9 @@ SampleHistory<-function(historyA,pick,inf.n,birthA,inf_years){
     }
     
     # Add prior on birth year - exponentially less likely to update if infections outside
-    if(inf.n>birthA[ii]){
-      a1=exp(-0.1*sum((infvector2*x)[1:(inf.n-birthA[ii])])) # tweak this parameter?
-      if( a1 > rand02[ii]){
+    if(inf.n>ageA[ii]){
+      a1=exp(-0.1*sum((infvector2*x)[1:(inf.n-ageA[ii])])) # tweak this parameter to penalise more/less
+      if( a1 > runif(1) ){
         historyA[ii,]=x
       }
     }
@@ -260,11 +255,11 @@ SampleHistory<-function(historyA,pick,inf.n,birthA,inf_years){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Resample age - add 1, 0, -1 with equal probability
 
-SampleAge<-function(pick,birthA){
+SampleAge<-function(pick,ageA){
 
-  b1=sapply(birthA[pick],function(x){x+sample(c(-1:1),1)})
-  birthA[pick]=b1
-  birthA
+  b1=sapply(ageA[pick],function(x){x+sample(c(-1:1),1)})
+  ageA[pick]=b1
+  ageA
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -336,11 +331,11 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   }
   
   colnames(historytab)=as.character(inf_years)
-  
-  # Plausible intial ages
-  age.tab=sample(1:80, n_part, replace=T) # for inference of age
-  
-  [1:(inf.n-birthA[ii])]
+
+  # Plausible intial ages - based on earliest strain in history
+  age.tab=sapply(
+    apply(historytab,1,function(x){min(c(inf.n:1)[x==1])}),
+    function(y){ sample(y:80, 1, replace=T) })
   
   # Preallocate matrices
   likelihoodtab=matrix(-Inf,nrow=(runs+1),ncol=n_part)
@@ -381,7 +376,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     }else{
       pickA=NULL
       pickA=sample(n_part, ceiling(varpart_prob*n_part)) # check that not length zero
-      age_star = SampleHistory(pickA,age.tab) #resample history
+      age_star = SampleAge(pickA,age.tab) #resample history
       history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years) #resample history
       theta_star =thetatab[m,]
     }
@@ -417,7 +412,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
       if(m %% 2==1){accepttabT[(m+1)/2]=0}
     }
     
-    if(m<5000){
+    if(m<50){
       accept_rateT=0.234
     }else{
       accept_rateT=sum(accepttabT[1:((m+1)/2)])/((m+1)/2)
