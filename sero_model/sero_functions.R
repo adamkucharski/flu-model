@@ -202,17 +202,22 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Resample infection history - include age
+# Resample infection history - included birthA table in case needed later
 
-SampleHistory<-function(historyA,pick,inf.n,birthA){
+SampleHistory<-function(historyA,pick,inf.n,birthA,inf_years){
   
   infvector=c(1:inf.n)
+  infvector2=rev(infvector)
+  
+  # generate random numbers
+  rand01=runif(length(pick))
+  rand02=runif(length(pick))
 
   for(ii in pick){
   #ls_pick=foreach(ii=(1:length(pick))) %dopar% {  # Parallel loop - slower to farm out
     
+    rand1=rand01[ii]
     x=historyA[ii,]
-    rand1=runif(1)
 
     # Remove infection
     if(rand1<1/3){
@@ -240,15 +245,27 @@ SampleHistory<-function(historyA,pick,inf.n,birthA){
       }
     }
     
-    historyA[ii,]=x
-    
-  }
+    # Add prior on birth year - exponentially less likely to update if infections outside
+    if(inf.n>birthA[ii]){
+      a1=exp(-0.1*sum((infvector2*x)[1:(inf.n-birthA[ii])])) # tweak this parameter?
+      if( a1 > rand02[ii]){
+        historyA[ii,]=x
+      }
+    }
   
+  } # end loop over individuals
   historyA
-  
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Resample age - add 1, 0, -1 with equal probability
 
+SampleAge<-function(pick,birthA){
+
+  b1=sapply(birthA[pick],function(x){x+sample(c(-1:1),1)})
+  birthA[pick]=b1
+  birthA
+}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Convert infection history to binary - not currently used
@@ -277,12 +294,10 @@ ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
 SampleTheta<-function(theta_in,m,covartheta){
   
   # sample new parameters from nearby: 
-
   theta_star = as.numeric(exp(rmvnorm(1,log(theta_in), covartheta)))
   names(theta_star)=names(theta_in)
   
   return(thetaS=theta_star)
-  
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -309,6 +324,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   thetatab[1,]=theta
   
   historytab=matrix(NA,nrow=n_part,ncol=inf.n)
+  age.tab=matrix(NA,nrow=n_part,ncol=1)
   
   # Pick plausible initial conditions
   if(is.null(hist.true)){
@@ -320,6 +336,11 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   }
   
   colnames(historytab)=as.character(inf_years)
+  
+  # Plausible intial ages
+  age.tab=sample(1:80, n_part, replace=T) # for inference of age
+  
+  [1:(inf.n-birthA[ii])]
   
   # Preallocate matrices
   likelihoodtab=matrix(-Inf,nrow=(runs+1),ncol=n_part)
@@ -353,13 +374,15 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     
     if(m %% 2==1 | varpart_prob==0){
       theta_star = SampleTheta(thetatab[m,], m,cov_matrix_theta) #resample theta
+      age_star = age.tab
       history_star = historytab
       pickA=c(1:n_part)
       
     }else{
       pickA=NULL
       pickA=sample(n_part, ceiling(varpart_prob*n_part)) # check that not length zero
-      history_star = SampleHistory(historytab,pickA,inf.n) #resample history
+      age_star = SampleHistory(pickA,age.tab) #resample history
+      history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years) #resample history
       theta_star =thetatab[m,]
     }
     
