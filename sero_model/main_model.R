@@ -45,7 +45,7 @@ theta0[["wane"]]=0.1
 theta=theta0
 vp1=0.05 #probability individual infection history resampled
 
-run_mcmc(test.yr=2010,runs=10000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
+run_mcmc(test.yr=2010,runs=1000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
 #historytabSim
 
 # Plot posteriors and compare to simulation

@@ -1,6 +1,6 @@
 
 # - - -
-# Simulation checks
+# Plot true infections against simulated titres
 par(mfrow=c(2,5))
 par(mar = c(5,5,1,1))
 for(ii0 in 1:n_part){

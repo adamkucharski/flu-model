@@ -28,7 +28,7 @@ dev.off()
 
 
 
-#Compare model fits
+#Compare model fits using posterior infection history (historytabPost) and parameters
 simulate_data(test_years=seq(2010,2010),historytabPost=historytab,
               inf_years=seq(1990,2010,1),
               strain_years=seq(1990,2010,2),

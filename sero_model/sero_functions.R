@@ -8,7 +8,7 @@ outputdmatrix<-function(theta,inf_years){
 }
 
 # - - - - - - - - - - - - - - - -
-# Set initial condition as infection if titre >=4
+# Set initial condition (for infection history) as infection if titre >=X
 
 setuphistIC<-function(ii,jj,inf.n,test.list){ # ii=participant | jj=test year
   
@@ -43,9 +43,7 @@ setuphistIC<-function(ii,jj,inf.n,test.list){ # ii=participant | jj=test year
       #}
       
   }
-  
   pos.hist=(hist0>0)
-
   if(sum(hist0)==0){hist0[sample(1:inf.n,1)]=1}
   hist0
   
@@ -65,7 +63,7 @@ compile.c<-function(){
 }
 
 # - - - - - - - - - - - - - - - -
-# Define likelihood function
+# Define expected titre function
 
 func1 <- function(x,titredat,dd,mu) {
   if (!is.numeric(x)){stop("argument x must be numeric")}
@@ -109,8 +107,6 @@ estimatelik<-function(ii,jj,historyii,dmatrix,thetastar,test.list){ # ii=partici
   
   sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+
     sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
-  
-
 }
 
 }
