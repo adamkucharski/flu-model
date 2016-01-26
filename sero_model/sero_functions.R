@@ -1,12 +1,5 @@
 #Functions
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Functions to set up parameters for model
-
-outputdmatrix<-function(theta,inf_years){
-  (dmatrix=sapply(inf_years,function(x){exp(-theta[["sigma"]]*abs(inf_years-x))})) # note that second entry is actually sample year
-}
-
 # - - - - - - - - - - - - - - - -
 # Set initial condition (for infection history) as infection if titre >=X
 
@@ -53,6 +46,12 @@ setuphistIC<-function(ii,jj,inf.n,test.list){ # ii=participant | jj=test year
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Likelihood given infection history and parameters (done in C)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+# Functions to set up parameters for model
+
+outputdmatrix<-function(theta,inf_years){
+  (dmatrix=sapply(inf_years,function(x){exp(-theta[["sigma"]]*abs(inf_years-x))})) # note that second entry is actually sample year
+}
 
 # Compile c code
 compile.c<-function(){
@@ -199,7 +198,6 @@ SampleHistory<-function(historyA,pick,inf.n){
   #ls_pick=foreach(ii=(1:length(pick))) %dopar% {  # Parallel loop - slower to farm out
     
     x=historyA[ii,]
-    
     rand1=runif(1)
 
     # Remove infection
@@ -239,13 +237,13 @@ SampleHistory<-function(historyA,pick,inf.n){
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Convert infection history to binary
+# Convert infection history to binary - not currently used
 
 convert_binary <- function(x){sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1))-1))}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-ComputeProbability<-function(pf_marg_likelihood,pf_marg_likelihood_star){
+ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
 
   # uniform priors
   p_theta_star = 1
@@ -255,7 +253,7 @@ ComputeProbability<-function(pf_marg_likelihood,pf_marg_likelihood_star){
   q_theta_given_theta_star = 1
   q_theta_star_given_theta = 1
   
-  val = exp((pf_marg_likelihood_star-pf_marg_likelihood))*(p_theta_star/p_theta)*(q_theta_given_theta_star/q_theta_star_given_theta) 
+  val = exp((marg_likelihood_star-marg_likelihood))*(p_theta_star/p_theta)*(q_theta_given_theta_star/q_theta_star_given_theta) 
   min(val, 1)
   
 }

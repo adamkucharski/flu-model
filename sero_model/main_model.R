@@ -22,7 +22,7 @@ thetaSim=c(mu=4,sigma=0.3,tau1=0.1,tau2=0.1,wane=0.1)
 npartM=100
 simulate_data(test_years=seq(2010,2010),
               inf_years=seq(1990,2010,1),
-              strain_years=seq(1990,2010,2),
+              strain_years=seq(1990,2010,4),
               n_part=npartM,thetastar=thetaSim,p.inf=0.15)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
