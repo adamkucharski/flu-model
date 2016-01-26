@@ -202,9 +202,9 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Resample infection history
+# Resample infection history - include age
 
-SampleHistory<-function(historyA,pick,inf.n){
+SampleHistory<-function(historyA,pick,inf.n,birthA){
   
   infvector=c(1:inf.n)
 
