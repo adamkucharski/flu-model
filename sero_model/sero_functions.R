@@ -194,6 +194,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
     test.list[[ii]]=i.list
   }
   # Export data
+  browser()
   if(is.null(historytabPost)){
     save(test_years,inf_years,strain_years,n_part,test.list,age.yr,historytabSim,file=paste("R_datasets/Simulated_data.RData",sep=""))
   }else{
