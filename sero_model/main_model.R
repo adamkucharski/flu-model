@@ -17,6 +17,8 @@ getDoParWorkers()
 source("sero_functions.R")
 
 compile.c() # Compile c code
+# logabs2(seq(-5, 5, by=2))
+
 
 # - - - - - - - - - - - - -
 # Generate simulated data
