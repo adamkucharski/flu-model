@@ -10,6 +10,7 @@ std::vector<double> logabs2(std::vector<double> x) {
 }
 
 // [[Rcpp::export]]
-std::vector<double> titremoodel() {
-  
+NumericVector titremodel() {
+  NumericVector rtn(6);
+  return rtn;
 }
