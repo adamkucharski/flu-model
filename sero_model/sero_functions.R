@@ -107,7 +107,7 @@ estimatelik<-function(ii,jj,historyii,dmatrix,thetastar,test.list){ # ii=partici
   d.ij=dmatrix[test.part,] # Define cross-immunity matrix for sample strain
   d_vector=melt(t(d.ij))$value
   
-  expect=func1(historyii,titredat,d_vector,thetastar[["mu"]]) # Output expectation
+  expect=func1(historyii,titredat,d_vector,thetastar[["mu"]],thetastar) # Output expectation
   #plot(as.numeric(test.jj[3,]),expect,ylim=c(0,100))
   
   # Calculate likelihood - ** need to add summation if k>8 **
@@ -171,7 +171,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
       d.ij=dmatrix[sample.index,] # Define cross-immunity matrix for sample strain
       d_vector=melt(t(d.ij))$value
       
-      expect=func1(historyii,sample.index,d_vector,thetastar[["mu"]]) # Output expectation
+      expect=func1(historyii,sample.index,d_vector,thetastar[["mu"]],thetastar) # Output expectation
       #titredat=sapply(expect,function(x){rpois(1,x)}) # Generate titre
       titredat=round(expect)
       titredat=sapply(titredat,function(x){min(x,8)})
@@ -349,7 +349,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     
     # Adaptive covariance matrix
     if(m==1){
-      epsilon0=0.001
+      epsilon0=0.01
       #epsilon0=0
       cov_matrix_theta=epsilon0*cov_matrix_theta0
       #varpart_prob0=varpart_prob
