@@ -44,7 +44,9 @@ load_fluscape <- function(pathfssvn="~/Dropbox/svn/fluscape/trunk/") {
   )
   
   rtn_yam_td[,"test.year",] <- c(2011,2011,2011,2012,2012,2012)
-  rtn_yam_td[,"strain_years",] <- c(2011,2011,2011,2012,2012,2012)
+  rtn_yam_td[,"strain_years",] <- c(1988,2002,2006,1988,2002,2006)
+  rtn_yam_td[,"simple.index",] <- c(1,2,3,1,2,3)
+
   
-  
+    
 }
