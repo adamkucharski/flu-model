@@ -65,7 +65,19 @@ load_fluscape <- function(
     rtn_yam_td[i,"titredat",] <- as.numeric(fsd[i,asTest])
   }
   
+  test_years <- c(2011,2012)
+  inf_years <- 1987:2012
+  if (sero="YAM") {
+    strain_years=c(1988,2002,2006)
+  } else {
+    stop("only yam implemented in load_fluscape")
+  }
+  npart <- noP
+  test.list <- rtn_yam_td
+  age.yr <- fsd$PART_AGE.V2
+  
   # Return the list of required output
-  list(titredat=rtn_yam_td)
+  save(test_years, strain_years, npart, test.list,
+       file="R_datasets/Fluscape_data.RData")
   
 }
