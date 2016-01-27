@@ -3,34 +3,39 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Load data (Fonville et al.)
 
-setwd("~/Dropbox/Imperial/Fluscape_2/sero_model/")
+#setwd("~/Dropbox/Imperial/Fluscape_2/sero_model/")
 
 source("load_data.R")
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Pick sample year and plot
 
+for(ii in 1:n_part){
+  
+  subjectn=ii
+  alt_year=2007
+  sample_yr=2012
+  
+  dataplot1=data1[data1$Subject.number==subjectn,]
+  points1=dataplot1[dataplot1$Sample.year==sample_yr,]
+  
+  dataplot2=data1[data1$Subject.number==subjectn,]
+  points2=dataplot2[dataplot2$Sample.year==alt_year,]
+  
+  sortyr=order(strain_years)
+  
+  #par(mar = c(5,4,4,2) + 0.1)
+  plot(strain_years+runif(nstrains,0,0),as.numeric(points1[,strain_names])+runif(nstrains,0,0),xlab="test strain (year of circulation)",ylab="log titre",ylim=c(0,7),col=rgb(0,0,1),pch=19,cex=1)
+  points(strain_years+runif(nstrains,0,0),as.numeric(points2[,strain_names])+runif(nstrains,0,0),col=rgb(1,0,0),pch=1,cex=1,lwd=2)
+  #axis(1, at=c(1:nstrains), labels=strain_names[sortyr], las=2)
+  grid(nx = NULL, ny = F, col = "lightgray",lty = "dotted")
+  text(x=1970,y=7,labels=alt_year,col="red")
+  text(x=1970,y=6,labels=sample_yr,col="blue")
+  
+  dev.copy(pdf,paste("data_figures/Plot_A",subjectn,"year_",alt_year,"_",sample_yr,".pdf",sep=""),width=8,height=6)
+  dev.off()
 
-
-subjectn=1
-sample_yr=2012
-
-dataplot1=data1[data1$Subject.number==subjectn,]
-points1=dataplot1[dataplot1$Sample.year==sample_yr,]
-
-dataplot2=data1[data1$Subject.number==subjectn,]
-points2=dataplot2[dataplot2$Sample.year==2007,]
-
-sortyr=order(strain_years)
-
-#par(mar = c(5,4,4,2) + 0.1)
-plot(strain_years+runif(nstrains,0,0.1),as.numeric(points1[,strain_names])+runif(nstrains,0,0.1),xlab="test strain (year of circulation)",ylab="log titre",ylim=c(0,7),col=rgb(0,0,1),pch=19,cex=0.5)
-points(strain_years+runif(nstrains,0,0.1),as.numeric(points2[,strain_names])+runif(nstrains,0,0.1),col=rgb(1,0,0),pch=19,cex=0.5)
-#axis(1, at=c(1:nstrains), labels=strain_names[sortyr], las=2)
-grid(nx = NULL, ny = F, col = "lightgray",lty = "dotted")
-
-dev.copy(pdf,paste("figures/Plot_A",sample_yr,".pdf",sep=""),width=8,height=6)
-dev.off()
+}
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -58,4 +63,5 @@ trace.animate <- function() {
 }
 
 #save all iterations into one GIF
-saveGIF(trace.animate(), interval = 1, movie.name=paste("titres_",subjectn,".gif",sep=""))
+saveGIF(trace.animate(), interval = 1, movie.name=paste("data_figures/titres_",subjectn,".gif",sep=""))
+

@@ -242,7 +242,7 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
     
     # Add prior on birth year - exponentially less likely to update if infections outside
     if(inf.n>ageA[ii]){
-      a1=exp(-0.1*sum((infvector2*x)[1:(inf.n-ageA[ii])])) # tweak this parameter to penalise more/less
+      a1=exp(-0.1*sum((x)[1:(inf.n-ageA[ii])])) # EDIT infvector2 tweak this parameter to penalise more/less
       if( a1 > runif(1) ){
         historyA[ii,]=x
       }
@@ -412,7 +412,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
       if(m %% 2==1){accepttabT[(m+1)/2]=0}
     }
     
-    if(m<50){
+    if(m<100){
       accept_rateT=0.234
     }else{
       accept_rateT=sum(accepttabT[1:((m+1)/2)])/((m+1)/2)
@@ -422,7 +422,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     
     if(m %% min(runs,200) ==0){
       print(c(m,accept_rateT,epsilon0,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,historytab,file=paste("posterior_sero_runs/outputR.RData",sep=""))
+      save(likelihoodtab,thetatab,historytab,age.tab,file=paste("posterior_sero_runs/outputR.RData",sep=""))
     }
     
   }
