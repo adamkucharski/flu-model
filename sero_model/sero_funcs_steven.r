@@ -1,5 +1,8 @@
 # Stevens functions in R
 
+# Declare some libraries that are needed here
+library(Rcpp)
+
 #' Load up the fluscape data and transform it into the same shape
 #' as the Vietnam data.
 #' make_fluscape_rdata()

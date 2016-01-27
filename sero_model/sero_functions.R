@@ -66,9 +66,9 @@ compile.c<-function(){
 # - - - - - - - - - - - - - - - -
 # Define expected titre function
 
-func1 <- function(x,titredat,dd,mu) {
+func1 <- function(x,titredat,dd,mu,theta=c(-1000,0.05)) {
   if (!is.numeric(x)){stop("argument x must be numeric")}
-  out <- .C("c_model2",
+  out <- .C("c_model2_sr",
             n=as.integer(length(x)),
             nsample=as.integer(length(titredat)),
             x=as.double(x),
@@ -76,17 +76,9 @@ func1 <- function(x,titredat,dd,mu) {
             titre=as.double(titredat),
             titrepred=as.double(rep(0,length(titredat))),
             dd=as.double(dd),
-            mu=as.double(mu)
-  )
-  out2 <- .C("c_model2_sr",
-            n=as.integer(length(x)),
-            nsample=as.integer(length(titredat)),
-            x=as.double(x),
-            x1=as.double(rep(0,length(x))),
-            titre=as.double(titredat),
-            titrepred=as.double(rep(0,length(titredat))),
-            dd=as.double(dd),
-            mu=as.double(mu)
+            mu=as.double(mu),
+            ntheta=as.integer(length(theta)),
+            theta=as.double(theta)
   )
   # browser()
   # out$titrepred - out2$titrepred

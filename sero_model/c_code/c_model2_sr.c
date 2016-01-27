@@ -10,20 +10,23 @@
  */
 
 void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre, 
-                  double *titrepred, double *dd, double *mu)
+                  double *titrepred, double *dd, double *mu, int *ntheta, 
+                  double *theta)
 {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	/* Calculate lambda */
 	
 	int n = nin[0];
 	int nsamp = nsin[0];
+	double T_2 = theta[1];
 	
 	// This to be made an argument of the function
 	int t_sample = n; 
   
   double yrTitre[n*nsamp];
   int maskedInfectionHistory[n];
-
+  double cumInfectionHistory[n];
+  
 	/* Add for loop over k*/
 	
 	int k;
@@ -47,11 +50,21 @@ void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre,
 	      maskedInfectionHistory[m]=0;
 	    }
 	  }
-	    
+
+	  // Make a cumulative infection history
+	  cumInfectionHistory[0] = maskedInfectionHistory[0];
+	  for (m=1;m<n;m++) {
+	    cumInfectionHistory[m] = cumInfectionHistory[m-1] + 
+	      maskedInfectionHistory[m];
+	  }
+	  	    
 		/* Calculate expected titre	- note k indexed from 0 */
 
 		for (i=0; i<n; i++){
-			x1[i] =  mu[0] * dd[k*n+i] * maskedInfectionHistory[i];
+			x1[i] =  mu[0] * 
+			  dd[k*n+i] * 
+			  maskedInfectionHistory[i] *
+			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0));
 		}
 	
 		for (i=0; i<n; i++){
