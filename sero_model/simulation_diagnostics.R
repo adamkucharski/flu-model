@@ -15,7 +15,7 @@ plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
 plot(as.data.frame(thetatab)$mu[runs1:runsPOST],as.data.frame(thetatab)$sigma[runs1:runsPOST],pch=18,xlab="mu",ylab="sigma")
 
 # Plot histogram of boosting
-hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main=NULL,col=colA,xlab="mu",prob=TRUE,xlim=c(1,3))
+hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main=NULL,col=colA,xlab="mu",prob=TRUE,xlim=c(1,5))
 abline(v=thetaSim[["mu"]],col="red")
 
 hist(as.data.frame(thetatab)$sigma[runs1:runsPOST],main=NULL,col=colA,xlab="sigma",xlim=c(0,0.5))
