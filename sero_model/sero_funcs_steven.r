@@ -2,13 +2,26 @@
 
 #' Load up the fluscape data and transform it into the same shape
 #' as the Vietnam data.
-load_fluscape <- function(pathfssvn="~/Dropbox/svn/fluscape/trunk/") {
+#' x <- load_fluscape()
+load_fluscape <- function(
+  pathfssvn="~/Dropbox/svn/fluscape/trunk/",
+  sero="YAM") {
   
   # Source the main fluscape functions needed for loading the data
   source(paste(pathfssvn,"/source/R/GeneralUtility.r",sep=""))
   
   # Run the load and merge function for the first three visits
-  fsd_tmp <- load.and.merge.part.V1.V2.V3(topdir=pathfssvn)
+  fsd_tmp <- load.and.merge.part.V1.V2.V3(
+    topdir=pathfssvn,
+    convert.titers=TRUE)
+  
+  # Define a vectors of the assay results in the correct order
+  if (sero=="YAM") {
+    asTest <- c("HI.B.1988.V1","HI.B.2002.V1","HI.B.2006.V1",
+                "HI.B.1988.V2","HI.B.2002.V2","HI.B.2006.V2")
+  } else {
+    stop("only yam implemented in load_fluscape")
+  }
   
   # Subset the data for those for whom we have both flu B assays
   # and date of birth. Initially, just do the 
@@ -44,7 +57,27 @@ load_fluscape <- function(pathfssvn="~/Dropbox/svn/fluscape/trunk/") {
   )
   
   rtn_yam_td[,"test.year",] <- c(2011,2011,2011,2012,2012,2012)
-  rtn_yam_td[,"strain_years",] <- c(2011,2011,2011,2012,2012,2012)
+  rtn_yam_td[,"strain_years",] <- c(1988,2002,2006,1988,2002,2006)
+  rtn_yam_td[,"sample.index",] <- c(1,2,3,1,2,3)
   
+  # Cycle through people putting in the right tire values
+  for (i in 1:noP) {
+    rtn_yam_td[i,"titredat",] <- as.numeric(fsd[i,asTest])
+  }
+  
+  test_years <- c(2011,2012)
+  inf_years <- 1987:2012
+  if (sero="YAM") {
+    strain_years=c(1988,2002,2006)
+  } else {
+    stop("only yam implemented in load_fluscape")
+  }
+  npart <- noP
+  test.list <- rtn_yam_td
+  age.yr <- fsd$PART_AGE.V2
+  
+  # Return the list of required output
+  save(test_years, strain_years, npart, test.list,
+       file="R_datasets/Fluscape_data.RData")
   
 }
