@@ -10,7 +10,7 @@
  */
 
 void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre, 
-                  double *titrepred, double *dd, double *mu, int *ntheta, 
+                  double *titrepred, double *dd, int *ntheta, 
                   double *theta)
 {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -19,6 +19,7 @@ void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre,
 	int n = nin[0];
 	int nsamp = nsin[0];
 	double T_2 = theta[1];
+	double mu = theta[0];
 	
 	// This to be made an argument of the function
 	int t_sample = n; 
@@ -61,7 +62,7 @@ void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre,
 		/* Calculate expected titre	- note k indexed from 0 */
 
 		for (i=0; i<n; i++){
-			x1[i] =  mu[0] * 
+			x1[i] =  mu * 
 			  dd[k*n+i] * 
 			  maskedInfectionHistory[i] *
 			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0));
