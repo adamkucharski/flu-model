@@ -58,11 +58,13 @@ outputdmatrix<-function(theta,inf_years){
 
 # Compile c code
 compile.c<-function(){
+  require("Rcpp")
   setwd("c_code")
   system("R CMD SHLIB c_model2.c")
   system("R CMD SHLIB c_model2_sr.c")
   dyn.load("./c_model2.so")
   dyn.load("./c_model2_sr.so")
+  sourceCpp("./cpp_steven.cpp")
   setwd("..")
 }
 
