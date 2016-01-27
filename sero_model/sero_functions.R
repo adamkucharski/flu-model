@@ -194,7 +194,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
     test.list[[ii]]=i.list
   }
   # Export data
-  browser()
+  #browser()
   if(is.null(historytabPost)){
     save(test_years,inf_years,strain_years,n_part,test.list,age.yr,historytabSim,file=paste("R_datasets/Simulated_data.RData",sep=""))
   }else{
@@ -218,8 +218,8 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
     # Remove infection
     if(rand1<1/3){
       infectID=infvector[(as.numeric(x)>0)]
-      if(length(infectID)>1){
-        x[sample(infectID,1)]=0
+      if(length(infectID)>0){
+        x[sample(c(infectID,infectID),1)]=0
       }
     }
     
@@ -227,7 +227,7 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
     if(rand1>1/3 & rand1<2/3){
       ninfecID=infvector[(as.numeric(x)==0)]
       if(length(ninfecID)>0){
-        x[sample(ninfecID,1)]=1
+        x[sample(c(ninfecID,ninfecID),1)]=1
       }
     }
     
@@ -236,18 +236,20 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
       infectID=infvector[(as.numeric(x)>0)]
       ninfecID=infvector[(as.numeric(x)==0)]
       if(length(infectID)>0 & length(ninfecID)>0){
-        x[sample(infectID,1)]=0
-        x[sample(ninfecID,1)]=1
+        x[sample(c(infectID,infectID),1)]=0
+        x[sample(c(ninfecID,ninfecID),1)]=1
       }
     }
     
     # Add prior on birth year - exponentially less likely to update if infections outside
-    if(inf.n>ageA[ii]){
-      a1=exp(-0.1*sum((x)[1:(inf.n-ageA[ii])])) # EDIT infvector2 tweak this parameter to penalise more/less
-      if( a1 > runif(1) ){
-        historyA[ii,]=x
-      }
-    }
+    #if(inf.n>ageA[ii]){
+    #  a1=0.01*exp(1)*exp(-sum(x[1:(inf.n-ageA[ii])])) # EDIT infvector2 tweak this parameter to penalise more/less
+    #  if( a1 > runif(1) ){
+    #    historyA[ii,]=x
+    #  }
+    #}
+    
+    historyA[ii,]=x
   
   } # end loop over individuals
   historyA
@@ -353,14 +355,13 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     # Adaptive covariance matrix
     if(m==1){
       epsilon0=0.001
+      #epsilon0=0
       cov_matrix_theta=epsilon0*cov_matrix_theta0
       #varpart_prob0=varpart_prob
     }else{
       epsilon0=min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m))
+      #epsilon0=0
       cov_matrix_theta=epsilon0*cov_matrix_theta0
-      
-      #varpart_prob0=min(1,exp(log(varpart_prob0)+(accept_rate-0.234)*0.999^m))
-      #varpart_prob=varpart_prob0
     }
     
     # - - - - - - - - - - - - - - - -
@@ -377,11 +378,11 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     }else{
       pickA=NULL
       pickA=sample(n_part, ceiling(varpart_prob*n_part)) # check that not length zero
-      age_star = SampleAge(pickA,age.tab) #resample history
+      age_star = age.tab #SampleAge(pickA,age.tab) #resample age (not for now)
       history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years) #resample history
       theta_star =thetatab[m,]
     }
-    
+
     dmatrix=outputdmatrix(theta_star,inf_years) # Arrange parameters
     
     # - - - - - - - - - - - - - - - -
@@ -390,7 +391,6 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     lik_val=likelihoodtab[m,]
     for(ii in pickA){
       # Set history to zero after test date
-      
       lik_val[ii]=estimatelik(ii,jj_year,as.numeric(history_star[ii,]),dmatrix,theta_star,test.list)
       #if(is.na(lik_val[ii])){lik_val[ii]=-Inf}
     }
@@ -399,11 +399,16 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     # - - - - - - - - - - - - - - - -
     # Metropolis Hastings step
     
+    #print(pickA)
+    #print(age.tab)
+    #print(c(m,sum(likelihoodtab[m,]),sum(lik_val))) # PRINT LIKELIHOOD
+    
     output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val)) 
     
     if(runif(1) < output_prob){
       thetatab[m+1,] = theta_star
       if(m %% 2==0){historytab = history_star} # Only change if resampled
+      if(m %% 2==0){age.tab = age_star} # Only change if resampled
       likelihoodtab[m+1,] = lik_val
       if(m %% 2==1){accepttabT[(m+1)/2]=1}
       
@@ -422,7 +427,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     #Sys.time()-aTime  #TIMER 2
     
     if(m %% min(runs,200) ==0){
-      print(c(m,accept_rateT,epsilon0,round(sum(likelihoodtab[m,]))))
+      print(c(m,accept_rateT,round(sum(likelihoodtab[m,]))))
       save(likelihoodtab,thetatab,historytab,age.tab,file=paste("posterior_sero_runs/outputR.RData",sep=""))
     }
     

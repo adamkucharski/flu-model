@@ -11,7 +11,7 @@ colA=rgb(0.8,0.8,0.8)
 maxlik=max(rowSums(likelihoodtab))
 runsPOST=length(rowSums(likelihoodtab)); runs1=ceiling(0.2*runsPOST)
 plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-50,maxlik))
-plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
+plot(as.data.frame(thetatab)$sigma[1:runsPOST],type="l",ylab="mu")
 plot(as.data.frame(thetatab)$mu[runs1:runsPOST],as.data.frame(thetatab)$sigma[runs1:runsPOST],pch=18,xlab="mu",ylab="sigma")
 
 # Plot histogram of boosting

@@ -67,7 +67,11 @@ make_fluscape_rdata <- function(
   
   test_years <- c(2011,2012)
   inf_years <- 1987:2012
+<<<<<<< HEAD
   if (sero=="YAM") {
+=======
+  if (sero="YAM") {
+>>>>>>> be7002495e330579e119dd1b9b7466efe76d0720
     strain_years=c(1988,2002,2006)
   } else {
     stop("only yam implemented in load_fluscape")
