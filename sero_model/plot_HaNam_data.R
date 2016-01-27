@@ -13,7 +13,7 @@ source("load_data.R")
 for(ii in 1:n_part){
   
   subjectn=ii
-  alt_year=2007
+  alt_year=2011
   sample_yr=2012
   
   dataplot1=data1[data1$Subject.number==subjectn,]

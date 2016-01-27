@@ -15,16 +15,17 @@ getDoParWorkers()
 # Load data and functions (Fonville et al.)
 #source("load_data.R")
 source("sero_functions.R")
-compile.c() # Compile c code
+
+#compile.c() # Compile c code
 
 # - - - - - - - - - - - - -
 # Generate simulated data
 thetaSim=c(mu=4,sigma=0.3,tau1=0.1,tau2=0.1,wane=0.1)
-npartM=100
+npartM=50
 simulate_data(test_years=seq(2010,2010),
               inf_years=seq(1990,2010,1),
               strain_years=seq(1990,2010,2),
-              n_part=npartM,thetastar=thetaSim,p.inf=0.15)
+              n_part=npartM,thetastar=thetaSim,p.inf=0.1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # INFERENCE MODEL
@@ -39,14 +40,14 @@ source("simulation_plots.R")
 # Set initial theta
 theta0=c(mu=NA,sigma=NA,tau1=NA,tau2=NA,wane=NA)
 theta0[["mu"]]=4
-theta0[["sigma"]]=0.3
+theta0[["sigma"]]=0.5
 theta0[["tau1"]]=0.1
 theta0[["tau2"]]=0.1
 theta0[["wane"]]=0.1
 theta=theta0
-vp1=0.2 #probability individual infection history resampled
+vp1=0.1 #probability individual infection history resampled
 
-run_mcmc(test.yr=2010,runs=20000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
+run_mcmc(test.yr=2010,runs=10000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
 #historytabSim
 
 # Plot posteriors and compare to simulation
