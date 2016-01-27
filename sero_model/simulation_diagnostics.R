@@ -27,11 +27,11 @@ dev.copy(pdf,paste("plot_simulations/posterior_mu",thetaSim[["mu"]],"_sigma",the
 dev.off()
 
 
-
+# UPDATE THIS BIT
 #Compare model fits using posterior infection history (historytabPost) and parameters
-simulate_data(test_years=seq(2010,2010),historytabPost=historytab,
-              inf_years=seq(1990,2010,1),
-              strain_years=seq(1990,2010,2),
+simulate_data(test_years,historytabPost=historytab,
+              inf_years,
+              strain_years,
               n_part=npartM,thetastar=as.data.frame(thetatab)[runsPOST,],p.inf=0.1)
 
 load("R_datasets/Simulated_dataPost.RData")

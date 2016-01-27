@@ -21,10 +21,10 @@ source("sero_functions.R")
 # - - - - - - - - - - - - -
 # Generate simulated data
 thetaSim=c(mu=4,sigma=0.3,tau1=0.1,tau2=0.1,wane=0.1)
-npartM=50
+npartM=100
 simulate_data(test_years=seq(2010,2010),
-              inf_years=seq(1990,2010,1),
-              strain_years=seq(1990,2010,2),
+              inf_years=seq(1980,2010,1),
+              strain_years=seq(1980,2010,1),
               n_part=npartM,thetastar=thetaSim,p.inf=0.1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -45,9 +45,9 @@ theta0[["tau1"]]=0.1
 theta0[["tau2"]]=0.1
 theta0[["wane"]]=0.1
 theta=theta0
-vp1=0.1 #probability individual infection history resampled
+vp1=0.05 #probability individual infection history resampled
 
-run_mcmc(test.yr=2010,runs=10000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
+run_mcmc(test.yr=2010,runs=1000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,switch1=3)
 #historytabSim
 
 # Plot posteriors and compare to simulation
