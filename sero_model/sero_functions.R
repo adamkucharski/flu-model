@@ -66,7 +66,7 @@ compile.c<-function(){
 # - - - - - - - - - - - - - - - -
 # Define expected titre function
 
-func1 <- function(x,titredat,dd,mu,theta=c(-1000,0.05)) {
+func1 <- function(x,titredat,dd,theta) {
   if (!is.numeric(x)){stop("argument x must be numeric")}
   out <- .C("c_model2_sr",
             n=as.integer(length(x)),
@@ -76,7 +76,6 @@ func1 <- function(x,titredat,dd,mu,theta=c(-1000,0.05)) {
             titre=as.double(titredat),
             titrepred=as.double(rep(0,length(titredat))),
             dd=as.double(dd),
-            mu=as.double(mu),
             ntheta=as.integer(length(theta)),
             theta=as.double(theta)
   )
@@ -104,7 +103,7 @@ estimatelik<-function(ii,jj,historyii,dmatrix,thetastar,test.list){ # ii=partici
   d.ij=dmatrix[test.part,] # Define cross-immunity matrix for sample strain
   d_vector=melt(t(d.ij))$value
   
-  expect=func1(historyii,titredat,d_vector,thetastar[["mu"]]) # Output expectation
+  expect=func1(historyii,titredat,d_vector,thetastar) # Output expectation
   #plot(as.numeric(test.jj[3,]),expect,ylim=c(0,100))
   
   # Calculate likelihood - ** need to add summation if k>8 **
@@ -168,7 +167,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
       d.ij=dmatrix[sample.index,] # Define cross-immunity matrix for sample strain
       d_vector=melt(t(d.ij))$value
       
-      expect=func1(historyii,sample.index,d_vector,thetastar[["mu"]]) # Output expectation
+      expect=func1(historyii,sample.index,d_vector,thetastar) # Output expectation
       #titredat=sapply(expect,function(x){rpois(1,x)}) # Generate titre
       titredat=round(expect)
       titredat=sapply(titredat,function(x){min(x,8)})
