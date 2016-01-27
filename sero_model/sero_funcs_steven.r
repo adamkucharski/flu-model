@@ -1,9 +1,12 @@
 # Stevens functions in R
 
+# Declare some libraries that are needed here
+library(Rcpp)
+
 #' Load up the fluscape data and transform it into the same shape
 #' as the Vietnam data.
-#' x <- load_fluscape()
-load_fluscape <- function(
+#' make_fluscape_rdata()
+make_fluscape_rdata <- function(
   pathfssvn="~/Dropbox/svn/fluscape/trunk/",
   sero="YAM") {
   
@@ -67,7 +70,7 @@ load_fluscape <- function(
   
   test_years <- c(2011,2012)
   inf_years <- 1987:2012
-  if (sero="YAM") {
+  if (sero=="YAM") {
     strain_years=c(1988,2002,2006)
   } else {
     stop("only yam implemented in load_fluscape")

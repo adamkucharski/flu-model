@@ -16,7 +16,7 @@ getDoParWorkers()
 #source("load_data.R")
 source("sero_functions.R")
 
-#compile.c() # Compile c code
+compile.c() # Compile c code
 
 # - - - - - - - - - - - - -
 # Generate simulated data
