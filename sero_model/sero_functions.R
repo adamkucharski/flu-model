@@ -21,22 +21,25 @@ setuphistIC<-function(ii,jj,inf.n,test.list){ # ii=participant | jj=test year
       maxt=(titredat==max(titredat))
       
       # set max titre strain to infection=1 in history
-      if(sum(maxt)>1){
-        hist0[inf_years==spyear[sample(c(1:length(maxt))[maxt],1)]]=1
-      }else{
-        
-        hist0[(inf_years==spyear[titredat==max(titredat)])]=1
-      }
+      #if(sum(maxt)>1){
+      #  hist0[inf_years==spyear[sample(c(1:length(maxt))[maxt],1)]]=1
+      #}else{
+      #  
+      #  hist0[(inf_years==spyear[titredat==max(titredat)])]=1
+      #}
 
       # Use simple cutoff for titres
-      #for(i in 1:length(spyear)){
-      #  if(max(titredat[(as.numeric(test.jj[3,])==spyear[i])])>=4){
-      #    hist0[(inf_years==spyear[i])]=1
-      #  }
-      #}
+      for(i in 1:length(spyear)){
+        if(max(titredat[(as.numeric(test.jj[3,])==spyear[i])])>=4 & runif(1)>0.5 ){
+         hist0[(inf_years==spyear[i])]=1
+        }
+      }
+      
+      #hist0=sample(c(0,1),inf.n,replace=T,prob=c(0.9,0.1)) # Constrain max number of infections to 10% attack rate?
       
   }
   pos.hist=(hist0>0)
+  
   if(sum(hist0)==0){hist0[sample(1:inf.n,1)]=1} # Make sure at least one infection
   hist0
   
@@ -105,7 +108,9 @@ estimatelik<-function(ii,jj,historyii,dmatrix,thetastar,test.list){ # ii=partici
   d.ij=dmatrix[test.part,] # Define cross-immunity matrix for sample strain
   d_vector=melt(t(d.ij))$value
   
+
   expect=func1(historyii,titredat,d_vector,thetastar) # Output expectation
+
   #plot(as.numeric(test.jj[3,]),expect,ylim=c(0,100))
   
   # Calculate likelihood - ** need to add summation if k>8 **
@@ -169,7 +174,9 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
       d.ij=dmatrix[sample.index,] # Define cross-immunity matrix for sample strain
       d_vector=melt(t(d.ij))$value
       
+
       expect=func1(historyii,sample.index,d_vector,thetastar) # Output expectation
+
       #titredat=sapply(expect,function(x){rpois(1,x)}) # Generate titre
       titredat=round(expect)
       titredat=sapply(titredat,function(x){min(x,8)})
@@ -294,7 +301,7 @@ SampleTheta<-function(theta_in,m,covartheta){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Metropolis-Hastings algorithm
 
-run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,theta0,runs,varpart_prob,hist.true=NULL){
+run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,theta0,runs,varpart_prob,hist.true=NULL,switch1=2){
   
   test.n=length(test_years)
   inf.n=length(inf_years)
@@ -347,7 +354,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     
     # Adaptive covariance matrix
     if(m==1){
-      epsilon0=0.001
+      epsilon0=0.01
       #epsilon0=0
       cov_matrix_theta=epsilon0*cov_matrix_theta0
       #varpart_prob0=varpart_prob
@@ -362,7 +369,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     
     #aTime=Sys.time() #TIMER 1
     
-    if(m %% 2==1 | varpart_prob==0){
+    if(m %% switch1==1 | varpart_prob==0){
       theta_star = SampleTheta(thetatab[m,], m,cov_matrix_theta) #resample theta
       age_star = age.tab
       history_star = historytab
@@ -400,21 +407,21 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     
     if(runif(1) < output_prob){
       thetatab[m+1,] = theta_star
-      if(m %% 2==0){historytab = history_star} # Only change if resampled
-      if(m %% 2==0){age.tab = age_star} # Only change if resampled
+      if(m %% switch1==0){historytab = history_star} # Only change if resampled
+      if(m %% switch1==0){age.tab = age_star} # Only change if resampled
       likelihoodtab[m+1,] = lik_val
-      if(m %% 2==1){accepttabT[(m+1)/2]=1}
+      if(m %% switch1!=0){accepttabT[(switch1-1)*(m+1)/switch1]=1}
       
     }else{
       thetatab[m+1,] = thetatab[m,]
       likelihoodtab[m+1,] = likelihoodtab[m,]
-      if(m %% 2==1){accepttabT[(m+1)/2]=0}
+      if(m %% switch1!=0){accepttabT[(switch1-1)*(m+1)/switch1]=0}
     }
     
     if(m<100){
       accept_rateT=0.234
     }else{
-      accept_rateT=sum(accepttabT[1:((m+1)/2)])/((m+1)/2)
+      accept_rateT=sum(accepttabT[1:((switch1-1)*(m+1)/switch1)])/((switch1-1)*(m+1)/switch1)
     }
     
     #Sys.time()-aTime  #TIMER 2
