@@ -3,16 +3,18 @@
 # Compare MCMC output to simulation data
 
 load("posterior_sero_runs/outputR.RData")
-par(mfrow=c(2,3))
+par(mfrow=c(3,3))
 par(mar = c(5,5,1,1))
 colA=rgb(0.8,0.8,0.8)
 
 # Plot profile likelihood
-maxlik=max(rowSums(likelihoodtab))
-runsPOST=length(rowSums(likelihoodtab)); runs1=ceiling(0.2*runsPOST)
+lik.tot=rowSums(likelihoodtab)
+maxlik=max(lik.tot)
+runsPOST=length(lik.tot[lik.tot!=-Inf])
+runs1=ceiling(0.5*runsPOST)
 plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-50,maxlik))
-plot(as.data.frame(thetatab)$sigma[1:runsPOST],type="l",ylab="mu")
-plot(as.data.frame(thetatab)$mu[runs1:runsPOST],as.data.frame(thetatab)$sigma[runs1:runsPOST],pch=18,xlab="mu",ylab="sigma")
+plot(as.data.frame(thetatab)$mu[1:runsPOST],type="l",ylab="mu")
+plot(as.data.frame(thetatab)$sigma[1:runsPOST],type="l",ylab="sigma")
 
 # Plot histogram of boosting
 hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main=NULL,col=colA,xlab="mu",prob=TRUE,xlim=c(1,5))
@@ -21,9 +23,16 @@ abline(v=thetaSim[["mu"]],col="red")
 hist(as.data.frame(thetatab)$sigma[runs1:runsPOST],main=NULL,col=colA,xlab="sigma",xlim=c(0,0.5))
 abline(v=thetaSim[["sigma"]],col="red")
 
+hist(as.data.frame(thetatab)$tau1[runs1:runsPOST],main=NULL,col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.5))
+abline(v=thetaSim[["tau1"]],col="red")
+
+plot(as.data.frame(thetatab)$mu[runs1:runsPOST],as.data.frame(thetatab)$sigma[runs1:runsPOST],pch=18,xlab="mu",ylab="sigma")
+
+plot(as.data.frame(thetatab)$tau1[runs1:runsPOST],as.data.frame(thetatab)$sigma[runs1:runsPOST],pch=18,xlab="tau1",ylab="sigma")
+
 plot(rowSums(historytab-historytabSim),type="l",ylab="history residual")
 
-dev.copy(pdf,paste("plot_simulations/posterior_mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],"_npart",n_part,".pdf",sep=""),width=12,height=6)
+dev.copy(pdf,paste("plot_simulations/posterior_mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],"_npart",n_part,".pdf",sep=""),width=12,height=8)
 dev.off()
 
 

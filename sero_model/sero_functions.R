@@ -336,9 +336,9 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   colnames(historytab)=as.character(inf_years)
 
   # Plausible intial ages - based on earliest strain in history
-  age.tab=sapply(
-    apply(historytab,1,function(x){min(c(inf.n:1)[x==1])}),
-    function(y){ sample(y:80, 1, replace=T) })
+  #age.tab=sapply(
+  #  apply(historytab,1,function(x){min(c(inf.n:1)[x==1])}),
+  #  function(y){ sample(y:80, 1, replace=T) })
   
   # Preallocate matrices
   likelihoodtab=matrix(-Inf,nrow=(runs+1),ncol=n_part)
@@ -371,14 +371,14 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     
     if(m %% switch1==1 | varpart_prob==0){
       theta_star = SampleTheta(thetatab[m,], m,cov_matrix_theta) #resample theta
-      age_star = age.tab
+      #age_star = age.tab
       history_star = historytab
       pickA=c(1:n_part)
       
     }else{
       pickA=NULL
       pickA=sample(n_part, ceiling(varpart_prob*n_part)) # check that not length zero
-      age_star = age.tab #SampleAge(pickA,age.tab) #resample age (not for now)
+      #age_star = age.tab #SampleAge(pickA,age.tab) #resample age (not for now)
       history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years) #resample history
       theta_star =thetatab[m,]
     }
@@ -408,7 +408,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     if(runif(1) < output_prob){
       thetatab[m+1,] = theta_star
       if(m %% switch1==0){historytab = history_star} # Only change if resampled
-      if(m %% switch1==0){age.tab = age_star} # Only change if resampled
+      #if(m %% switch1==0){age.tab = age_star} # Only change if resampled
       likelihoodtab[m+1,] = lik_val
       if(m %% switch1!=0){accepttabT[(switch1-1)*(m+1)/switch1]=1}
       
