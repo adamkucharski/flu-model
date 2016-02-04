@@ -26,9 +26,10 @@ abline(v=thetaSim[["sigma"]],col="red")
 hist(as.data.frame(thetatab)$tau1[runs1:runsPOST],main=NULL,col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.5))
 abline(v=thetaSim[["tau1"]],col="red")
 
-plot(as.data.frame(thetatab)$mu[runs1:runsPOST],as.data.frame(thetatab)$sigma[runs1:runsPOST],pch=18,xlab="mu",ylab="sigma")
+hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.5))
+abline(v=thetaSim[["tau2"]],col="red")
 
-plot(as.data.frame(thetatab)$tau1[runs1:runsPOST],as.data.frame(thetatab)$sigma[runs1:runsPOST],pch=18,xlab="tau1",ylab="sigma")
+plot(as.data.frame(thetatab)$tau1[runs1:runsPOST],as.data.frame(thetatab)$tau2[runs1:runsPOST],pch=18,xlab="tau1",ylab="tau2")
 
 plot(rowSums(historytab-historytabSim),type="l",ylab="history residual")
 

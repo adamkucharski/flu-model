@@ -75,6 +75,7 @@ func1 <- function(x,titredat,dd,theta) {
   if (!is.numeric(x)){stop("argument x must be numeric")}
   out <- .C("c_model2_sr",
             n=as.integer(length(x)),
+            itot=as.integer(sum(x)),
             nsample=as.integer(length(titredat)),
             x=as.double(x),
             x1=as.double(rep(0,length(x))),

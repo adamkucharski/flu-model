@@ -9,7 +9,7 @@
 	- d.ij vector
  */
 
-void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre, 
+void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *titre, 
                   double *titrepred, double *dd, int *ntheta, 
                   double *theta)
 {
@@ -17,8 +17,10 @@ void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre,
 	/* Calculate lambda */
 	
 	int n = nin[0];
+	int total_inf = itot[0];
 	int nsamp = nsin[0];
-	double T_2 = theta[1];
+	double T_1 = theta[1];
+	double T_2 = theta[2];
 	double mu = theta[0];
 	
 	// This to be made an argument of the function
@@ -65,6 +67,7 @@ void c_model2_sr(int *nin, int *nsin, double *x, double *x1, double *titre,
 			x1[i] =  mu * 
 			  dd[k*n+i] * 
 			  maskedInfectionHistory[i] *
+			  exp(T_1 * (total_inf - cumInfectionHistory[i])) *
 			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0));
 		}
 	
