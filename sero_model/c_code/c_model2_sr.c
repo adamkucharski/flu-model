@@ -67,7 +67,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 			x1[i] =  mu * 
 			  dd[k*n+i] * 
 			  maskedInfectionHistory[i] *
-			  exp(T_1 * (total_inf - cumInfectionHistory[i])) *
+			  pow(1+T_1 , (total_inf - cumInfectionHistory[i])) *
 			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0));
 		}
 	

@@ -34,11 +34,11 @@ simulate_data(test_years=seq(2010,2010),
 # INFERENCE MODEL
 # Run MCMC for specific data set
 
-#load("R_datasets/HaNam_data.RData")
-load("R_datasets/Simulated_data.RData")
+load("R_datasets/HaNam_data.RData")
+#load("R_datasets/Simulated_data.RData")
 
 # Plot simulation data vs history
-source("simulation_plots.R")
+#source("simulation_plots.R")
 
 # Set initial theta
 theta0=c(mu=NA,tau1=NA,tau2=NA,sigma=NA,wane=NA)
@@ -50,12 +50,14 @@ theta0[["wane"]]=0.1
 theta=theta0
 vp1=0.05 #probability individual infection history resampled
 
-#run_mcmc(test.yr=2010,runs=10000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,switch1=2)
-#historytabSim
+define.year=2009
 
-run_mcmc(test.yr=2012,runs=1000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,switch1=2)
+# NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
+run_mcmc(test.yr=define.year,runs=100,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,switch1=2)
+
 
 
 # Plot posteriors and compare to simulation
+simDat=FALSE
 source("simulation_diagnostics.R",local=TRUE)
 

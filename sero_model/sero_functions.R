@@ -323,6 +323,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   thetatab[1,]=theta
   
   historytab=matrix(NA,nrow=n_part,ncol=inf.n)
+  historytabCollect=historytab
   age.tab=matrix(NA,nrow=n_part,ncol=1)
   
   # Pick plausible initial conditions
@@ -426,10 +427,13 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     }
     
     #Sys.time()-aTime  #TIMER 2
+    if(m %% min(runs,20) ==0){
+      historytabCollect=rbind(historytabCollect,historytab)
+    }
     
-    if(m %% min(runs,200) ==0){
+    if(m %% min(runs,1000) ==0){
       print(c(m,accept_rateT,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,historytab,age.tab,file=paste("posterior_sero_runs/outputR.RData",sep=""))
+      save(likelihoodtab,thetatab,n_part,test.list,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr,".RData",sep=""))
     }
     
   }
