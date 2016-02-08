@@ -34,11 +34,12 @@ strain_years_unique=sort(unique(strain_years)) # years of samples tested against
 # Gather participants and infection years
 
 n_part=max(data1$Subject.number) # number of participants
-inf_years=seq(min(strain_years),max(strain_years)) #annual infection model
-inf.n=length(inf_years) # number of possible infecting strains
 
 test_years=unique(data1$Sample.year) # year of testing
 test.n=length(test_years) # number of test years
+
+inf_years=seq(min(strain_years),max(c(test_years,strain_years))) #annual infection model
+inf.n=length(inf_years) # number of possible infecting strains
 
 # Set up list of test data for quick access
 
@@ -64,6 +65,6 @@ i.list[[jj]]=rbind(rep(testyr,nstrains),
 
 test.list[[ii]]=i.list
 
-save(test_years,inf_years,strain_years,n_part,test.list,file=paste("R_datasets/HaNam_data.RData",sep=""))
+save(test_years,inf_years,strain_years,n_part,test.list,file=paste("R_datasets/HaNam_data_V.RData",sep=""))
 
 }

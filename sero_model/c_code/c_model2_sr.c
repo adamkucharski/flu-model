@@ -11,7 +11,7 @@
 
 void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *titre, 
                   double *titrepred, double *dd, int *ntheta, 
-                  double *theta)
+                  double *theta, int *inputtestyr)
 {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	/* Calculate lambda */
@@ -21,13 +21,15 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	int nsamp = nsin[0];
 	double T_1 = theta[1];
 	double T_2 = theta[2];
+	double muShort = theta[3];
 	double mu = theta[0];
 	
-	// This to be made an argument of the function
-	int t_sample = n; 
+	// This to be made an argument of the function -- gives test year
+	int t_sample = inputtestyr[0]; 
   
   double yrTitre[n*nsamp];
   int maskedInfectionHistory[n];
+  int shortTermResponse[n];
   double cumInfectionHistory[n];
   
 	/* Add for loop over k*/
@@ -53,6 +55,15 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	      maskedInfectionHistory[m]=0;
 	    }
 	  }
+	  
+	  // Make an index for short term boosting
+	  for (m=0;m<n;m++) {
+	  	if (maskedInfectionHistory[t_sample] == 1) {
+	      shortTermResponse[m]=1;
+	    } else {
+	      shortTermResponse[m]=0;
+	    }
+	  }
 
 	  // Make a cumulative infection history
 	  cumInfectionHistory[0] = maskedInfectionHistory[0];
@@ -64,11 +75,10 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 		/* Calculate expected titre	- note k indexed from 0 */
 
 		for (i=0; i<n; i++){
-			x1[i] =  mu * 
-			  dd[k*n+i] * 
+			x1[i] = dd[k*n+i] * 
 			  maskedInfectionHistory[i] *
-			  pow(1+T_1 , (total_inf - cumInfectionHistory[i])) *
-			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0));
+			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0)) *
+			  (mu + muShort * shortTermResponse[i]* pow(1+T_1 , (total_inf - cumInfectionHistory[i])) );
 		}
 	
 		for (i=0; i<n; i++){
@@ -77,15 +87,14 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	
 	  yrTitre[k+j*nsamp]=xx2;
 	
-	  }
+	  } // end test year loop (j)
 	
-	}
+	} // end sample loop (k)
 	
 	for (k=0;k<nsamp;k++) {
-	  titrepred[k]=yrTitre[k+(t_sample-1)*nsamp];
+	  titrepred[k]=yrTitre[k+(t_sample-1)*nsamp]; //Need (t-1) as index from 0
 	}
 	
-	/* End loop over k*/
 	
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	/* Compare to observed titre*/

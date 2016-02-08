@@ -3,7 +3,7 @@
 # - - - - - - - - - - - - - - - -
 # Set initial condition (for infection history) as infection if titre >=X
 
-setuphistIC<-function(ii,jj,inf.n,test.list){ # ii=participant | jj=test year
+setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index){ # ii=participant | jj=test year
   
   test.II=test.list[[ii]]
   test.jj=test.II[[jj]]
@@ -40,7 +40,7 @@ setuphistIC<-function(ii,jj,inf.n,test.list){ # ii=participant | jj=test year
   }
   pos.hist=(hist0>0)
   
-  if(sum(hist0)==0){hist0[sample(1:inf.n,1)]=1} # Make sure at least one infection
+  if(sum(hist0)==0){hist0[sample(1:testyear_index[1],1)]=1} # Make sure at least one infection
   hist0
   
 }
@@ -71,7 +71,7 @@ compile.c<-function(){
 # - - - - - - - - - - - - - - - -
 # Define expected titre function
 
-func1 <- function(x,titredat,dd,theta) {
+func1 <- function(x,titredat,dd,theta,testyear_index) {
   if (!is.numeric(x)){stop("argument x must be numeric")}
   out <- .C("c_model2_sr",
             n=as.integer(length(x)),
@@ -83,7 +83,8 @@ func1 <- function(x,titredat,dd,theta) {
             titrepred=as.double(rep(0,length(titredat))),
             dd=as.double(dd),
             ntheta=as.integer(length(theta)),
-            theta=as.double(theta)
+            theta=as.double(theta),
+            inputtestyr=as.integer(testyear_index)
   )
   # browser()
   # out$titrepred - out2$titrepred
@@ -94,32 +95,33 @@ func1 <- function(x,titredat,dd,theta) {
 # - - - - - - - - - - - - - - - -
 # Calculate likelihood for given participant and test year
 
-estimatelik<-function(ii,jj,historyii,dmatrix,thetastar,test.list){ # ii=participant | jj=test year
+estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ # ii=participant | jj=test year
 
-  test.II=test.list[[ii]]
-  test.jj=test.II[[jj]]
+    test.II=test.list[[ii]]
+    test.jj=test.II[[jj]]
+    
+    # Check test data available
+    if(length(test.jj[,1])==1){0}else{
+    
+    # Set up test strains
+    test.part=as.numeric(test.jj[4,]) # index of sample strains data available for
+    titredat=test.jj[2,] # Define titre data
+    
+    d.ij=dmatrix[test.part,] # Define cross-immunity matrix for sample strain
+    d_vector=melt(t(d.ij))$value
+    
   
-  # Check test data available
-  if(length(test.jj[,1])==1){0}else{
-  
-  # Set up test strains
-  test.part=as.numeric(test.jj[4,]) # index of sample strains data available for
-  titredat=test.jj[2,] # Define titre data
-  
-  d.ij=dmatrix[test.part,] # Define cross-immunity matrix for sample strain
-  d_vector=melt(t(d.ij))$value
-  
-
-  expect=func1(historyii,titredat,d_vector,thetastar) # Output expectation
-
-  #plot(as.numeric(test.jj[3,]),expect,ylim=c(0,100))
-  
-  # Calculate likelihood - ** need to add summation if k>8 **
-  largett=(titredat>=8)
-  
-  sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+
-    sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
-}
+    expect=func1(historyii,titredat,d_vector,theta_star,testyearI) # Output expectation
+    #plot(test.part,expect)
+    #plot(as.numeric(titredat))
+    #plot(as.numeric(test.jj[3,]),expect,ylim=c(0,100))
+    
+    # Calculate likelihood - ** need to add summation if k>8 **
+    largett=(titredat>=8)
+    
+    sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+
+      sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
+    }
 
 }
 
@@ -174,15 +176,16 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
       
       d.ij=dmatrix[sample.index,] # Define cross-immunity matrix for sample strain
       d_vector=melt(t(d.ij))$value
-      
+      testyr=test_years[jj]
+      testyearI=c(1:inf.n)[inf_years==testyr]
 
-      expect=func1(historyii,sample.index,d_vector,thetastar) # Output expectation
+      expect=func1(historyii,sample.index,d_vector,thetastar,testyearI) # Output expectation
 
       #titredat=sapply(expect,function(x){rpois(1,x)}) # Generate titre
       titredat=round(expect)
       titredat=sapply(titredat,function(x){min(x,8)})
       
-      testyr=test_years[jj]
+
       i.list[[jj]]=rbind(test.year=rep(testyr,nstrains),
                          titredat,
                          strain_years,
@@ -304,6 +307,9 @@ SampleTheta<-function(theta_in,m,covartheta){
 
 run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,theta0,runs,varpart_prob,hist.true=NULL,switch1=2){
   
+  # DEBUG set params <<<
+  # hist.true=NULL; test.yr=c(2010,2011); runs=1; switch1=2; varpart_prob=0.05
+  
   test.n=length(test_years)
   inf.n=length(inf_years)
   nstrains=length(strain_years)
@@ -311,7 +317,9 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   historyii=rbinom(inf.n, 1, 0.1) # dummy infection history
   
   # Index variables
-  jj_year=c(1:test.n)[test_years==test.yr]
+  jj_year=match(test.yr,test_years)
+  testyear_index=match(test.yr,inf_years)
+  sample.n=length(jj_year)
   
   # Specific MCMC parameters
   nparam=length(theta)
@@ -329,7 +337,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   # Pick plausible initial conditions
   if(is.null(hist.true)){
     for(ii in 1:n_part){
-      historytab[ii,]=setuphistIC(ii,jj_year,inf.n,test.list)
+      historytab[ii,]=setuphistIC(ii,jj_year[1],inf.n,test.list,testyear_index) # Pick first test year
     }
   }else{
     historytab=hist.true
@@ -390,10 +398,24 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     # - - - - - - - - - - - - - - - -
     # LIKELIHOOD function - Only calculate for updated history
     
+    #print(jj_year)
+    #print(testyear_index)
+    
     lik_val=likelihoodtab[m,]
     for(ii in pickA){
       # Set history to zero after test date
-      lik_val[ii]=estimatelik(ii,jj_year,as.numeric(history_star[ii,]),dmatrix,theta_star,test.list)
+      lik.ii=rep(NA,sample.n)
+      for(kk in 1:sample.n){
+        
+        #DEBUG DEBUG set params <<<
+        #ii=1;kk=2;historyii=as.numeric(history_star[ii,])
+        
+        lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,theta_star,test.list,testyear_index[kk])
+      }
+      
+      lik.ii
+      
+      lik_val[ii]=sum(lik.ii)
       #if(is.na(lik_val[ii])){lik_val[ii]=-Inf}
     }
     
@@ -431,11 +453,11 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
       historytabCollect=rbind(historytabCollect,historytab)
     }
     
-    if(m %% min(runs,1000) ==0){
+    if(m %% min(runs,20) ==0){
       print(c(m,accept_rateT,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,n_part,test.list,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr,".RData",sep=""))
+      save(likelihoodtab,thetatab,n_part,test.list,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr[1],".RData",sep=""))
     }
     
-  }
+  } #End runs loop
   
 }

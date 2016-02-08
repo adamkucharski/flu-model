@@ -23,12 +23,12 @@ for(ii0 in 1:n_part){
 #thetaSim[["mu"]]=3
 #thetaSim[["sigma"]]=0.25
 dmatrix=outputdmatrix(thetaSim,inf_years) # Arrange parameters
-estimatelik(ii0,1,as.numeric(historytabSim[ii0,]),dmatrix,thetaSim,test.list)
+#estimatelik(ii0,1,as.numeric(historytabSim[ii0,]),dmatrix,thetaSim,test.list)
 
-lik_val=NULL
-for(ii0 in 1:n_part){
-  lik_val=c(lik_val,estimatelik(ii0,1,as.numeric(historytabSim[ii0,]),dmatrix,thetaSim,test.list))
-}
-sum(lik_val)
+#lik_val=NULL
+#for(ii0 in 1:n_part){
+#  lik_val=c(lik_val,estimatelik(ii0,1,as.numeric(historytabSim[ii0,]),dmatrix,thetaSim,test.list))
+#}
+#sum(lik_val)
 
 # - - -
