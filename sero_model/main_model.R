@@ -42,11 +42,11 @@ load("R_datasets/HaNam_data.RData")
 
 # Set initial theta
 theta0=c(mu=NA,tau1=NA,tau2=NA,muShort=NA,sigma=NA,wane=NA)
-theta0[["mu"]]=3
+theta0[["mu"]]=2
 theta0[["sigma"]]=0.3
-theta0[["tau1"]]=0.1
+theta0[["tau1"]]=0.05
 theta0[["tau2"]]=0.1
-theta0[["muShort"]]=1
+theta0[["muShort"]]=2
 theta0[["wane"]]=0.1
 theta=theta0
 vp1=0.05 #probability individual infection history resampled
@@ -54,7 +54,7 @@ vp1=0.05 #probability individual infection history resampled
 define.year=c(2010,2011)
 
 # NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
-run_mcmc(test.yr=define.year,runs=5000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,switch1=2)
+run_mcmc(test.yr=define.year,runs=200000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,switch1=2)
 
 
 

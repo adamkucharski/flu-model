@@ -453,7 +453,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
       historytabCollect=rbind(historytabCollect,historytab)
     }
     
-    if(m %% min(runs,20) ==0){
+    if(m %% min(runs,100) ==0){
       print(c(m,accept_rateT,round(sum(likelihoodtab[m,]))))
       save(likelihoodtab,thetatab,n_part,test.list,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr[1],".RData",sep=""))
     }
