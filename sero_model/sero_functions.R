@@ -142,6 +142,12 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
   nstrains=length(strain_years)
   sample.index=strain_years-min(strain_years)+1
   
+  # Check inputs are correct
+  if(sum(max(test_years)==inf_years)==0){
+    print("need infection years >= test years")
+    return
+  }
+  
   dmatrix=outputdmatrix(thetastar,inf_years)
   
   #Set per year incidence, to create correlation between participants
@@ -352,7 +358,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   
   # Preallocate matrices
   likelihoodtab=matrix(-Inf,nrow=(runs+1),ncol=n_part)
-  accepttabT=rep(NA,(runs/2))
+  accepttabT=NULL
   accepttabH=rep(NA,(runs))
   
   
@@ -434,18 +440,18 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
       if(m %% switch1==0){historytab = history_star} # Only change if resampled
       #if(m %% switch1==0){age.tab = age_star} # Only change if resampled
       likelihoodtab[m+1,] = lik_val
-      if(m %% switch1!=0){accepttabT[(switch1-1)*(m+1)/switch1]=1}
+      if(m %% switch1!=0){accepttabT=c(accepttabT,1)}
       
     }else{
       thetatab[m+1,] = thetatab[m,]
       likelihoodtab[m+1,] = likelihoodtab[m,]
-      if(m %% switch1!=0){accepttabT[(switch1-1)*(m+1)/switch1]=0}
+      if(m %% switch1!=0){accepttabT=c(accepttabT,0)}
     }
     
     if(m<100){
       accept_rateT=0.234
     }else{
-      accept_rateT=sum(accepttabT[1:((switch1-1)*(m+1)/switch1)])/((switch1-1)*(m+1)/switch1)
+      accept_rateT=sum(accepttabT)/length(accepttabT)
     }
     
     #Sys.time()-aTime  #TIMER 2
@@ -455,7 +461,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     
     if(m %% min(runs,100) ==0){
       print(c(m,accept_rateT,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,n_part,test.list,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr[1],".RData",sep=""))
+      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr[1],".RData",sep=""))
     }
     
   } #End runs loop

@@ -16,17 +16,15 @@ getDoParWorkers()
 #source("load_data.R")
 source("sero_functions.R")
 
-
 compile.c() # Compile c code
-# logabs2(seq(-5, 5, by=2))
 
 
 # - - - - - - - - - - - - -
 # Generate simulated data
 thetaSim=c(mu=4,tau1=0.3,tau2=0.1,wane=0.1,sigma=0.3,muShort=0.1)
 npartM=100
-simulate_data(test_years=seq(2010,2010),
-              inf_years=seq(1980,2010,1),
+simulate_data(test_years=seq(2010,2011), # this needs to be vector
+              inf_years=seq(1980,2011,1),
               strain_years=seq(1980,2010,2),
               n_part=npartM,thetastar=thetaSim,p.inf=0.1)
 
@@ -34,11 +32,11 @@ simulate_data(test_years=seq(2010,2010),
 # INFERENCE MODEL
 # Run MCMC for specific data set
 
-load("R_datasets/HaNam_data.RData")
-#load("R_datasets/Simulated_data.RData")
+#load("R_datasets/HaNam_data.RData")
+load("R_datasets/Simulated_data.RData")
 
 # Plot simulation data vs history
-#source("simulation_plots.R")
+source("simulation_plots.R")
 
 # Set initial theta
 theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA)
@@ -54,11 +52,11 @@ vp1=0.05 #probability individual infection history resampled
 define.year=c(2010,2011)
 
 # NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
-run_mcmc(test.yr=define.year,runs=50000,hist.true=NULL,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,switch1=2)
+run_mcmc(test.yr=define.year,runs=1000,hist.true=NULL,switch1=3,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
 
 
 
 # Plot posteriors and compare to simulation
-simDat=FALSE
+simDat=TRUE
 source("simulation_diagnostics.R",local=TRUE)
 

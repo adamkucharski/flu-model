@@ -31,13 +31,10 @@ if(simDat==T){abline(v=thetaSim[["tau2"]],col="red")}
 
 hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,0.5))
 
-if(simDat==T){
-  plot(rowSums(historytab-historytabSim),type="l",ylab="history residual")
-  }else{
-    hist.sample=length(historytabCollect[,1])/n_part
-    ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
-    hist(ind.infN,col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""))
-}
+hist.sample=length(historytabCollect[,1])/n_part
+ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
+hist(ind.infN,col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""))
+
 
 dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_npart",n_part,"_yr",define.year,".pdf",sep=""),width=12,height=8)
 dev.off()
