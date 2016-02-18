@@ -29,7 +29,7 @@ if(simDat==T){abline(v=thetaSim[["tau1"]],col="red")}
 hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.5))
 if(simDat==T){abline(v=thetaSim[["tau2"]],col="red")}
 
-hist(as.data.frame(thetatab)$muShort[runs1:runsPOST],main=NULL,col=colA,xlab="mu_short",prob=TRUE,xlim=c(0,3))
+hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,0.5))
 
 if(simDat==T){
   plot(rowSums(historytab-historytabSim),type="l",ylab="history residual")
