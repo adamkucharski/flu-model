@@ -47,12 +47,12 @@ theta0[["tau2"]]=0.2
 theta0[["muShort"]]=2
 theta0[["wane"]]=0.001
 theta=theta0
-vp1=0.05 #probability individual infection history resampled
+vp1=0.1 #probability individual infection history resampled
 
 define.year=c(2010)
 
 # NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
-run_mcmc(test.yr=define.year,runs=1000,hist.true=NULL,switch1=100,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
+run_mcmc(test.yr=define.year,runs=10000,hist.true=NULL,switch1=10,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
 
 
 
