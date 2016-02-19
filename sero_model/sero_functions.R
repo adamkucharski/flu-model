@@ -285,12 +285,10 @@ convert_binary <- function(x){sum(2^(which(rev(unlist(strsplit(as.character(x), 
 ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
 
   # uniform priors
-  p_theta_star = 1
-  p_theta = 1
+  p_theta_star = 1; p_theta = 1
   
   # probability symmetic
-  q_theta_given_theta_star = 1
-  q_theta_star_given_theta = 1
+  q_theta_given_theta_star = 1; q_theta_star_given_theta = 1
   
   val = exp((marg_likelihood_star-marg_likelihood))*(p_theta_star/p_theta)*(q_theta_given_theta_star/q_theta_star_given_theta) 
   min(val, 1)
@@ -316,24 +314,19 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   # DEBUG set params <<<
   # hist.true=NULL; test.yr=c(2010,2011); runs=1; switch1=2; varpart_prob=0.05
   
-  test.n=length(test_years)
-  inf.n=length(inf_years)
-  nstrains=length(strain_years)
+  test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
   sample.index=strain_years-min(strain_years)+1
   historyii=rbinom(inf.n, 1, 0.1) # dummy infection history
   
   # Index variables
-  jj_year=match(test.yr,test_years)
-  testyear_index=match(test.yr,inf_years)
+  jj_year=match(test.yr,test_years); testyear_index=match(test.yr,inf_years)
   sample.n=length(jj_year)
   
   # Specific MCMC parameters
-  nparam=length(theta)
-  npcov=rep(1,nparam)
+  nparam=length(theta); npcov=rep(1,nparam)
   cov_matrix_theta0 = diag(npcov)
   
-  thetatab=matrix(NA,nrow=(runs+1),ncol=length(theta))
-  colnames(thetatab)=names(theta)
+  thetatab=matrix(NA,nrow=(runs+1),ncol=length(theta)); colnames(thetatab)=names(theta)
   thetatab[1,]=theta
   
   historytab=matrix(NA,nrow=n_part,ncol=inf.n)
@@ -345,9 +338,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     for(ii in 1:n_part){
       historytab[ii,]=setuphistIC(ii,jj_year[1],inf.n,test.list,testyear_index) # Pick first test year
     }
-  }else{
-    historytab=hist.true
-  }
+  }else{historytab=hist.true}
   
   colnames(historytab)=as.character(inf_years)
 
@@ -361,8 +352,6 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
   accepttabT=NULL
   accepttabH=rep(NA,(runs))
   
-  
-  
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Run MCMC
   
@@ -375,7 +364,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
       cov_matrix_theta=epsilon0*cov_matrix_theta0
       #varpart_prob0=varpart_prob
     }else{
-      epsilon0=min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m))
+      epsilon0=max(0.00001,min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m)))
       #epsilon0=0
       cov_matrix_theta=epsilon0*cov_matrix_theta0
     }
@@ -385,7 +374,7 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     
     #aTime=Sys.time() #TIMER 1
     
-    if(m %% switch1==1 | varpart_prob==0){
+    if(m %% switch1!=0 | m==1){ # m==1 condition as have to calculate all liks on first step
       theta_star = SampleTheta(thetatab[m,], m,cov_matrix_theta) #resample theta
       #age_star = age.tab
       history_star = historytab
@@ -400,22 +389,16 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
     }
 
     dmatrix=outputdmatrix(theta_star,inf_years) # Arrange parameters
-    
+  
     # - - - - - - - - - - - - - - - -
     # LIKELIHOOD function - Only calculate for updated history
-    
-    #print(jj_year)
-    #print(testyear_index)
     
     lik_val=likelihoodtab[m,]
     for(ii in pickA){
       # Set history to zero after test date
       lik.ii=rep(NA,sample.n)
       for(kk in 1:sample.n){
-        
-        #DEBUG DEBUG set params <<<
-        #ii=1;kk=2;historyii=as.numeric(history_star[ii,])
-        
+        #DEBUG DEBUG set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
         lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,theta_star,test.list,testyear_index[kk])
       }
       
@@ -425,28 +408,26 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
       #if(is.na(lik_val[ii])){lik_val[ii]=-Inf}
     }
     
-    
     # - - - - - - - - - - - - - - - -
     # Metropolis Hastings step
-    
-    #print(pickA)
-    #print(age.tab)
+
     #print(c(m,sum(likelihoodtab[m,]),sum(lik_val))) # PRINT LIKELIHOOD
     
     output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val)) 
     
     if(runif(1) < output_prob){
       thetatab[m+1,] = theta_star
-      if(m %% switch1==0){historytab = history_star} # Only change if resampled
+      if(m %% switch1!=0){historytab = history_star} # Only change if resampled
       #if(m %% switch1==0){age.tab = age_star} # Only change if resampled
       likelihoodtab[m+1,] = lik_val
-      if(m %% switch1!=0){accepttabT=c(accepttabT,1)}
+      if(m %% switch1==0){accepttabT=c(accepttabT,1)}
       
     }else{
       thetatab[m+1,] = thetatab[m,]
       likelihoodtab[m+1,] = likelihoodtab[m,]
-      if(m %% switch1!=0){accepttabT=c(accepttabT,0)}
+      if(m %% switch1==0){accepttabT=c(accepttabT,0)}
     }
+  
     
     if(m<100){
       accept_rateT=0.234
@@ -459,8 +440,8 @@ run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,th
       historytabCollect=rbind(historytabCollect,historytab)
     }
     
-    if(m %% min(runs,100) ==0){
-      print(c(m,accept_rateT,round(sum(likelihoodtab[m,]))))
+    if(m %% min(runs,20) ==0){
+      print(c(m,accept_rateT,length(accepttabT),round(sum(likelihoodtab[m,]))))
       save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr[1],".RData",sep=""))
     }
     
