@@ -21,9 +21,9 @@ compile.c() # Compile c code
 
 # - - - - - - - - - - - - -
 # Generate simulated data - tau1=back-boost  / tau2=suppress
-thetaSim=c(mu=4,tau1=0,tau2=0.2,wane=0,sigma=0.3,muShort=0.1)
+thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1)
 npartM=200
-simulate_data(test_years=seq(2010,2010), # this needs to be vector
+simulate_data(test_years=seq(2010,2011), # this needs to be vector
               inf_years=seq(1980,2011,1),
               strain_years=seq(1980,2010,2),
               n_part=npartM,thetastar=thetaSim,p.inf=0.1)
@@ -42,17 +42,17 @@ source("simulation_plots.R")
 theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA)
 theta0[["mu"]]=4
 theta0[["sigma"]]=0.3
-theta0[["tau1"]]=0.001
+theta0[["tau1"]]=0.2
 theta0[["tau2"]]=0.2
 theta0[["muShort"]]=2
-theta0[["wane"]]=0.001
+theta0[["wane"]]=0.01
 theta=theta0
-vp1=0.1 #probability individual infection history resampled
+vp1=0.05 #probability individual infection history resampled
 
-define.year=c(2010)
+define.year=c(2010,2011)
 
 # NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
-run_mcmc(test.yr=define.year,runs=10000,hist.true=NULL,switch1=10,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
+run_mcmc(test.yr=define.year,runs=10000,hist.true=NULL,switch1=20,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
 
 
 

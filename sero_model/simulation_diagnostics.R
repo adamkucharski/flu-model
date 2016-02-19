@@ -26,10 +26,11 @@ if(simDat==T){abline(v=thetaSim[["sigma"]],col="red")}
 hist(as.data.frame(thetatab)$tau1[runs1:runsPOST],main=NULL,col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.5))
 if(simDat==T){abline(v=thetaSim[["tau1"]],col="red")}
 
-hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.5))
+hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,1))
 if(simDat==T){abline(v=thetaSim[["tau2"]],col="red")}
 
-hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,0.5))
+hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,0.05))
+if(simDat==T){abline(v=thetaSim[["wane"]],col="red")}
 
 hist.sample=length(historytabCollect[,1])/n_part
 ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])

@@ -420,7 +420,7 @@
         #if(m %% switch1==0){age.tab = age_star} # Only change if resampled
         likelihoodtab[m+1,] = lik_val
         if(m %% switch1==0){accepttabT=c(accepttabT,1)}
-        if(m %% switch1!=0){accepttabH=c(accepttabH,0)}
+        if(m %% switch1!=0){accepttabH=c(accepttabH,1)}
         
       }else{
         thetatab[m+1,] = thetatab[m,]
@@ -444,7 +444,7 @@
       }
       
       if(m %% min(runs,100) ==0){
-        print(c(m,accept_rateT,accept_rateH,signif(varpart_prob0,3),round(sum(likelihoodtab[m,]))))
+        print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
         save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr[1],".RData",sep=""))
       }
       
