@@ -13,7 +13,7 @@ getDoParWorkers()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Load data and functions (Fonville et al.)
-#source("load_data.R")
+#source("load_data.R")  
 source("sero_functions.R")
 
 compile.c() # Compile c code
@@ -24,8 +24,8 @@ compile.c() # Compile c code
 thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1)
 npartM=200
 simulate_data(test_years=seq(2010,2011), # this needs to be vector
-              inf_years=seq(1980,2011,1),
-              strain_years=seq(1980,2010,2),
+              inf_years=seq(1970,2011,1),
+              strain_years=seq(1970,2010,2),
               n_part=npartM,thetastar=thetaSim,p.inf=0.1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -47,12 +47,12 @@ theta0[["tau2"]]=0.2
 theta0[["muShort"]]=2
 theta0[["wane"]]=0.01
 theta=theta0
-vp1=0.05 #probability individual infection history resampled
+vp1=0.02 #probability individual infection history resampled
 
 define.year=c(2010,2011)
 
 # NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
-run_mcmc(test.yr=define.year,runs=10000,hist.true=NULL,switch1=20,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
+run_mcmc(test.yr=define.year,runs=100000,hist.true=NULL,switch1=10,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0)
 
 
 
