@@ -62,9 +62,9 @@
     setwd("c_code")
     system("R CMD SHLIB c_model2.c")
     system("R CMD SHLIB c_model2_sr.c")
-    dyn.load("./c_model2.so")
-    dyn.load("./c_model2_sr.so")
-    sourceCpp("./cpp_steven.cpp")
+    dyn.load("c_model2.so")
+    dyn.load("c_model2_sr.so") # Note edit to remove ./ for cluster runs
+    #sourceCpp("./cpp_steven.cpp")
     setwd("..")
   }
   
