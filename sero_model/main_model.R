@@ -22,21 +22,21 @@ compile.c() # Compile c code
 # - - - - - - - - - - - - -
 # Generate simulated data - tau1=back-boost  / tau2=suppress
 
-for(ii in 1:10){  # Use multiple seeds
+for(ii in 1:5){  # Use multiple seeds for simulation code
+loadseed=ii
   
-
-
 thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1); npartM=300
-
 simulate_data(test_years=seq(2010,2011), # this needs to be vector
-              inf_years=seq(1970,2011,1),strain_years=seq(1970,2010,2),n_part=npartM,thetastar=thetaSim,p.inf=0.1,seedi=ii)
+              inf_years=seq(1970,2011,1),strain_years=seq(1970,2010,2),n_part=npartM,thetastar=thetaSim,p.inf=0.1,seedi=loadseed)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # INFERENCE MODEL
 # Run MCMC for specific data set
 
+# << Put for loop here and set loadseed=1 to run multiple MCMC chains
+
 #load("R_datasets/HaNam_data.RData")
-load(paste("R_datasets/Simulated_data_",ii,".RData",sep=""))
+load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
 
 # Plot simulation data vs history
 #source("simulation_plots.R")
@@ -55,7 +55,7 @@ vp1=0.02 #probability individual infection history resampled
 define.year=c(2010,2011)
 
 # NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
-run_mcmc(test.yr=define.year,runs=100,hist.true=NULL,switch1=10,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,seedi=ii)
+run_mcmc(test.yr=define.year,runs=1000,hist.true=NULL,switch1=10,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,seedi=ii)
 
 
 } # End loop over seeds
