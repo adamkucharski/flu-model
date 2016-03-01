@@ -129,7 +129,7 @@
   # - - - - - - - - - - - - - - - -
   # Simulation infection history data
   
-  simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2){ # ii=participant | jj=test year
+  simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1){ # ii=participant | jj=test year
     
     # Variables needed: test_years,inf_years,strain_years,n_part
     #strain_years=seq(1968,2010,4)
@@ -206,9 +206,9 @@
     # Export data
     #browser()
     if(is.null(historytabPost)){
-      save(test_years,inf_years,strain_years,n_part,test.list,age.yr,historytabSim,file=paste("R_datasets/Simulated_data.RData",sep=""))
+      save(test_years,inf_years,strain_years,n_part,test.list,age.yr,historytabSim,file=paste("R_datasets/Simulated_data_",seedi,".RData",sep=""))
     }else{
-      save(test_years,inf_years,strain_years,n_part,test.list,age.yr,file=paste("R_datasets/Simulated_dataPost.RData",sep=""))
+      save(test_years,inf_years,strain_years,n_part,test.list,age.yr,file=paste("R_datasets/Simulated_dataPost_",seedi,".RData",sep=""))
     }
   }
   
@@ -309,7 +309,7 @@
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Metropolis-Hastings algorithm
   
-  run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,theta0,runs,varpart_prob,hist.true=NULL,switch1=2){
+  run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,theta0,runs,varpart_prob,hist.true=NULL,switch1=2,seedi=1){
     
     # DEBUG set params <<<
     # hist.true=NULL; test.yr=c(2010,2011); runs=1; switch1=2; varpart_prob=0.05
@@ -445,7 +445,7 @@
       
       if(m %% min(runs,100) ==0){
         print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
-        save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr[1],".RData",sep=""))
+        save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr[1],"_",seedi,".RData",sep=""))
       }
       
     } #End runs loop
