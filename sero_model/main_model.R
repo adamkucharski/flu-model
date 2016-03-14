@@ -11,6 +11,8 @@ library(mvtnorm)
 #registerDoMC(4)  #change the 2 to your number of CPU cores
 #getDoParWorkers()
 
+rm(list=ls(all=TRUE))
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Load data and functions (Fonville et al.)
 #source("load_data.R")  
@@ -18,47 +20,84 @@ source("sero_functions.R")
 
 compile.c() # Compile c code
 
-
 # - - - - - - - - - - - - -
 # Generate simulated data - tau1=back-boost  / tau2=suppress
 
-for(ii in 1:5){  # Use multiple seeds for simulation code
-loadseed=ii
+# Define simple function of seed
+
+fnSeedLoop <- function(seed_i) {
+
+  loadseed=seed_i
   
-thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1); npartM=300
-simulate_data(test_years=seq(2010,2011), # this needs to be vector
-              inf_years=seq(1970,2011,1),strain_years=seq(1970,2010,2),n_part=npartM,thetastar=thetaSim,p.inf=0.1,seedi=loadseed)
+  thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1); npartM=300
+  simulate_data(test_years=seq(2010,2011), # this needs to be vector
+                inf_years=seq(1970,2011,1),strain_years=seq(1970,2010,2),n_part=npartM,thetastar=thetaSim,p.inf=0.1,seedi=loadseed)
+  
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # INFERENCE MODEL
+  # Run MCMC for specific data set
+  
+  # << Put for loop here and set loadseed=1 to run multiple MCMC chains
+  
+  #load("R_datasets/HaNam_data.RData")
+  load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
+  
+  # Plot simulation data vs history
+  #source("simulation_plots.R")
+  
+  # Set initial theta
+  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA)
+  theta0[["mu"]]=4
+  theta0[["sigma"]]=0.3
+  theta0[["tau1"]]=0.2
+  theta0[["tau2"]]=0.2
+  theta0[["muShort"]]=2
+  theta0[["wane"]]=0.01
+  theta=theta0
+  vp1=0.02 #probability individual infection history resampled
+  
+  define.year=c(2010,2011)
+  
+  # browser()
+  
+  # NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
+  run_mcmc(
+    test.yr=define.year,
+    test_years,
+    inf_years,
+    strain_years,
+    n_part,
+    test.list,
+    theta0,
+    runs=100,
+    varpart_prob=vp1,
+    hist.true=NULL,
+    switch1=10,
+    seedi=loadseed)
+  
+}
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# INFERENCE MODEL
-# Run MCMC for specific data set
+system.time(
 
-# << Put for loop here and set loadseed=1 to run multiple MCMC chains
+  for(ii in 1:2){  # Use multiple seeds for simulation code
+    
+    fnSeedLoop(ii)
+    
+  } # End loop over seeds
+    
+)
 
-#load("R_datasets/HaNam_data.RData")
-load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
+# Do some of these over the network
+library("didewin")
+didewin::didewin_config_global(credentials="~/.smbcredentials",
+                               home="~/dide/home",
+                               temp="~/dide/tmp")
 
-# Plot simulation data vs history
-#source("simulation_plots.R")
-
-# Set initial theta
-theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA)
-theta0[["mu"]]=4
-theta0[["sigma"]]=0.3
-theta0[["tau1"]]=0.2
-theta0[["tau2"]]=0.2
-theta0[["muShort"]]=2
-theta0[["wane"]]=0.01
-theta=theta0
-vp1=0.02 #probability individual infection history resampled
-
-define.year=c(2010,2011)
-
-# NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
-run_mcmc(test.yr=define.year,runs=1000,hist.true=NULL,switch1=10,varpart_prob=vp1,test_years,inf_years,strain_years,n_part,test.list,theta0,seedi=ii)
+make_trees <- function(n, nspp) {
+  lapply(seq_len(n), function(...) ape::rtree(nspp))
+}
 
 
-} # End loop over seeds
 
 # - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot posteriors and compare to simulation

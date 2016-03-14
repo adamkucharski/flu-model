@@ -59,12 +59,12 @@
   # Compile c code
   compile.c<-function(){
     require("Rcpp")
-    setwd("c_code")
+    setwd("./c_code")
     system("R CMD SHLIB c_model2.c")
     system("R CMD SHLIB c_model2_sr.c")
     dyn.load("c_model2.so")
     dyn.load("c_model2_sr.so") # Note edit to remove ./ for cluster runs
-    #sourceCpp("./cpp_steven.cpp")
+    # sourceCpp("./cpp_steven.cpp")
     setwd("..")
   }
   
@@ -309,10 +309,24 @@
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Metropolis-Hastings algorithm
   
-  run_mcmc<-function(test.yr,test_years,inf_years,strain_years,n_part,test.list,theta0,runs,varpart_prob,hist.true=NULL,switch1=2,seedi=1){
+  run_mcmc<-function(
+    test.yr,
+    test_years,
+    inf_years,
+    strain_years,
+    n_part,
+    test.list,
+    theta,
+    runs,
+    varpart_prob,
+    hist.true=NULL,
+    switch1=2,
+    seedi=1){
     
     # DEBUG set params <<<
     # hist.true=NULL; test.yr=c(2010,2011); runs=1; switch1=2; varpart_prob=0.05
+    
+    browser()
     
     test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
     sample.index=strain_years-min(strain_years)+1
