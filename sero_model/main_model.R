@@ -2,7 +2,7 @@
 # Author: AJ Kucharski (2015)
 
 # setwd("~/Documents/flu-model/sero_model/")
-# setwd("./sero_model")
+# setwd("~/Dropbox/git/flu-model/sero_model")
 
 library(reshape2)
 #library(foreach)
@@ -17,6 +17,7 @@ rm(list=ls(all=TRUE))
 # Load data and functions (Fonville et al.)
 #source("load_data.R")  
 source("sero_functions.R")
+source("sero_funcs_steven.r")
 
 compile.c() # Compile c code
 
@@ -79,7 +80,7 @@ fnSeedLoop <- function(seed_i) {
 
 system.time(
 
-  for(ii in 1:2){  # Use multiple seeds for simulation code
+  for(ii in 1:1){  # Use multiple seeds for simulation code
     
     fnSeedLoop(ii)
     
@@ -101,6 +102,7 @@ make_trees <- function(n, nspp) {
 
 # - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot posteriors and compare to simulation
-#simDat=TRUE
-#source("simulation_diagnostics.R",local=TRUE)
+
+simDat=TRUE
+source("simulation_diagnostics.R",local=TRUE)
 

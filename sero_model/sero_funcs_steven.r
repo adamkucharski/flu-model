@@ -84,3 +84,26 @@ make_fluscape_rdata <- function(
        file="R_datasets/Fluscape_data.RData")
   
 }
+
+# simLocations()
+simLocations <- function(
+  yrs=rep(2000:2018),
+  mu_cs=4,
+  c_cs=2,
+  dr=c(2,6,2,6)) {
+    noyears <- length(yrs)
+    rtn <- matrix(nrow=noyears,ncol=2)
+    next_cluster <- c_cs
+    cur_x <- 0
+    cur_y <- 0
+    for (i in noyears:1) {
+        rtn[i,] <- c(cur_x,cur_y)
+        next_cluster <- next_cluster - 1
+        if (next_cluster<1) {
+          next_cluster <- 1 + rpois(1,mu_cs-1)
+          cur_x <- cur_x + runif(1,min = dr[1],max=dr[2])
+          cur_y <- cur_y + runif(1,min = dr[3],max=dr[4])
+        }
+    }
+    rtn
+}

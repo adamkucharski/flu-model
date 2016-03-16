@@ -2,6 +2,8 @@
 # Simulation diagnostics
 # Compare MCMC output to simulation data
 
+define.year=c(2010)
+
 load(paste("posterior_sero_runs/outputR",define.year[1],"_",ii,".RData",sep=""))
 par(mfrow=c(3,3))
 par(mar = c(5,5,1,1))
