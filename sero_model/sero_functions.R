@@ -344,8 +344,8 @@ run_mcmc<-function(
   
   # Specific MCMC parameters
   # Up to here
-  browser()
-  theta_fitted <- theta(pmask)
+  #browser()
+  theta_fitted <- theta[pmask]
   
   nparam=length(theta); npcov=rep(1,nparam)
   cov_matrix_theta0 = diag(npcov)

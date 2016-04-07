@@ -69,7 +69,7 @@ fnSeedLoop <- function(seed_i) {
     strain_years,
     n_part,
     test.list,
-    theta0,
+    theta=theta0,
     runs=100,
     varpart_prob=vp1,
     hist.true=NULL,
