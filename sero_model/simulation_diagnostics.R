@@ -2,7 +2,9 @@
 # Simulation diagnostics
 # Compare MCMC output to simulation data
 
-define.year=c(2010)
+ii=1
+define.year=c(2007)
+simDat=F
 
 load(paste("posterior_sero_runs/outputR",define.year[1],"_",ii,".RData",sep=""))
 par(mfrow=c(3,3))
@@ -13,13 +15,13 @@ colA=rgb(0.8,0.8,0.8)
 lik.tot=rowSums(likelihoodtab)
 maxlik=max(lik.tot)
 runsPOST=length(lik.tot[lik.tot!=-Inf])
-runs1=ceiling(0.2*runsPOST)
+runs1=ceiling(0.4*runsPOST)
 plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
 plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
 plot(as.data.frame(thetatab)$sigma[runs1:runsPOST],type="l",ylab="sigma")
 
 # Plot histogram of boosting
-hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main=NULL,col=colA,xlab="mu",prob=TRUE,xlim=c(1,5))
+hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main=NULL,col=colA,xlab="mu",prob=TRUE,xlim=c(1,8))
 if(simDat==T){abline(v=thetaSim[["mu"]],col="red")}
 
 hist(as.data.frame(thetatab)$sigma[runs1:runsPOST],main=NULL,col=colA,xlab="sigma",xlim=c(0,0.5))
@@ -31,7 +33,7 @@ if(simDat==T){abline(v=thetaSim[["tau1"]],col="red")}
 hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,1))
 if(simDat==T){abline(v=thetaSim[["tau2"]],col="red")}
 
-hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,0.05))
+hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,0.15))
 if(simDat==T){abline(v=thetaSim[["wane"]],col="red")}
 
 hist.sample=length(historytabCollect[,1])/n_part

@@ -56,7 +56,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	    }
 	  }
 	  
-	  // Make an index for short term boosting
+	  // Make an index for waning
 	  for (m=0;m<n;m++) {
 		  distanceFromTest[m]=exp(-wane * (t_sample-m));
 	  }

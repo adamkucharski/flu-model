@@ -39,9 +39,9 @@ fnSeedLoop <- function(seed_i) {
   # Run MCMC for specific data set
   
   # << Put for loop here and set loadseed=1 to run multiple MCMC chains
-  
-  #load("R_datasets/HaNam_data.RData")
-  load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
+  loadseed=1
+  load("R_datasets/HaNam_data.RData")
+  #load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
   
   # Plot simulation data vs history
   #source("simulation_plots.R")
@@ -49,15 +49,15 @@ fnSeedLoop <- function(seed_i) {
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA)
   theta0[["mu"]]=4
-  theta0[["sigma"]]=0.3
-  theta0[["tau1"]]=0.2
-  theta0[["tau2"]]=0.2
+  theta0[["sigma"]]=0.1
+  theta0[["tau1"]]=0
+  theta0[["tau2"]]=0
   theta0[["muShort"]]=2
-  theta0[["wane"]]=0.01
+  theta0[["wane"]]=0 # Issue with likelihood if too big
   theta=theta0
   vp1=0.02 #probability individual infection history resampled
   
-  define.year=c(2010,2011)
+  define.year=c(2007,2008,2012)
   
   # browser()
   
@@ -70,7 +70,7 @@ fnSeedLoop <- function(seed_i) {
     n_part,
     test.list,
     theta=theta0,
-    runs=100,
+    runs=100000,
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10,
@@ -103,6 +103,6 @@ make_trees <- function(n, nspp) {
 # - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot posteriors and compare to simulation
 
-simDat=TRUE
+simDat=FALSE
 source("simulation_diagnostics.R",local=TRUE)
 

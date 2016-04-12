@@ -40,7 +40,8 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, inf_years){ # ii=par
   }
   pos.hist=(hist0>0)
   
-  if(sum(hist0)==0){hist0[sample(1:testyear_index[1],1)]=1} # Make sure at least one infection
+  min.range=max(1,testyear_index[1]-20) # Add infection within past 20 years
+  if(sum(hist0[1:max(testyear_index)])==0){hist0[sample(min.range:testyear_index[1],1)]=1} # Make sure at least one infection previous to test year
   hist0
   
 }
@@ -67,9 +68,9 @@ outputdmatrix<-function(theta,inf_years,locmat=NULL){
 compile.c<-function(){
   require("Rcpp")
   setwd("./c_code")
-  system("R CMD SHLIB c_model2.c")
+  #system("R CMD SHLIB c_model2.c")
   system("R CMD SHLIB c_model2_sr.c")
-  dyn.load("c_model2.so")
+  #dyn.load("c_model2.so")
   dyn.load("c_model2_sr.so") # Note edit to remove ./ for cluster runs
   # sourceCpp("./cpp_steven.cpp")
   setwd("..")
@@ -117,15 +118,13 @@ estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ #
     d.ij=dmatrix[test.part,] # Define cross-immunity matrix for sample strain
     d_vector=melt(t(d.ij))$value
     
-    
+    #if(ii==62){historyii[10]=1}
+
     expect=func1(historyii,titredat,d_vector,theta_star,testyearI) # Output expectation
-    #plot(test.part,expect)
-    #plot(as.numeric(titredat))
-    #plot(as.numeric(test.jj[3,]),expect,ylim=c(0,100))
-    
-    # Calculate likelihood - ** need to add summation if k>8 **
+
+    # Calculate likelihood - ** have added summation for k>8 **
     largett=(titredat>=8)
-    
+
     sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+
       sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
   }
@@ -328,11 +327,11 @@ run_mcmc<-function(
   varpart_prob,
   hist.true=NULL,
   switch1=2,
-  seedi=1,
-  pmask=rep(TRUE,length(theta))){
+  seedi=1
+  ){
   
   # DEBUG set params <<<
-  # hist.true=NULL; test.yr=c(2010,2011); runs=1; switch1=2; varpart_prob=0.05
+  # hist.true=NULL; test.yr=c(2008); runs=1; switch1=2; varpart_prob=0.05
   
   test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
   sample.index=strain_years-min(strain_years)+1
@@ -345,6 +344,7 @@ run_mcmc<-function(
   # Specific MCMC parameters
   # Up to here
   #browser()
+  pmask=rep(TRUE,length(theta))
   theta_fitted <- theta[pmask]
   
   nparam=length(theta); npcov=rep(1,nparam)
@@ -424,9 +424,6 @@ run_mcmc<-function(
         #DEBUG DEBUG set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
         lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,theta_star,test.list,testyear_index[kk])
       }
-      
-      lik.ii
-      
       lik_val[ii]=sum(lik.ii)
       #if(is.na(lik_val[ii])){lik_val[ii]=-Inf}
     }
@@ -437,6 +434,8 @@ run_mcmc<-function(
     #print(c(m,sum(likelihoodtab[m,]),sum(lik_val))) # PRINT LIKELIHOOD
     
     output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val)) 
+    
+    if(is.na(output_prob) & m==1){stop('check initial parameter values')}
     
     if(runif(1) < output_prob){
       thetatab[m+1,] = theta_star
