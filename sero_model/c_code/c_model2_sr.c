@@ -23,11 +23,12 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	double T_2 = theta[2];
 	double wane = theta[3];
 	double mu = theta[0];
+	double mu2 = theta[4];
 	
 	// This to be made an argument of the function -- gives test year
 	int t_sample = inputtestyr[0]; 
   
-  double yrTitre[n*nsamp];
+  double yrTitre[nsamp];
   int maskedInfectionHistory[n];
   double distanceFromTest[n];
   double cumInfectionHistory[n];
@@ -41,13 +42,12 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	
 	double xx2; 
 	
-	for (k=0; k<nsamp; k++){
-		
-	  for (j=0; j<n; j++) {
-	
-		xx2=0;
+	for (k=0; k<nsamp; k++){ // Iterate over samples tested against
+
+	  xx2=0;
 
 	  // Make a masked infection history
+	  j=(t_sample-1); // fix test year
 	  for (m=0;m<n;m++) {
 	    if (m <= j) {
 	      maskedInfectionHistory[m]=x[m];
@@ -69,28 +69,28 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	  }
 	  	    
 		/* Calculate expected titre	- note k indexed from 0 */
+	    /* Note that waning is currently linked with back boosting */
 
 		for (i=0; i<n; i++){
-			x1[i] = mu *
-			  dd[k*n+i] * 
+			x1[i] = dd[k*n+i] * 
 			  maskedInfectionHistory[i] *
 			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0)) *
-			  pow(1+T_1 , (total_inf - cumInfectionHistory[i])) *
-			  distanceFromTest[i];
+			  //(1+ T_1 *
+			  (mu + mu2 * pow(1+T_1 , (total_inf - cumInfectionHistory[i]) * 
+			  distanceFromTest[i]) );
 		}
 	
 		for (i=0; i<n; i++){
 			xx2 =  xx2 + x1[i];
 		}
 	
-	  yrTitre[k+j*nsamp]=xx2;
+	  yrTitre[k]=xx2;
 	
-	  } // end test year loop (j)
 	
 	} // end sample loop (k)
 	
 	for (k=0;k<nsamp;k++) {
-	  titrepred[k]=yrTitre[k+(t_sample-1)*nsamp]; //Need (t-1) as index from 0
+	  titrepred[k]=yrTitre[k]; //Need (t-1) as index from 0
 	}
 	
 	

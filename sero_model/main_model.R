@@ -48,12 +48,12 @@ fnSeedLoop <- function(seed_i) {
   
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA)
-  theta0[["mu"]]=4
-  theta0[["sigma"]]=0.1
-  theta0[["tau1"]]=0
-  theta0[["tau2"]]=0
-  theta0[["muShort"]]=2
-  theta0[["wane"]]=0 # Issue with likelihood if too big
+  theta0[["mu"]]=3
+  theta0[["sigma"]]=0.3
+  theta0[["tau1"]]=0.1
+  theta0[["tau2"]]=0.1
+  theta0[["muShort"]]=1
+  theta0[["wane"]]=0.05 # Issue with likelihood if too big
   theta=theta0
   vp1=0.02 #probability individual infection history resampled
   
@@ -70,7 +70,7 @@ fnSeedLoop <- function(seed_i) {
     n_part,
     test.list,
     theta=theta0,
-    runs=100000,
+    runs=500000,
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10,

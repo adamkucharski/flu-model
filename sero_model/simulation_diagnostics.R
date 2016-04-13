@@ -17,7 +17,7 @@ maxlik=max(lik.tot)
 runsPOST=length(lik.tot[lik.tot!=-Inf])
 runs1=ceiling(0.4*runsPOST)
 plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
-plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
+#plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
 plot(as.data.frame(thetatab)$sigma[runs1:runsPOST],type="l",ylab="sigma")
 
 # Plot histogram of boosting
@@ -27,14 +27,17 @@ if(simDat==T){abline(v=thetaSim[["mu"]],col="red")}
 hist(as.data.frame(thetatab)$sigma[runs1:runsPOST],main=NULL,col=colA,xlab="sigma",xlim=c(0,0.5))
 if(simDat==T){abline(v=thetaSim[["sigma"]],col="red")}
 
-hist(as.data.frame(thetatab)$tau1[runs1:runsPOST],main=NULL,col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.5))
+hist(as.data.frame(thetatab)$tau1[runs1:runsPOST],main=NULL,col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.3))
 if(simDat==T){abline(v=thetaSim[["tau1"]],col="red")}
 
-hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,1))
+hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.3))
 if(simDat==T){abline(v=thetaSim[["tau2"]],col="red")}
 
-hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,0.15))
+hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,0.5))
 if(simDat==T){abline(v=thetaSim[["wane"]],col="red")}
+
+hist(as.data.frame(thetatab)$muShort[runs1:runsPOST],main=NULL,col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,10))
+if(simDat==T){abline(v=thetaSim[["muShort"]],col="red")}
 
 hist.sample=length(historytabCollect[,1])/n_part
 ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
@@ -43,6 +46,8 @@ hist(ind.infN,breaks=seq(-0.5,max(ind.infN)+0.5,1),col=colA,xlab="infections",pr
 
 dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_npart",n_part,"_yr",define.year,".pdf",sep=""),width=12,height=8)
 dev.off()
+
+# Plot simulated data against runs
 
 if(simDat==T){
 

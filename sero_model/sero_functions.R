@@ -41,7 +41,7 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, inf_years){ # ii=par
   pos.hist=(hist0>0)
   
   min.range=max(1,testyear_index[1]-20) # Add infection within past 20 years
-  if(sum(hist0[1:max(testyear_index)])==0){hist0[sample(min.range:testyear_index[1],1)]=1} # Make sure at least one infection previous to test year
+  if(sum(hist0[1:min(testyear_index)])==0){hist0[sample(min.range:testyear_index[1],1)]=1} # Make sure at least one infection previous to test year
   hist0
   
 }
