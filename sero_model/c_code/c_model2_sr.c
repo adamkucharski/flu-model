@@ -23,7 +23,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	double T_2 = theta[2];
 	double wane = theta[3];
 	double mu = theta[0];
-	double mu2 = theta[4];
+	double mu2 = theta[5]; // as sigma is theta[4]
 	
 	// This to be made an argument of the function -- gives test year
 	int t_sample = inputtestyr[0]; 
@@ -76,9 +76,9 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 			  maskedInfectionHistory[i] *
 			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0)) *
 			  //  mu ;
-		      (mu + mu2 *
-			  //(mu + mu2 * pow(1+T_1 , (total_inf - cumInfectionHistory[i]) ) * 
-			  distanceFromTest[i] );
+				  mu + (mu2 *
+		     //(mu + mu2 * pow(1+T_1 , (total_inf - cumInfectionHistory[i]) ) * 
+			   distanceFromTest[i] );
 		}
 	
 		for (i=0; i<n; i++){

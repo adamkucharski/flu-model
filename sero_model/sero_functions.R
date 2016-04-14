@@ -40,9 +40,9 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, inf_years){ # ii=par
     #hist0=sample(c(0,1),inf.n,replace=T,prob=c(0.9,0.1)) # Constrain max number of infections to 10% attack rate?
     
   }
+
   pos.hist=(hist0>0)
-  
-  min.range=max(1,testyear_index[1]-20) # Add infection within past 20 years
+  min.range=max(1,testyear_index[1]-10) # Add infection within past 10 years
   if(sum(hist0[1:min(testyear_index)])==0){hist0[sample(min.range:testyear_index[1],1)]=1} # Make sure at least one infection previous to test year
   hist0
   
@@ -55,9 +55,14 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, inf_years){ # ii=par
 
 # Functions to set up parameters for model
 
-outputdmatrix<-function(theta,inf_years,locmat=NULL){
+outputdmatrix<-function(theta,inf_years,linearD=F,locmat=NULL){
   if (is.null(locmat)) {
-    (dmatrix=sapply(inf_years,function(x){exp(-theta[["sigma"]]*abs(inf_years-x))})) # note that second entry is actually sample year
+    # Exponential decay
+    (dmatrix=sapply(inf_years,function(x){exp(-theta[["sigma"]]*abs(inf_years-x))})) # note that second entry refers to sample year in titre calc
+    # Linear decay
+    if(linearD==T){
+      (dmatrix=sapply(inf_years,function(x){y=1-1000*theta[["sigma"]]*abs(inf_years-x)/inf_years; y[y<0]=0; y }) ) # note that second entry refers to sample year in titre calc
+    }
   } else {
     stop("Non-null locmat not yet implemented in outputdmatrix")
     # Up to here on the distance matrix
@@ -119,13 +124,13 @@ estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ #
     
     d.ij=dmatrix[test.part,] # Define cross-immunity matrix for sample strain
     d_vector=melt(t(d.ij))$value #melt is by column
-    
-    #if(ii==62){historyii[10]=1}
 
     expect=func1(historyii,titredat,d_vector,theta_star,testyearI) # Output expectation
 
     # Calculate likelihood - have added summation for k>8
     largett=(titredat>=8)
+    
+    #if(ii==12){print(historyii)}
 
     sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+
       sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
@@ -137,7 +142,7 @@ estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ #
 # - - - - - - - - - - - - - - - -
 # Simulation infection history data
 
-simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1){ # ii=participant | jj=test year
+simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1,roundv=F,linD=F){ # ii=participant | jj=test year
   
   # Variables needed: test_years,inf_years,strain_years,n_part
   #strain_years=seq(1968,2010,4)
@@ -156,7 +161,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
     return
   }
   
-  dmatrix=outputdmatrix(thetastar,inf_years)
+  dmatrix=outputdmatrix(thetastar,inf_years,linD)
   
   #Set per year incidence, to create correlation between participants
   log.sd=1
@@ -196,7 +201,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
       expect=func1(historyii,sample.index,d_vector,thetastar,testyearI) # Output expectation
       
       #titredat=sapply(expect,function(x){rpois(1,x)}) # Generate titre
-      titredat=round(expect)
+      if(roundv==T){titredat=round(expect)}else{titredat=expect}
       titredat=sapply(titredat,function(x){min(x,8)})
       
       
@@ -331,7 +336,8 @@ run_mcmc<-function(
   varpart_prob,
   hist.true=NULL,
   switch1=2,
-  seedi=1
+  seedi=1,
+  linD=F
   ){
   
   # DEBUG set params <<<
@@ -361,10 +367,14 @@ run_mcmc<-function(
   historytabCollect=historytab
   age.tab=matrix(NA,nrow=n_part,ncol=1)
   
-  # Pick plausible initial conditions
+  # Pick plausible initial conditions -- using all test years
   if(is.null(hist.true)){
     for(ii in 1:n_part){
-      historytab[ii,]=setuphistIC(ii,jj_year[1],inf.n,test.list,testyear_index,inf_years) # Pick first test year
+      histIC=NULL
+      for(kk in 1:length(jj_year)){
+        histIC=rbind(histIC,setuphistIC(ii,jj_year[kk],inf.n,test.list,testyear_index,inf_years))
+      }
+      historytab[ii,]=as.numeric(colSums(histIC)>0)
     }
   } else { historytab=hist.true }
   
@@ -415,7 +425,7 @@ run_mcmc<-function(
       theta_star =thetatab[m,]
     }
     
-    dmatrix=outputdmatrix(theta_star,inf_years) # Arrange parameters
+    dmatrix=outputdmatrix(theta_star,inf_years,linD) # Arrange parameters
     
     # - - - - - - - - - - - - - - - -
     # LIKELIHOOD function - Only calculate for updated history
@@ -427,10 +437,15 @@ run_mcmc<-function(
       for(kk in 1:sample.n){
         #DEBUG DEBUG set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
         lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,theta_star,test.list,testyear_index[kk])
+        #if(lik.ii[kk]==-Inf){
+        #  print(c(ii,kk))  }
+        
       }
       lik_val[ii]=sum(lik.ii)
       #if(is.na(lik_val[ii])){lik_val[ii]=-Inf}
     }
+    
+
     
     # - - - - - - - - - - - - - - - -
     # Metropolis Hastings step

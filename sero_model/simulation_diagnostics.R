@@ -2,10 +2,10 @@
 # Simulation diagnostics
 # Compare MCMC output to simulation data
 
-plot.posteriors<-function(simDat=F,ii=1){
+plot.posteriors<-function(simDat=F,loadseed=1){
 
   define.year=c(2007)
-  load(paste("posterior_sero_runs/outputR",define.year[1],"_",ii,".RData",sep=""))
+  load(paste("posterior_sero_runs/outputR",define.year[1],"_",loadseed,".RData",sep=""))
   par(mfrow=c(3,3))
   par(mar = c(5,5,1,1))
   colA=rgb(0.8,0.8,0.8)
@@ -50,20 +50,22 @@ plot.posteriors<-function(simDat=F,ii=1){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # plot expected titres using posterior against true titres
 
-plot.titres<-function(pickyr=1){
+plot.titres<-function(pickyr=1,loadseed=1){
   
   define.year=c(2007)
   
-  load(paste("posterior_sero_runs/outputR",define.year[1],"_",ii,".RData",sep=""))
+  load(paste("posterior_sero_runs/outputR",define.year[1],"_",loadseed,".RData",sep=""))
 
   lik.tot=rowSums(likelihoodtab)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
   maxlik=max(lik.tot)
-  max.pos=min(c(1:runsPOST)[lik.tot==maxlik])
+  max.pos=(c(1:runsPOST)[lik.tot==maxlik])[1]
   max.pos20=round(max.pos/20) # Pick to nearest 20 as historytab is thinned
 
   # Pick max likelihood history and parameters
   hist.sample=historytabCollect[((max.pos20-1)*n_part+1):(max.pos20*n_part),1:45]
+  theta.max=as.data.frame(thetatab)[max.pos,]
+  theta.max
   
   for(pickyr in 1:length(test.yr)){
   
@@ -71,34 +73,31 @@ plot.titres<-function(pickyr=1){
     simulate_data(test.yr[pickyr],historytabPost=hist.sample,
                   inf_years,
                   strain_years,
-                  n_part,thetastar=as.data.frame(thetatab)[max.pos,],p.inf=0.1)
+                  n_part,thetastar=theta.max,p.inf=0.1,linD=F)
     
     load("R_datasets/Simulated_dataPost_1.RData")
-    
-    
-    par(mfrow=c(2,5))
-    par(mar = c(5,5,1,1))
-    
+  
+    par(mfrow=c(2,5)); par(mar = c(5,5,1,1))
     # Mask infections after test year
     
-    hist.sampleB=hist.sample
-    hist.sampleB[,as.numeric(colnames(hist.sample))>test.yr[pickyr]]=0
+    hist.sampleB=hist.sample;  hist.sampleB[,as.numeric(colnames(hist.sample))>test.yr[pickyr]]=0
     
     for(ii0 in 1:n_part){
-      
       lenhis=rep(0,length(hist.sample[ii0,]))
+      plot(inf_years,8*hist.sample[ii0,],type="l",ylim=c(0,9),col='white',xlab="year",ylab="titre")
       
-      plot(8*hist.sample[ii0,],type="l",ylim=c(0,9),col='white')
-      #for(jj in 1:length(lenhis)){
-      #  lines(c(jj,jj),c(0,9*historytabSim[ii0,jj]),col='red')
-      #}
+
+      # Plot true titres
+      points(min(inf_years)-1+test.list[[ii0]][[pickyr]][4,],test.list[[ii0]][[pickyr]][2,],pch=1,col='red')
+      
+      # Sample from infection history
       for(jj in 1:length(lenhis)){
-        lines(c(jj,jj),c(0,9*hist.sampleB[ii0,jj]),col='grey')
+        lines(min(inf_years)-1+c(jj,jj),c(0,9*hist.sampleB[ii0,jj]),col='grey') # Plot estimated infections
       }
       
-      points(test.list[[ii0]][[pickyr]][4,],test.list[[ii0]][[pickyr]][2,],pch=19,col='red')
-    
-      points(test.listSim[[ii0]][[1]][4,],test.listSim[[ii0]][[1]][2,],pch=1,col='blue')
+      sim.titre=test.listSim[[ii0]][[1]] # sort sample years
+      lines(min(inf_years)-1+sort(sim.titre["sample.index",]),sim.titre["titredat",order(sim.titre["sample.index",])],pch=1,col='blue')
+      points(min(inf_years)-1+test.listSim[[ii0]][[1]][4,],test.listSim[[ii0]][[1]][2,],pch=19,cex=0.5,col='blue')
       
       if(ii0 %% 10==0){
         dev.copy(pdf,paste("plot_simulations/sim",ii0,"P_",pickyr,".pdf",sep=""),width=12,height=6)
@@ -107,6 +106,7 @@ plot.titres<-function(pickyr=1){
       
     }
   }
+  
   
 }
 
