@@ -47,7 +47,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	  xx2=0;
 
 	  // Make a masked infection history
-	  j=(t_sample-1); // fix test year
+	  j=(t_sample-1); // fix test year. Need (t-1) as index from 0
 	  for (m=0;m<n;m++) {
 	    if (m <= j) {
 	      maskedInfectionHistory[m]=x[m];
@@ -75,9 +75,10 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 			x1[i] = dd[k*n+i] * 
 			  maskedInfectionHistory[i] *
 			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0)) *
-			  //(1+ T_1 *
-			  (mu + mu2 * pow(1+T_1 , (total_inf - cumInfectionHistory[i]) * 
-			  distanceFromTest[i]) );
+			  //  mu ;
+		      (mu + mu2 *
+			  //(mu + mu2 * pow(1+T_1 , (total_inf - cumInfectionHistory[i]) ) * 
+			  distanceFromTest[i] );
 		}
 	
 		for (i=0; i<n; i++){
@@ -90,7 +91,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	} // end sample loop (k)
 	
 	for (k=0;k<nsamp;k++) {
-	  titrepred[k]=yrTitre[k]; //Need (t-1) as index from 0
+	  titrepred[k]=yrTitre[k]; 
 	}
 	
 	

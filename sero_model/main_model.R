@@ -31,7 +31,7 @@ fnSeedLoop <- function(seed_i) {
   loadseed=seed_i
   
   thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1); npartM=300
-  simulate_data(test_years=seq(2010,2011), # this needs to be vector
+  simulate_data(test_years=seq(2007,2008), # this needs to be vector
                 inf_years=seq(1970,2011,1),strain_years=seq(1970,2010,2),n_part=npartM,thetastar=thetaSim,p.inf=0.1,seedi=loadseed)
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -57,7 +57,7 @@ fnSeedLoop <- function(seed_i) {
   theta=theta0
   vp1=0.02 #probability individual infection history resampled
   
-  define.year=c(2007,2008,2012)
+  define.year=c(2007,2008,2009)
   
   # browser()
   
@@ -70,7 +70,7 @@ fnSeedLoop <- function(seed_i) {
     n_part,
     test.list,
     theta=theta0,
-    runs=500000,
+    runs=50000,
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10,

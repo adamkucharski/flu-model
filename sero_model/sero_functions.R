@@ -1,3 +1,5 @@
+# Model of serological dynamics - uses PLOS Biology model (Kucharski et al. 2015)
+# Author: AJ Kucharski (2015)
 #Functions
 
 # - - - - - - - - - - - - - - - -
@@ -116,13 +118,13 @@ estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ #
     titredat=test.jj[2,] # Define titre data
     
     d.ij=dmatrix[test.part,] # Define cross-immunity matrix for sample strain
-    d_vector=melt(t(d.ij))$value
+    d_vector=melt(t(d.ij))$value #melt is by column
     
     #if(ii==62){historyii[10]=1}
 
     expect=func1(historyii,titredat,d_vector,theta_star,testyearI) # Output expectation
 
-    # Calculate likelihood - ** have added summation for k>8 **
+    # Calculate likelihood - have added summation for k>8
     largett=(titredat>=8)
 
     sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+
@@ -209,12 +211,14 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
     
     test.list[[ii]]=i.list
   }
+  test.listSim=test.list
+  
   # Export data
   #browser()
   if(is.null(historytabPost)){
-    save(test_years,inf_years,strain_years,n_part,test.list,age.yr,historytabSim,file=paste("R_datasets/Simulated_data_",seedi,".RData",sep=""))
+    save(test_years,inf_years,strain_years,n_part,test.listSim,age.yr,historytabSim,file=paste("R_datasets/Simulated_data_",seedi,".RData",sep=""))
   }else{
-    save(test_years,inf_years,strain_years,n_part,test.list,age.yr,file=paste("R_datasets/Simulated_dataPost_",seedi,".RData",sep=""))
+    save(test_years,inf_years,strain_years,n_part,test.listSim,age.yr,file=paste("R_datasets/Simulated_dataPost_",seedi,".RData",sep=""))
   }
 }
 
@@ -466,9 +470,9 @@ run_mcmc<-function(
       historytabCollect=rbind(historytabCollect,historytab)
     }
     
-    if(m %% min(runs,100) ==0){
+    if(m %% min(runs,200) ==0){
       print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,file=paste("posterior_sero_runs/outputR",test.yr[1],"_",seedi,".RData",sep=""))
+      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,file=paste("posterior_sero_runs/outputR",test.yr[1],"_",seedi,".RData",sep=""))
     }
     
   } #End runs loop
