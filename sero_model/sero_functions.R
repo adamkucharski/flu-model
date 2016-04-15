@@ -318,6 +318,15 @@ SampleTheta<-function(theta_in,m,covartheta){
   theta_star = as.numeric(exp(rmvnorm(1,log(theta_in), covartheta)))
   names(theta_star)=names(theta_in)
   
+  # bouncy boundary condition for max titre=8
+  mu1=min(20-theta_star[["mu"]],theta_star[["mu"]])
+  theta_star[["mu"]]=ifelse(mu1<0,theta_star[["mu"]],mu1)
+  
+  mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
+  theta_star[["muShort"]]=ifelse(mu2<0,theta_star[["muShort"]],mu2)
+
+  #print(theta_star)
+  
   return(thetaS=theta_star)
 }
 

@@ -65,6 +65,7 @@ plot.titres<-function(pickyr=1,loadseed=1){
   # Pick max likelihood history and parameters
   hist.sample=historytabCollect[((max.pos20-1)*n_part+1):(max.pos20*n_part),1:45]
   theta.max=as.data.frame(thetatab)[max.pos,]
+  theta.max$muShort=8
   theta.max
   
   for(pickyr in 1:length(test.yr)){

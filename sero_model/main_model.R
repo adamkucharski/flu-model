@@ -52,12 +52,12 @@ fnSeedLoop <- function(seed_i) {
   theta0[["sigma"]]=0.2
   theta0[["tau1"]]=0.1
   theta0[["tau2"]]=0.1
-  theta0[["muShort"]]=2
+  theta0[["muShort"]]=5
   theta0[["wane"]]=0.5 
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
   
-  define.year=c(2007,2008,2009)
+  define.year=c(2007,2008,2010,2011)
   
   # browser()
   
@@ -70,7 +70,7 @@ fnSeedLoop <- function(seed_i) {
     n_part,
     test.list,
     theta=theta0,
-    runs=50000,
+    runs=500000,
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples
