@@ -76,7 +76,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0)) *
 			  //  mu ;
 				  (dd[k*n+i] * mu +
-				   mu2 * distanceFromTest[i] );
+				   mu2 * distanceFromTest[i] * pow(1+T_1 , (total_inf - cumInfectionHistory[i])) );
 			   //(mu + mu2 * pow(1+T_1 , (total_inf - cumInfectionHistory[i]) ) * 
 			   //distanceFromTest[i] );
 		}

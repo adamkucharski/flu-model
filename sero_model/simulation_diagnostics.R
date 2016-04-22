@@ -32,7 +32,7 @@ plot.posteriors<-function(simDat=F,loadseed=1){
   hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.7))
   if(simDat==T){abline(v=thetaSim[["tau2"]],col="red")}
   
-  hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,2))
+  hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,3))
   if(simDat==T){abline(v=thetaSim[["wane"]],col="red")}
   
   hist(as.data.frame(thetatab)$muShort[runs1:runsPOST],main=NULL,col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,8))
@@ -59,13 +59,12 @@ plot.titres<-function(pickyr=1,loadseed=1){
   lik.tot=rowSums(likelihoodtab)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
   maxlik=max(lik.tot)
-  max.pos=(c(1:runsPOST)[lik.tot==maxlik])[1]
+  max.pos=(c(1:(runsPOST+1))[lik.tot==maxlik])[1]
   max.pos20=round(max.pos/20) # Pick to nearest 20 as historytab is thinned
 
   # Pick max likelihood history and parameters
   hist.sample=historytabCollect[((max.pos20-1)*n_part+1):(max.pos20*n_part),1:45]
   theta.max=as.data.frame(thetatab)[max.pos,]
-  theta.max$muShort=8
   theta.max
   
   for(pickyr in 1:length(test.yr)){

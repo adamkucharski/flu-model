@@ -70,7 +70,7 @@ fnSeedLoop <- function(seed_i) {
     n_part,
     test.list,
     theta=theta0,
-    runs=500000,
+    runs=1000000,
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples
