@@ -21,8 +21,7 @@ source("sero_funcs_steven.r")
 
 compile.c() # Compile c code
 
-# - - - - - - - - - - - - -
-# Generate simulated data - tau1=back-boost  / tau2=suppress
+
 
 # Define simple function of seed
 
@@ -30,16 +29,19 @@ fnSeedLoop <- function(seed_i) {
 
   loadseed=seed_i
   
-  thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1); npartM=300
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # SIMULATION MODEL
+  # Generate simulated data - tau1=back-boost  / tau2=suppress
+  
+  thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1,error=0.05); npartM=300
   simulate_data(test_years=seq(2007,2008), # this needs to be vector
                 inf_years=seq(1970,2011,1),strain_years=seq(1970,2010,2),n_part=npartM,thetastar=thetaSim,p.inf=0.1,seedi=loadseed)
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # INFERENCE MODEL
   # Run MCMC for specific data set
-  
-  # << Put for loop here and set loadseed=1 to run multiple MCMC chains
-  loadseed=1
+
+  loadseed=1 # ** Fix for initial testing **
   load("R_datasets/HaNam_data.RData")
   #load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
   
@@ -47,21 +49,23 @@ fnSeedLoop <- function(seed_i) {
   #source("simulation_plots.R")
   
   # Set initial theta
-  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA)
-  theta0[["mu"]]=3
-  theta0[["sigma"]]=0.2
-  theta0[["tau1"]]=0.1
-  theta0[["tau2"]]=0.1
-  theta0[["muShort"]]=5
-  theta0[["wane"]]=0.5 
+  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA)
+  theta0[["mu"]]=3 # basic boosting
+  theta0[["tau1"]]=0.1 # back-boost
+  theta0[["tau2"]]=0.1 # suppression via AGS
+  theta0[["wane"]]=0.5 # short term waning
+  theta0[["sigma"]]=0.2 # cross-reaction
+  theta0[["muShort"]]=5 # short term boosting
+  theta0[["error"]]=0.3 # measurement error
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
   
-  define.year=c(2007,2008,2010,2011)
+  define.year=c(2007,2008) # years to include in inference
   
   # browser()
   
-  # NEED TO RE INITIALISE DATAFRAME IF REPEAT RUN
+  # RUN MCMC
+  # Note: NEED TO RE-INITIALISE DATAFRAME IF REPEAT RUN (i.e. reload dataset above)
   run_mcmc(
     test.yr=define.year,
     test_years,
@@ -70,10 +74,10 @@ fnSeedLoop <- function(seed_i) {
     n_part,
     test.list,
     theta=theta0,
-    runs=1000000,
+    runs=1000, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
-    switch1=10, # ratio of infection history resamples to theta resamples
+    switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
     seedi=loadseed,
     linD=F)
   

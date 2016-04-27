@@ -1,6 +1,6 @@
 # Model of serological dynamics - uses PLOS Biology model (Kucharski et al. 2015)
 # Author: AJ Kucharski (2015)
-#Functions
+# Functions
 
 # - - - - - - - - - - - - - - - -
 # Set initial condition (for infection history) as infection if titre >=X
@@ -106,6 +106,21 @@ func1 <- function(x,titredat,dd,theta,testyear_index) {
   return(out$titrepred)
 }
 
+# - - - - - - - - - - - - - - - -
+# Define likelihood function given expected titre and data - include uniform error term
+
+likelihood.titre<-function(expect,titredat,theta){
+  largett=(titredat>=8)  # Identify censored titres in data (>=8)
+  
+  # Calculate P(observe j | true titre is k) - no error
+  #p_jk = sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+ sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
+  
+  # Include uniform error i.e. L(j)= sum_k P(true titre is k) x P(observe j | true titre is k) - derivation is in PLOS Biol supplement
+  p_jk = sum( log(dpois(as.numeric(titredat[!largett]), expect[!largett], log = FALSE) *(1-theta[["error"]])+theta[["error"]]/9 ) )
+          + sum(log(ppois(8, lambda=expect[largett], lower=FALSE,log=FALSE)*(1-theta[["error"]])+theta[["error"]]/9  ))
+  p_jk
+
+}
 
 # - - - - - - - - - - - - - - - -
 # Calculate likelihood for given participant and test year
@@ -126,16 +141,10 @@ estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ #
     d_vector=melt(t(d.ij))$value #melt is by column
 
     expect=func1(historyii,titredat,d_vector,theta_star,testyearI) # Output expectation
-
-    # Calculate likelihood - have added summation for k>8
-    largett=(titredat>=8)
     
-    #if(ii==12){print(historyii)}
-
-    sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+
-      sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
+    #print(likelihood.titre(expect,titredat,theta_star))
+    likelihood.titre(expect,titredat,theta_star)
   }
-  
 }
 
 
@@ -163,7 +172,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
   
   dmatrix=outputdmatrix(thetastar,inf_years,linD)
   
-  #Set per year incidence, to create correlation between participants
+  #Set per year incidence, to create correlation between participant infection histories
   log.sd=1
   attack.yr=rlnorm(inf.n,meanlog=log(p.inf)-log.sd^2/2,sdlog=log.sd)
   
@@ -178,8 +187,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
   }else{
     historytabSim=historytabPost
   }
-  
-  
+
   # Simulate titres for each participant
   # ** NEED TO INCLUDE TEST YEAR IN FUNCTION IF DECAY ADDED **
   
@@ -203,8 +211,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
       #titredat=sapply(expect,function(x){rpois(1,x)}) # Generate titre
       if(roundv==T){titredat=round(expect)}else{titredat=expect}
       titredat=sapply(titredat,function(x){min(x,8)})
-      
-      
+
       i.list[[jj]]=rbind(test.year=rep(testyr,nstrains),
                          titredat,
                          strain_years,
@@ -212,8 +219,7 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
       )
     }
     #i.list[[1]][2,]
-    #
-    
+
     test.list[[ii]]=i.list
   }
   test.listSim=test.list
@@ -281,7 +287,7 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Resample age - add 1, 0, -1 with equal probability
+# Resample age - add 1, 0, -1 with equal probability -- NOTE THIS IS NOT CURRENTLY ACTIVE
 
 SampleAge<-function(pick,ageA){
   
@@ -291,41 +297,41 @@ SampleAge<-function(pick,ageA){
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Convert infection history to binary - not currently used
+# Convert infection history to binary -- NOTE THIS IS NOT CURRENTLY ACTIVE
 
 convert_binary <- function(x){sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1))-1))}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
-  
   # uniform priors
   p_theta_star = 1; p_theta = 1
   
   # probability symmetic
   q_theta_given_theta_star = 1; q_theta_star_given_theta = 1
   
-  val = exp((marg_likelihood_star-marg_likelihood))*(p_theta_star/p_theta)*(q_theta_given_theta_star/q_theta_star_given_theta) 
-  min(val, 1)
-  
+  cal.lik = exp((marg_likelihood_star-marg_likelihood))*(p_theta_star/p_theta)*(q_theta_given_theta_star/q_theta_star_given_theta) 
+  min(1, cal.lik)
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-SampleTheta<-function(theta_in,m,covartheta){
+SampleTheta<-function(theta_initial,m,covartheta){
   
-  # sample new parameters from nearby: 
-  theta_star = as.numeric(exp(rmvnorm(1,log(theta_in), covartheta)))
-  names(theta_star)=names(theta_in)
+  # sample from multivariate normal distribution
+  theta_star = as.numeric(exp(rmvnorm(1,log(theta_initial), covartheta)))
+  names(theta_star)=names(theta_initial)
   
-  # bouncy boundary condition for max titre=8
+  # reflective boundary condition for max boost=10
   mu1=min(20-theta_star[["mu"]],theta_star[["mu"]])
   theta_star[["mu"]]=ifelse(mu1<0,theta_star[["mu"]],mu1)
   
   mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
   theta_star[["muShort"]]=ifelse(mu2<0,theta_star[["muShort"]],mu2)
-
-  #print(theta_star)
+  
+  # reflective boundary condition for error function
+  error2=min(2-theta_star[["error"]],theta_star[["error"]])
+  theta_star[["error"]]=ifelse(error2<0,theta_star[["error"]],error2)
   
   return(thetaS=theta_star)
 }
@@ -346,7 +352,7 @@ run_mcmc<-function(
   hist.true=NULL,
   switch1=2,
   seedi=1,
-  linD=F
+  linD=F # toggles linear/exponential cross-reactivity function
   ){
   
   # DEBUG set params <<<
@@ -444,23 +450,19 @@ run_mcmc<-function(
       # Set history to zero after test date
       lik.ii=rep(NA,sample.n)
       for(kk in 1:sample.n){
-        #DEBUG DEBUG set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
+        #For DEBUG: set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
         lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,theta_star,test.list,testyear_index[kk])
-        #if(lik.ii[kk]==-Inf){
-        #  print(c(ii,kk))  }
+        #if(lik.ii[kk]==-Inf){print(c(ii,kk))  } For DEBUG
         
       }
       lik_val[ii]=sum(lik.ii)
-      #if(is.na(lik_val[ii])){lik_val[ii]=-Inf}
+      #if(is.na(lik_val[ii])){ lik_val[ii]=-Inf} For DEBUG
     }
-    
 
-    
     # - - - - - - - - - - - - - - - -
     # Metropolis Hastings step
     
-    #print(c(m,sum(likelihoodtab[m,]),sum(lik_val))) # PRINT LIKELIHOOD
-    
+    #print(c(m,sum(likelihoodtab[m,]),sum(lik_val),theta_star)) # Print likelihood (For DEBUG)
     output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val)) 
     
     if(is.na(output_prob) & m==1){stop('check initial parameter values')}
@@ -482,8 +484,8 @@ run_mcmc<-function(
     
     
     if(m<max(100)){
-      accept_rateT=0.234
-      accept_rateH=0.234
+      accept_rateT=0.234 # target acceptance rate for theta
+      accept_rateH=0.234 # target acceptance rate for infection history
     }else{
       accept_rateT=sum(accepttabT)/length(accepttabT)
       accept_rateH=sum(accepttabH)/length(accepttabH)
@@ -494,7 +496,7 @@ run_mcmc<-function(
       historytabCollect=rbind(historytabCollect,historytab)
     }
     
-    if(m %% min(runs,200) ==0){
+    if(m %% min(runs,20) ==0){
       print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
       save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,file=paste("posterior_sero_runs/outputR",test.yr[1],"_",seedi,".RData",sep=""))
     }

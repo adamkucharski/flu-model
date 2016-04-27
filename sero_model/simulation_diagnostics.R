@@ -17,7 +17,7 @@ plot.posteriors<-function(simDat=F,loadseed=1){
   runs1=ceiling(0.5*runsPOST)
   plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
   #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
-  plot(as.data.frame(thetatab)$sigma[runs1:runsPOST],type="l",ylab="sigma")
+  plot(as.data.frame(thetatab)$error[runs1:runsPOST],type="l",ylab="error")
   
   # Plot histogram of boosting
   hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main=NULL,col=colA,xlab="mu",prob=TRUE,xlim=c(0,5))
