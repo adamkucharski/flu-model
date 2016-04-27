@@ -14,7 +14,7 @@ plot.posteriors<-function(simDat=F,loadseed=1){
   lik.tot=rowSums(likelihoodtab)
   maxlik=max(lik.tot)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
-  runs1=ceiling(0.5*runsPOST)
+  runs1=ceiling(0.2*runsPOST)
   plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
   #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
   plot(as.data.frame(thetatab)$error[runs1:runsPOST],type="l",ylab="error")

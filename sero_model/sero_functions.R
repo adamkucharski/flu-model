@@ -352,6 +352,7 @@ run_mcmc<-function(
   hist.true=NULL,
   switch1=2,
   seedi=1,
+  pmask=NULL,
   linD=F # toggles linear/exponential cross-reactivity function
   ){
   
@@ -367,12 +368,8 @@ run_mcmc<-function(
   sample.n=length(jj_year)
   
   # Specific MCMC parameters
-  # Up to here
   #browser()
-  pmask=rep(TRUE,length(theta))
-  theta_fitted <- theta[pmask]
-  
-  nparam=length(theta); npcov=rep(1,nparam)
+  nparam=length(theta); npcov=rep(1,nparam); npcov[names(theta)==pmask]=0 # mask specified parameters
   cov_matrix_theta0 = diag(npcov)
   
   thetatab=matrix(NA,nrow=(runs+1),ncol=length(theta)); colnames(thetatab)=names(theta)
@@ -418,7 +415,7 @@ run_mcmc<-function(
     }else{
       epsilon0=max(0.00001,min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m)))
       cov_matrix_theta=epsilon0*cov_matrix_theta0
-      varpart_prob0=max(0.01,min(1,exp(log(varpart_prob0)+(accept_rateH-0.234)*0.999^m)))
+      varpart_prob0=max(0.01,min(0.25,exp(log(varpart_prob0)+(accept_rateH-0.234)*0.999^m))) # resample max of 25%, min of 1%
     }
     
     # - - - - - - - - - - - - - - - -
@@ -496,7 +493,7 @@ run_mcmc<-function(
       historytabCollect=rbind(historytabCollect,historytab)
     }
     
-    if(m %% min(runs,20) ==0){
+    if(m %% min(runs,200) ==0){
       print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
       save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,file=paste("posterior_sero_runs/outputR",test.yr[1],"_",seedi,".RData",sep=""))
     }
