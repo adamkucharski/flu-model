@@ -8,6 +8,7 @@ library(reshape2)
 #library(foreach)
 #library(doMC)
 library(mvtnorm)
+library(MASS)
 #registerDoMC(4)  #change the 2 to your number of CPU cores
 #getDoParWorkers()
 
@@ -56,11 +57,11 @@ fnSeedLoop <- function(seed_i) {
   theta0[["wane"]]=-2*log(0.5) # short term waning - half life of 6 months
   theta0[["sigma"]]=0.2 # cross-reaction
   theta0[["muShort"]]=5 # short term boosting
-  theta0[["error"]]=0.1 # measurement error
+  theta0[["error"]]=0.2 # measurement error
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
   
-  define.year=c(2007,2008,2009) # years to include in inference
+  define.year=c(2007:2012) # years to include in inference
   
   # browser()
   
@@ -74,7 +75,7 @@ fnSeedLoop <- function(seed_i) {
     n_part,
     test.list,
     theta=theta0,
-    runs=500000, # number of MCMC runs
+    runs=1000000, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed

@@ -316,25 +316,30 @@ ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-SampleTheta<-function(theta_initial,m,covartheta){
+SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   
-  # sample from multivariate normal distribution
-  theta_star = as.numeric(exp(rmvnorm(1,log(theta_initial), covartheta)))
+  # sample from multivariate normal distribution - include adaptive samples (Roberts & Rosenthal, 2009)
+  #theta_star = as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=covartheta))) - #no adaptive sampling
+  theta_star = 0.05*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covarbasic))) +
+                0.95*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covartheta)))
+  
   names(theta_star)=names(theta_initial)
   
   # reflective boundary condition for max boost=10
   mu1=min(20-theta_star[["mu"]],theta_star[["mu"]])
-  theta_star[["mu"]]=ifelse(mu1<0,theta_star[["mu"]],mu1)
+  theta_star[["mu"]]=ifelse(mu1<0,theta_initial[["mu"]],mu1)
   
   mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
-  theta_star[["muShort"]]=ifelse(mu2<0,theta_star[["muShort"]],mu2)
+  theta_star[["muShort"]]=ifelse(mu2<0,theta_initial[["muShort"]],mu2)
   
   # reflective boundary condition for error function
   error2=min(2-theta_star[["error"]],theta_star[["error"]])
-  theta_star[["error"]]=ifelse(error2<0,theta_star[["error"]],error2)
+  theta_star[["error"]]=ifelse(error2<0,theta_initial[["error"]],error2)
   
+  #print(rbind(theta_initial,theta_star1,theta_star2))
   return(thetaS=theta_star)
 }
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Metropolis-Hastings algorithm
@@ -357,7 +362,7 @@ run_mcmc<-function(
   ){
   
   # DEBUG set params <<<
-  # hist.true=NULL; test.yr=c(2008); runs=1; switch1=2; varpart_prob=0.05
+  # hist.true=NULL; test.yr=c(2007); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=F; pmask=NULL
   
   test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
   sample.index=strain_years-min(strain_years)+1
@@ -371,6 +376,7 @@ run_mcmc<-function(
   #browser()
   nparam=length(theta); npcov=rep(1,nparam); npcov[names(theta)==pmask]=0 # mask specified parameters
   cov_matrix_theta0 = diag(npcov)
+  cov_matrix_thetaA=cov_matrix_theta0
   
   thetatab=matrix(NA,nrow=(runs+1),ncol=length(theta)); colnames(thetatab)=names(theta)
   thetatab[1,]=theta
@@ -410,21 +416,21 @@ run_mcmc<-function(
     # Adaptive covariance matrix
     if(m==1){
       epsilon0=0.01
-      cov_matrix_theta=epsilon0*cov_matrix_theta0
+      cov_matrix_theta=epsilon0*cov_matrix_thetaA
+      cov_matrix_basic=epsilon0*cov_matrix_theta0
       varpart_prob0=varpart_prob
     }else{
       epsilon0=max(0.00001,min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m)))
-      cov_matrix_theta=epsilon0*cov_matrix_theta0
+      cov_matrix_theta=epsilon0*cov_matrix_thetaA
+      cov_matrix_basic=epsilon0*cov_matrix_theta0
       varpart_prob0=max(0.01,min(0.25,exp(log(varpart_prob0)+(accept_rateH-0.234)*0.999^m))) # resample max of 25%, min of 1%
     }
     
     # - - - - - - - - - - - - - - - -
     # Resample parameters
     
-    #aTime=Sys.time() #TIMER 1
-    
     if(m %% switch1==0 | m==1){ # m==1 condition as have to calculate all liks on first step
-      theta_star = SampleTheta(thetatab[m,], m,cov_matrix_theta) #resample theta
+      theta_star = SampleTheta(thetatab[m,], m,cov_matrix_theta,cov_matrix_basic,nparam=sum(cov_matrix_theta0)) #resample theta
       #age_star = age.tab
       history_star = historytab
       pickA=c(1:n_part)
@@ -450,7 +456,6 @@ run_mcmc<-function(
         #For DEBUG: set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
         lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,theta_star,test.list,testyear_index[kk])
         #if(lik.ii[kk]==-Inf){print(c(ii,kk))  } For DEBUG
-        
       }
       lik_val[ii]=sum(lik.ii)
       #if(is.na(lik_val[ii])){ lik_val[ii]=-Inf} For DEBUG
@@ -458,16 +463,16 @@ run_mcmc<-function(
 
     # - - - - - - - - - - - - - - - -
     # Metropolis Hastings step
-    
-    #print(c(m,sum(likelihoodtab[m,]),sum(lik_val),theta_star)) # Print likelihood (For DEBUG)
+
     output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val)) 
     
+    #if(is.na(output_prob)){print(c(m,sum(likelihoodtab[m,]),sum(lik_val),theta_star))} # Print likelihood (For DEBUG)}
     if(is.na(output_prob) & m==1){stop('check initial parameter values')}
     
     if(runif(1) < output_prob){
       thetatab[m+1,] = theta_star
       if(m %% switch1!=0){historytab = history_star} # Only change if resampled
-      #if(m %% switch1==0){age.tab = age_star} # Only change if resampled
+      #if(m %% switch1==0){age.tab = age_star} # Only change if resampled - not currently active
       likelihoodtab[m+1,] = lik_val
       if(m %% switch1==0){accepttabT=c(accepttabT,1)}
       if(m %% switch1!=0){accepttabH=c(accepttabH,1)}
@@ -486,16 +491,16 @@ run_mcmc<-function(
     }else{
       accept_rateT=sum(accepttabT)/length(accepttabT)
       accept_rateH=sum(accepttabH)/length(accepttabH)
+      cov_matrix_thetaA=cov(thetatab[1:m,]) # Include adaptive covariance matrix for MCMC
     }
     
-    #Sys.time()-aTime  #TIMER 2
     if(m %% min(runs,20) ==0){
       historytabCollect=rbind(historytabCollect,historytab)
     }
     
-    if(m %% min(runs,200) ==0){
+    if(m %% min(runs,20) ==0){
       print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,file=paste("posterior_sero_runs/outputR",test.yr[1],"_",seedi,".RData",sep=""))
+      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,file=paste("posterior_sero_runs/outputR_f",test.yr[1],"_t",length(test.yr),"_s",seedi,".RData",sep=""))
     }
     
   } #End runs loop
