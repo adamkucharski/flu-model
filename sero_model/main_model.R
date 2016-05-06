@@ -54,7 +54,7 @@ fnSeedLoop <- function(seed_i) {
   theta0[["mu"]]=3 # basic boosting
   theta0[["tau1"]]=0.1 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
-  theta0[["wane"]]=-2*log(0.5) # short term waning - half life of 6 months
+  theta0[["wane"]]=-log(0.5)/1 # short term waning - half life of /X years
   theta0[["sigma"]]=0.2 # cross-reaction
   theta0[["muShort"]]=5 # short term boosting
   theta0[["error"]]=0.2 # measurement error
@@ -75,7 +75,7 @@ fnSeedLoop <- function(seed_i) {
     n_part,
     test.list,
     theta=theta0,
-    runs=1000000, # number of MCMC runs
+    runs=1e5, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed

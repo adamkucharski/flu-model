@@ -4,8 +4,8 @@
 
 plot.posteriors<-function(simDat=F,loadseed=1){
 
-  define.year=c(2007)
-  load(paste("posterior_sero_runs/outputR_f",define.year[1],"_t",length(test_years),"_s",loadseed,".RData",sep=""))
+  define.year=c(2007:2012)
+  load(paste("posterior_sero_runs/outputR_f",define.year[1],"_t",length(define.year),"_s",loadseed,".RData",sep=""))
   par(mfrow=c(3,3))
   par(mar = c(5,5,1,1))
   colA=rgb(0.8,0.8,0.8)
@@ -53,9 +53,9 @@ plot.posteriors<-function(simDat=F,loadseed=1){
 
 plot.posterior.titres<-function(pickyr=1,loadseed=1){
   
-  define.year=c(2007)
+  define.year=c(2007:2012)
   
-  load(paste("posterior_sero_runs/outputR_f",define.year[1],"_t",length(test_years),"_s",loadseed,".RData",sep=""))
+  load(paste("posterior_sero_runs/outputR_f",define.year[1],"_t",length(define.year),"_s",loadseed,".RData",sep=""))
   
   lik.tot=rowSums(likelihoodtab)
   runsPOST=length(lik.tot[lik.tot!=-Inf])

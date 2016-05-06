@@ -319,9 +319,9 @@ ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
 SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   
   # sample from multivariate normal distribution - include adaptive samples (Roberts & Rosenthal, 2009)
-  #theta_star = as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=covartheta))) - #no adaptive sampling
-  theta_star = 0.05*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covarbasic))) +
-                0.95*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covartheta)))
+  theta_star = as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=covarbasic)))  #no adaptive sampling
+  #theta_star = 0.05*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covarbasic))) +
+  #              0.95*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covartheta)))
   
   names(theta_star)=names(theta_initial)
   
@@ -340,6 +340,12 @@ SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   return(thetaS=theta_star)
 }
 
+# DEBUG CHECK
+#theta01=theta
+#while(max(theta01)>0){
+#  theta01=SampleTheta(theta01,1,covartheta=cov_matrix_basic,covarbasic=10*cov_matrix_basic,length(theta))
+#  
+#}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Metropolis-Hastings algorithm
@@ -498,7 +504,7 @@ run_mcmc<-function(
       historytabCollect=rbind(historytabCollect,historytab)
     }
     
-    if(m %% min(runs,20) ==0){
+    if(m %% min(runs,500) ==0){
       print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
       save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,file=paste("posterior_sero_runs/outputR_f",test.yr[1],"_t",length(test.yr),"_s",seedi,".RData",sep=""))
     }

@@ -1,14 +1,13 @@
 # flu-model
 
-# SR Test of ability to push
 
 ### Summary
 
-This repository contains code for annual version of following model:
+This repository contains code for extended annual version of following model:
 
 Kucharski AJ, Lessler J, Read JM, Zhu H, Jiang CQ et al. (2015) Estimating the life course of influenza A(H3N2) antibody responses from cross-sectional data. PLOS Biol.
 
-Currently, model just includes boosting and cross-reactivity, with Poisson observation process. Need to work out efficient way of including antigenic seniority and other mechanisms.
+Model includes boosting and cross-reactivity, with Poisson observation process. Also include antigenic seniority (boosting + suppression), short-term waning and uniform measurement error.
 
 ### Guide to files
 
@@ -17,5 +16,7 @@ Currently, model just includes boosting and cross-reactivity, with Poisson obser
 > `load_data.R` Loads data from HaNam and reshapes to get in format efficient for simulation/inference
 
 > `sero_functions.R` Functions for model and inference
+
+`simulation_diagnostics.R` Reads in MCMC output and plots posteriors and model estimates
 
 `plot_data.R` Gives basic summary plots of data, and some animations
