@@ -3,6 +3,8 @@
 # Compare MCMC output to simulation data
 
 plot.posteriors<-function(simDat=F,loadseed=1){
+  
+  loadseed="1_w12"
 
   define.year=c(2007:2012)
   load(paste("posterior_sero_runs/outputR_f",define.year[1],"_t",length(define.year),"_s",loadseed,".RData",sep=""))
@@ -14,10 +16,12 @@ plot.posteriors<-function(simDat=F,loadseed=1){
   lik.tot=rowSums(likelihoodtab)
   maxlik=max(lik.tot)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
-  runs1=ceiling(0.2*runsPOST)
+  runs1=ceiling(0.25*runsPOST)
   plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
   #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
-  plot(as.data.frame(thetatab)$error[runs1:runsPOST],type="l",ylab="error")
+  #plot(as.data.frame(thetatab)$sigma[runs1:runsPOST],type="l",ylab="sigma")
+  
+  hist(as.data.frame(thetatab)$error[runs1:runsPOST],main=NULL,col=colA,xlab="error",prob=TRUE,xlim=c(0,0.1))
   
   # Plot histogram of boosting
   hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main=NULL,col=colA,xlab="mu",prob=TRUE,xlim=c(0,5))
@@ -40,9 +44,9 @@ plot.posteriors<-function(simDat=F,loadseed=1){
   
   hist.sample=length(historytabCollect[,1])/n_part
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
-  hist(ind.infN,breaks=seq(-0.5,max(ind.infN)+0.5,1),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""))
+  hist(ind.infN,breaks=seq(-0.5,max(ind.infN)+0.5,1),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
   
-  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_npart",n_part,"_yr",define.year,".pdf",sep=""),width=12,height=8)
+  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_npart",n_part,"_yr",define.year,loadseed,".pdf",sep=""),width=12,height=8)
   dev.off()
 
 }
@@ -122,7 +126,7 @@ plot.posterior.titres<-function(pickyr=1,loadseed=1){
       # Sample from infection history
       for(ksamp in 1:btstrap){
         for(jj in 1:n.inf){
-          lines(min(inf_years)-1+c(jj,jj),c(0,9*hist.sample[ksamp,jj]),col=rgb(0.8,0.8,0.8,0.01),lwd=2) # Plot estimated infections
+          lines(min(inf_years)-1+c(jj,jj),c(-1,10*hist.sample[ksamp,jj]-1),col=rgb(0.8,0.8,0.8,0.01),lwd=2) # Plot estimated infections
         }
       }
       

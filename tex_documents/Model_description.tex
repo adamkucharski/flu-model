@@ -73,8 +73,16 @@ We fit our model to serological data using Markov chain Monte Carlo~\cite{gilks1
 
 We use a data augmentation approach to estimate individual infection histories. To ensure the Markov chain was irreducible, resampling at each step involved one of the following: addition of infection in some year; removal of infection in some year; moving an infection from some year to another~\cite{gibson1998estimating}. We also used adaptive MCMC to improve the efficiency of mixing~\cite{Roberts:2009wg}: at each iteration, we adjusted the magnitude and shape of the covariance matrix, and the proportion $p$ of individual histories that were resampled.
 
-
 \bibliographystyle{plos2015}
 \bibliography{$HOME/Dropbox/AdamPhD/TeXdocs/Writeups/References1.bib}
+
+
+\begin{figure}[htbp]
+\begin{center}
+  \includegraphics[width=\textwidth]{sim30P_4.pdf} 
+\caption{Illustrative model fits to the Ha Nam data set~\cite{fonville2014antibody}. Red points show observed titre. Blue lines show median titre in fitted model, with blue region showing 95\% MCMC credibility interval. Grey lines show samples from the posterior distribution of individual infection histories (darker lines indicate consistent estimation of infection in a specific year).}
+\label{default}
+\end{center}
+\end{figure}
 
 \end{document}
