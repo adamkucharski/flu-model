@@ -506,7 +506,7 @@ run_mcmc<-function(
     
     if(m %% min(runs,500) ==0){
       print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,file=paste("posterior_sero_runs/outputR_f",test.yr[1],"_t",length(test.yr),"_s",seedi,".RData",sep=""))
+      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
     }
     
   } #End runs loop

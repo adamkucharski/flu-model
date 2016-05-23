@@ -14,23 +14,26 @@ library(MASS)
 
 rm(list=ls(all=TRUE))
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Load data and functions (Fonville et al.)
-#source("load_data.R")  
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Load data and functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#source("load_data.R") # Reformat HaNam data and save to file
 source("sero_functions.R")
-source("sero_funcs_steven.r")
+source("simulation_diagnostics.R")
+#source("sero_funcs_steven.r") # AK: Is this deprecated?
+
 
 compile.c() # Compile c code
 
-
-
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Define simple function of seed
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 fnSeedLoop <- function(seed_i) {
 
   loadseed=seed_i
   
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # SIMULATION MODEL
   # Generate simulated data - tau1=back-boost  / tau2=suppress
   
@@ -38,7 +41,7 @@ fnSeedLoop <- function(seed_i) {
   simulate_data(test_years=seq(2007,2008), # this needs to be vector
                 inf_years=seq(1970,2011,1),strain_years=seq(1970,2010,2),n_part=npartM,thetastar=thetaSim,p.inf=0.1,seedi=loadseed)
   
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # INFERENCE MODEL
   # Run MCMC for specific data set
 
@@ -105,11 +108,62 @@ make_trees <- function(n, nspp) {
   lapply(seq_len(n), function(...) ape::rtree(nspp))
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Inference using cross-sectional vs longitudinal data
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+data.infer <- function(year_test) {
+  # INFERENCE MODEL
+  # Run MCMC for specific data set
+  
+  loadseed=1 # ** Fix for initial testing **
+  load("R_datasets/HaNam_data.RData")
 
-# - - - - - - - - - - - - - - - - - - - - - - - - 
-# Plot posteriors and compare to simulation
+  # Plot simulation data vs history
+  #source("simulation_plots.R")
+  
+  # Set initial theta
+  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA)
+  theta0[["mu"]]=3 # basic boosting
+  theta0[["tau1"]]=0.1 # back-boost
+  theta0[["tau2"]]=0.1 # suppression via AGS
+  theta0[["wane"]]=-log(0.5)/1 # short term waning - half life of /X years
+  theta0[["sigma"]]=0.2 # cross-reaction
+  theta0[["muShort"]]=5 # short term boosting
+  theta0[["error"]]=0.2 # measurement error
+  theta=theta0
+  vp1=0.02 #probability individual infection history resampled - this is adaptive in model
+  
+  define.year=year_test # years to include in inference
+  
+  # browser()
+  
+  # RUN MCMC
+  # Note: NEED TO RE-INITIALISE DATAFRAME IF REPEAT RUN (i.e. reload dataset above)
+  run_mcmc(
+    test.yr=define.year,
+    test_years,
+    inf_years,
+    strain_years,
+    n_part,
+    test.list,
+    theta=theta0,
+    runs=1e5, # number of MCMC runs
+    varpart_prob=vp1,
+    hist.true=NULL,
+    switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
+    pmask=c("wane"), # specify parameters to fix
+    seedi=loadseed,
+    linD=F)
+}
 
-simDat=FALSE
-source("simulation_diagnostics.R",local=TRUE)
+# - - - - - - - - - - - - - - - - - 
+# Run inference & plot posteriors
+for(kk in 2007:2012){
+  print(kk)
+  data.infer(kk)
+}
 
+for(kk in 2007:2012){
+  plot.posteriors(define.year=kk)
+}

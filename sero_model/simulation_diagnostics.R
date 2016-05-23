@@ -2,12 +2,22 @@
 # Simulation diagnostics
 # Compare MCMC output to simulation data
 
-plot.posteriors<-function(simDat=F,loadseed=1){
-  
-  loadseed="1_w12"
+# Convert vector to median and 95% CrI
+c.text<-function(x,sigF=3){
+  bp1=signif(c(median(x),quantile(x,0.025),quantile(x,0.975)),sigF)
+  paste(bp1[1]," (",bp1[2],"-",bp1[3],")",sep="")
+}
 
-  define.year=c(2007:2012)
-  load(paste("posterior_sero_runs/outputR_f",define.year[1],"_t",length(define.year),"_s",loadseed,".RData",sep=""))
+c.nume<-function(x){
+  bp1=c(median(x),quantile(x,0.025),quantile(x,0.975))
+  as.numeric(bp1)
+}
+
+plot.posteriors<-function(simDat=F,loadseed=1,define.year){
+  
+  loadseed="1" #"1_w12"
+  
+  load(paste("posterior_sero_runs/outputR_f",paste(define.year,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
   par(mfrow=c(3,3))
   par(mar = c(5,5,1,1))
   colA=rgb(0.8,0.8,0.8)
@@ -46,20 +56,71 @@ plot.posteriors<-function(simDat=F,loadseed=1){
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
   hist(ind.infN,breaks=seq(-0.5,max(ind.infN)+0.5,1),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
   
-  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_npart",n_part,"_yr",define.year,loadseed,".pdf",sep=""),width=12,height=8)
+  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=12,height=8)
   dev.off()
 
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Compare multiple MCMC outputs for vector of years
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# plot expected titres using sampled posterior estimates against true titres 
+plot.compare<-function(simDat=F,loadseed=1,define.year.vec){
+  
+  loadseed="1" #"1_w12"
+  n.test=length(define.year.vec)
+  names1=c("test","mu","tau1","tau2","sigma","muShort","error","infections")
+  store.val=array(NA,dim=c(3,length(names1),n.test),dimnames=list(NULL,names1,NULL))
+  range.p=rbind(c(0,0),c(0,5),c(0,0.5),c(0,0.5),c(0,0.5),c(0,10),c(0,0.1),c(0,30))# define parameter ranges for plots
 
-plot.posterior.titres<-function(pickyr=1,loadseed=1){
+  for(kk in 1:n.test){
   
-  define.year=c(2007:2012)
+    load(paste("posterior_sero_runs/outputR_f",define.year.vec[kk],"_s",loadseed,".RData",sep=""))
+
+    # Store median and 95% CrI
+    lik.tot=rowSums(likelihoodtab); maxlik=max(lik.tot); runsPOST=length(lik.tot[lik.tot!=-Inf]); runs1=ceiling(0.25*runsPOST)
+    hist.sample=length(historytabCollect[,1])/n_part; ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
+    store.val[,,kk]=cbind(rep(kk,3),
+                     c.nume(as.data.frame(thetatab)$mu[runs1:runsPOST]),
+                     c.nume(as.data.frame(thetatab)$tau1[runs1:runsPOST]),
+                     c.nume(as.data.frame(thetatab)$tau2[runs1:runsPOST]),
+                     c.nume(as.data.frame(thetatab)$sigma[runs1:runsPOST]),
+                     c.nume(as.data.frame(thetatab)$muShort[runs1:runsPOST]),
+                     c.nume(as.data.frame(thetatab)$error[runs1:runsPOST]),
+                     c.nume(ind.infN)
+                     )
+  }
   
-  load(paste("posterior_sero_runs/outputR_f",define.year[1],"_t",length(define.year),"_s",loadseed,".RData",sep=""))
+  # - - - - - - - - - - - - - - - 
+  # Plot comparison of parameters
+  
+  par(mfrow=c(2,4))
+  
+  for(jj in 2:length(names1)){   # Iterate across parameters
+    colA=rgb(0,0,0.8)
+    plot(c(1:n.test),c(1:n.test),pch=19,col=rgb(1,1,1),ylim=range.p[jj,],xaxt="n",xlab="test year",ylab="estimate",main=names1[jj])
+    axis(1,at=c(1:n.test),labels=define.year.vec)
+    grid(ny = NULL, nx = 0, col = rgb(0.9,0.9,0.9), lty = "solid")
+  
+      for(kk in 1:n.test){ # Iterate across test years
+        points(kk,store.val[1,jj,kk],pch=19,col=colA)
+        lines(c(kk,kk),c(store.val[2,jj,kk],store.val[3,jj,kk]),col=colA)
+      }
+  
+  }
+  
+
+  dev.copy(pdf,paste("plot_simulations/posterior_compare",paste(define.year.vec,"_",collapse="",sep=""),".pdf",sep=""),width=12,height=8)
+  dev.off()
+  
+}
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Plot expected titres using sampled posterior estimates against true titres 
+
+plot.posterior.titres<-function(loadseed=1,define.year){
+  
+  load(paste("posterior_sero_runs/outputR_f",paste(define.year,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
   
   lik.tot=rowSums(likelihoodtab)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
@@ -151,14 +212,10 @@ plot.posterior.titres<-function(pickyr=1,loadseed=1){
       
   } # end loop over test years
 
-  
-  
-  
-  
 }
 
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot simulated data against runs
 
 plot.sim.data<-function(){
