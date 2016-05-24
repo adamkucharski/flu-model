@@ -38,7 +38,7 @@ fnSeedLoop <- function(seed_i) {
   # SIMULATION MODEL
   # Generate simulated data - tau1=back-boost  / tau2=suppress
   
-  thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1,error=0.05); npartM=300
+  thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1,error=0.05,disp_k=1); npartM=300
   simulate_data(test_years=seq(2007,2008), # this needs to be vector
                 inf_years=seq(1970,2011,1),strain_years=seq(1970,2010,2),n_part=npartM,thetastar=thetaSim,p.inf=0.1,seedi=loadseed)
   
@@ -54,7 +54,7 @@ fnSeedLoop <- function(seed_i) {
   #source("simulation_plots.R")
   
   # Set initial theta
-  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA)
+  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=1)
   theta0[["mu"]]=3 # basic boosting
   theta0[["tau1"]]=0.1 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
@@ -62,6 +62,7 @@ fnSeedLoop <- function(seed_i) {
   theta0[["sigma"]]=0.2 # cross-reaction
   theta0[["muShort"]]=5 # short term boosting
   theta0[["error"]]=0.2 # measurement error
+  theta0[["disp_k"]]=0.1 # measurement error
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
   
@@ -124,14 +125,15 @@ data.infer <- function(year_test,mcmc.iterations) {
   #source("simulation_plots.R")
   
   # Set initial theta
-  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA)
+  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=NA)
   theta0[["mu"]]=3 # basic boosting
   theta0[["tau1"]]=0.1 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
-  theta0[["wane"]]=-log(0.5)/1 # short term waning - half life of /X years
+  theta0[["wane"]]=-log(0.5)/0.5 # short term waning - half life of /X years
   theta0[["sigma"]]=0.2 # cross-reaction
   theta0[["muShort"]]=1e-6 # short term boosting
   theta0[["error"]]=0.1 # measurement error
+  theta0[["disp_k"]]=0.1 # measurement error
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
   
@@ -161,17 +163,18 @@ data.infer <- function(year_test,mcmc.iterations) {
 
 # - - - - - - - - - - - - - - - - - 
 # Run inference
-foreach(kk=c(2007:2013)) %dopar% {
+foreach(kk=c(2007:2012)) %dopar% {
   if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  data.infer(kk1,mcmc.iterations=1e2)
+  data.infer(kk1,mcmc.iterations=1e4)
 }
 
 # - - - - - - - - - - - - - - - - - 
 # Plot posteriors
 for(kk in 2007:2012){
-  plot.posteriors(define.year=kk)
+  if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
+  plot.posteriors(define.year=kk1)
 }
 
-plot.compare(define.year.vec=c(2007:2012))
+plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
 
 

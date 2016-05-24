@@ -46,8 +46,8 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year){
   hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.7))
   if(simDat==T){abline(v=thetaSim[["tau2"]],col="red")}
   
-  hist(as.data.frame(thetatab)$wane[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,3))
-  if(simDat==T){abline(v=thetaSim[["wane"]],col="red")}
+  hist(as.data.frame(thetatab)$disp_k[runs1:runsPOST],main=NULL,col=colA,xlab="disp_k",prob=TRUE,xlim=c(0,3))
+  if(simDat==T){abline(v=thetaSim[["disp_k"]],col="red")}
   
   hist(as.data.frame(thetatab)$muShort[runs1:runsPOST],main=NULL,col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,20))
   if(simDat==T){abline(v=thetaSim[["muShort"]],col="red")}
@@ -68,10 +68,10 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007,2012)){
   
   loadseed="1" #"1_w12"
   n.test=length(define.year.vec)
-  names1=c("test","mu","tau1","tau2","wane","sigma","muShort","error","infections")
+  names1=c("test","mu","tau1","tau2","disp_k","sigma","muShort","error","infections")
   store.val=array(NA,dim=c(3,length(names1),n.test),dimnames=list(NULL,names1,NULL))
-  range.p=rbind(c(0,0),c(0,5),c(0,0.5),c(0,0.5),c(0,1),c(0,0.5),c(0,10),c(0,0.1),c(0,30))# define parameter ranges for plots
-  labels.Y=define.year.vec
+  range.p=rbind(c(0,0),c(0,5),c(0,0.5),c(0,0.5),c(0,5),c(0,0.5),c(0,10),c(0,0.1),c(0,30))# define parameter ranges for plots
+  labels.Y=if(length(define.year.vec)>6){c(define.year.vec[1:6],"All")}else{define.year.vec}
   
   for(kk in 1:n.test){
   
@@ -83,7 +83,7 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007,2012)){
                      c.nume(as.data.frame(thetatab)$mu[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$tau1[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$tau2[runs1:runsPOST]),
-                     c.nume(as.data.frame(thetatab)$wane[runs1:runsPOST]),
+                     c.nume(as.data.frame(thetatab)$disp_k[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$sigma[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$muShort[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$error[runs1:runsPOST]),
@@ -95,7 +95,7 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007,2012)){
   for(jj in 2:length(names1)){   # Iterate across parameters
     colA=rgb(0,0,0.8)
     plot(c(1:n.test),c(1:n.test),pch=19,col=rgb(1,1,1),ylim=range.p[jj,],xaxt="n",xlab="test year",ylab="estimate",main=names1[jj])
-    axis(1,at=c(1:n.test),labels=define.year.vec)
+    axis(1,at=c(1:n.test),labels=labels.Y)
     grid(ny = NULL, nx = 0, col = rgb(0.9,0.9,0.9), lty = "solid")
   
       for(kk in 1:n.test){ # Iterate across test years

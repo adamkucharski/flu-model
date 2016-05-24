@@ -116,8 +116,12 @@ likelihood.titre<-function(expect,titredat,theta){
   #p_jk = sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+ sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
   
   # Include uniform error i.e. L(j)= sum_k P(true titre is k) x P(observe j | true titre is k) - derivation is in PLOS Biol supplement
-  p_jk = sum( log(dpois(as.numeric(titredat[!largett]), expect[!largett], log = FALSE) *(1-theta[["error"]])+theta[["error"]]/9 ) )
-          + sum(log(ppois(8, lambda=expect[largett], lower=FALSE,log=FALSE)*(1-theta[["error"]])+theta[["error"]]/9  ))
+  #p_jk = sum( log(dpois(as.numeric(titredat[!largett]), expect[!largett], log = FALSE) *(1-theta[["error"]])+theta[["error"]]/9 ) )
+  #        + sum(log(ppois(8, lambda=expect[largett], lower=FALSE,log=FALSE)*(1-theta[["error"]])+theta[["error"]]/9  ))
+  
+  p_jk = sum( log(dnbinom(as.numeric(titredat[!largett]), mu=expect[!largett], size=theta[["disp_k"]], log = FALSE) *(1-theta[["error"]])+theta[["error"]]/9 ) )
+          + sum(log(pnbinom(8, mu=expect[largett], size=theta[["disp_k"]], lower.tail=FALSE,log=FALSE)*(1-theta[["error"]])+theta[["error"]]/9  ))
+  
   p_jk
 
 }
