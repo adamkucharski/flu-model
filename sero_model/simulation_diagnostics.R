@@ -64,18 +64,18 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Compare multiple MCMC outputs for vector of years
 
-plot.compare<-function(simDat=F,loadseed=1,define.year.vec){
+plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007,2012)){
   
   loadseed="1" #"1_w12"
   n.test=length(define.year.vec)
-  names1=c("test","mu","tau1","tau2","sigma","muShort","error","infections")
+  names1=c("test","mu","tau1","tau2","wane","sigma","muShort","error","infections")
   store.val=array(NA,dim=c(3,length(names1),n.test),dimnames=list(NULL,names1,NULL))
-  range.p=rbind(c(0,0),c(0,5),c(0,0.5),c(0,0.5),c(0,0.5),c(0,10),c(0,0.1),c(0,30))# define parameter ranges for plots
-
+  range.p=rbind(c(0,0),c(0,5),c(0,0.5),c(0,0.5),c(0,1),c(0,0.5),c(0,10),c(0,0.1),c(0,30))# define parameter ranges for plots
+  labels.Y=define.year.vec
+  
   for(kk in 1:n.test){
   
     load(paste("posterior_sero_runs/outputR_f",define.year.vec[kk],"_s",loadseed,".RData",sep=""))
-
     # Store median and 95% CrI
     lik.tot=rowSums(likelihoodtab); maxlik=max(lik.tot); runsPOST=length(lik.tot[lik.tot!=-Inf]); runs1=ceiling(0.25*runsPOST)
     hist.sample=length(historytabCollect[,1])/n_part; ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
@@ -83,18 +83,15 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec){
                      c.nume(as.data.frame(thetatab)$mu[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$tau1[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$tau2[runs1:runsPOST]),
+                     c.nume(as.data.frame(thetatab)$wane[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$sigma[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$muShort[runs1:runsPOST]),
                      c.nume(as.data.frame(thetatab)$error[runs1:runsPOST]),
-                     c.nume(ind.infN)
-                     )
+                     c.nume(ind.infN))
   }
-  
   # - - - - - - - - - - - - - - - 
   # Plot comparison of parameters
-  
   par(mfrow=c(2,4))
-  
   for(jj in 2:length(names1)){   # Iterate across parameters
     colA=rgb(0,0,0.8)
     plot(c(1:n.test),c(1:n.test),pch=19,col=rgb(1,1,1),ylim=range.p[jj,],xaxt="n",xlab="test year",ylab="estimate",main=names1[jj])
@@ -105,9 +102,7 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec){
         points(kk,store.val[1,jj,kk],pch=19,col=colA)
         lines(c(kk,kk),c(store.val[2,jj,kk],store.val[3,jj,kk]),col=colA)
       }
-  
   }
-  
 
   dev.copy(pdf,paste("plot_simulations/posterior_compare",paste(define.year.vec,"_",collapse="",sep=""),".pdf",sep=""),width=12,height=8)
   dev.off()
@@ -135,8 +130,8 @@ plot.posterior.titres<-function(loadseed=1,define.year){
   store.mcmc.test.data=array(NA, dim=c(btstrap,n_part,n.strains,n.test,2)) # Store expected titres for each test year
   store.mcmc.hist.data=array(NA, dim=c(btstrap,n_part,n.inf,n.test)) # Store history for each test year
   
-  # - - - - - - - - - - - - 
-  # Sample from MCMC runs to get stored matrices
+  # - - - - - - - - - - - - - - - - - - - - - - 
+  # Sample from MCMC runs to get stored matrices of expected titre and estimated infection years
 
   for(sampk in 1:btstrap){
     pickA=sample(c(runs1:runsPOST),1)
@@ -147,7 +142,7 @@ plot.posterior.titres<-function(loadseed=1,define.year){
   for(pickyr in 1:n.test){
     
     # Note here that inf_years and strain_years are loads from main_model.R
-    # Output expected titre - could include Poisson measurement uncertainty?
+    # Output expected titre - could include Poisson measurement uncertainty here?
     simulate_data(test.yr[pickyr],historytabPost=hist.sample,
                   inf_years,
                   strain_years,
@@ -160,9 +155,9 @@ plot.posterior.titres<-function(loadseed=1,define.year){
       
       sim.titre=test.listSim[[ii0]][[1]] # sort sample years
       hist.sampleB=hist.sample;  hist.sampleB[,as.numeric(colnames(hist.sample))>test.yr[pickyr]]=0 # don't show infections after test year
-      store.mcmc.test.data[sampk,ii0,,pickyr,1]= min(inf_years)-1+sort(sim.titre["sample.index",])
-      store.mcmc.test.data[sampk,ii0,,pickyr,2]=sim.titre["titredat",order(sim.titre["sample.index",])]
-      store.mcmc.hist.data[sampk,ii0,,pickyr]=hist.sampleB[ii0,]
+      store.mcmc.test.data[sampk,ii0,,pickyr,1]= min(inf_years)-1+sort(sim.titre["sample.index",]) # Sampled strain years
+      store.mcmc.test.data[sampk,ii0,,pickyr,2]=sim.titre["titredat",order(sim.titre["sample.index",])] # Sampled expected titre
+      store.mcmc.hist.data[sampk,ii0,,pickyr]=hist.sampleB[ii0,] # Sampled history
       
     }  # end loop over participants
     

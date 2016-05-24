@@ -380,7 +380,7 @@ run_mcmc<-function(
   
   # Specific MCMC parameters
   #browser()
-  nparam=length(theta); npcov=rep(1,nparam); npcov[names(theta)==pmask]=0 # mask specified parameters
+  nparam=length(theta); npcov=rep(1,nparam); npcov[match(pmask,names(theta))]=0 # mask specified parameters
   cov_matrix_theta0 = diag(npcov)
   cov_matrix_thetaA=cov_matrix_theta0
   
@@ -504,7 +504,7 @@ run_mcmc<-function(
       historytabCollect=rbind(historytabCollect,historytab)
     }
     
-    if(m %% min(runs,500) ==0){
+    if(m %% min(runs,1000) ==0){
       print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
       save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
     }

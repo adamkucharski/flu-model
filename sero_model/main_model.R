@@ -5,12 +5,13 @@
 # setwd("~/Dropbox/git/flu-model/sero_model")
 
 library(reshape2)
-#library(foreach)
-#library(doMC)
 library(mvtnorm)
 library(MASS)
-#registerDoMC(4)  #change the 2 to your number of CPU cores
-#getDoParWorkers()
+
+library(foreach)
+library(doMC)
+registerDoMC(4)  #change the 2 to your number of CPU cores
+getDoParWorkers()
 
 rm(list=ls(all=TRUE))
 
@@ -20,7 +21,7 @@ rm(list=ls(all=TRUE))
 #source("load_data.R") # Reformat HaNam data and save to file
 source("sero_functions.R")
 source("simulation_diagnostics.R")
-#source("sero_funcs_steven.r") # AK: Is this deprecated?
+source("sero_funcs_steven.r") # Load Flu B format
 
 
 compile.c() # Compile c code
@@ -112,7 +113,7 @@ make_trees <- function(n, nspp) {
 # Inference using cross-sectional vs longitudinal data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-data.infer <- function(year_test) {
+data.infer <- function(year_test,mcmc.iterations) {
   # INFERENCE MODEL
   # Run MCMC for specific data set
   
@@ -129,8 +130,8 @@ data.infer <- function(year_test) {
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/1 # short term waning - half life of /X years
   theta0[["sigma"]]=0.2 # cross-reaction
-  theta0[["muShort"]]=5 # short term boosting
-  theta0[["error"]]=0.2 # measurement error
+  theta0[["muShort"]]=1e-6 # short term boosting
+  theta0[["error"]]=0.1 # measurement error
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
   
@@ -148,22 +149,29 @@ data.infer <- function(year_test) {
     n_part,
     test.list,
     theta=theta0,
-    runs=1e5, # number of MCMC runs
+    runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
-    pmask=c("wane"), # specify parameters to fix
+    pmask=c("wane","muShort"), # specify parameters to fix
     seedi=loadseed,
     linD=F)
 }
 
+
 # - - - - - - - - - - - - - - - - - 
-# Run inference & plot posteriors
-for(kk in 2007:2012){
-  print(kk)
-  data.infer(kk)
+# Run inference
+foreach(kk=c(2007:2013)) %dopar% {
+  if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
+  data.infer(kk1,mcmc.iterations=1e2)
 }
 
+# - - - - - - - - - - - - - - - - - 
+# Plot posteriors
 for(kk in 2007:2012){
   plot.posteriors(define.year=kk)
 }
+
+plot.compare(define.year.vec=c(2007:2012))
+
+
