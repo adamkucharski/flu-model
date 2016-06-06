@@ -131,9 +131,9 @@ data.infer <- function(year_test,mcmc.iterations) {
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/0.5 # short term waning - half life of /X years
   theta0[["sigma"]]=0.2 # cross-reaction
-  theta0[["muShort"]]=1e-6 # short term boosting
+  theta0[["muShort"]]=5 # short term boosting
   theta0[["error"]]=0.1 # measurement error
-  theta0[["disp_k"]]=0.1 # measurement error
+  theta0[["disp_k"]]=0.01 # dispersion parameter
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
   
@@ -155,7 +155,7 @@ data.infer <- function(year_test,mcmc.iterations) {
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
-    pmask=c("wane","muShort"), # specify parameters to fix
+    pmask=NULL, #c("wane"), #,"muShort"), # specify parameters to fix
     seedi=loadseed,
     linD=F)
 }
@@ -163,14 +163,14 @@ data.infer <- function(year_test,mcmc.iterations) {
 
 # - - - - - - - - - - - - - - - - - 
 # Run inference
-foreach(kk=c(2007:2012)) %dopar% {
+foreach(kk=c(2013)) %dopar% {
   if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  data.infer(kk1,mcmc.iterations=1e4)
+  data.infer(kk1,mcmc.iterations=1e5)
 }
 
 # - - - - - - - - - - - - - - - - - 
 # Plot posteriors
-for(kk in 2007:2012){
+for(kk in 2007:2013){
   if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   plot.posteriors(define.year=kk1)
 }
