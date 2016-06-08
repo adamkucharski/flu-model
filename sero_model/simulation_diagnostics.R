@@ -60,7 +60,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   
   hist.sample=length(historytabCollect[,1])/n_part
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
-  hist(ind.infN,breaks=seq(-0.5,max(ind.infN)+0.5,2),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
+  hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
   
   dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=12,height=8)
   dev.off()
@@ -122,8 +122,9 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007,2012)){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot expected titres using sampled posterior estimates against true titres 
 
-plot.posterior.titres<-function(loadseed=1,define.year){
+plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012)){
   
+  load("R_datasets/HaNam_data.RData")
   load(paste("posterior_sero_runs/outputR_f",paste(define.year,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
   
   lik.tot=rowSums(likelihoodtab)
@@ -165,7 +166,9 @@ plot.posterior.titres<-function(loadseed=1,define.year){
       sim.titre=test.listSim[[ii0]][[1]] # sort sample years
       hist.sampleB=hist.sample;  hist.sampleB[,as.numeric(colnames(hist.sample))>test.yr[pickyr]]=0 # don't show infections after test year
       store.mcmc.test.data[sampk,ii0,,pickyr,1]= min(inf_years)-1+sort(sim.titre["sample.index",]) # Sampled strain years
-      store.mcmc.test.data[sampk,ii0,,pickyr,2]=sim.titre["titredat",order(sim.titre["sample.index",])] # Sampled expected titre
+      s.titre=sim.titre["titredat",order(sim.titre["sample.index",])]
+      store.mcmc.test.data[sampk,ii0,,pickyr,2]=s.titre # Sampled expected titre
+      #store.mcmc.test.data[sampk,ii0,,pickyr,2]=rpois(length(s.titre),lambda=s.titre) # Sampled expected titre - include Poisson noise
       store.mcmc.hist.data[sampk,ii0,,pickyr]=hist.sampleB[ii0,] # Sampled history
       
     }  # end loop over participants

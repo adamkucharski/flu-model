@@ -309,22 +309,19 @@ convert_binary <- function(x){sum(2^(which(rev(unlist(strsplit(as.character(x), 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
-  # uniform priors
-  p_theta_star = 1; p_theta = 1
-  
-  # probability symmetic
-  q_theta_given_theta_star = 1; q_theta_star_given_theta = 1
-  
-  cal.lik = exp((marg_likelihood_star-marg_likelihood))*(p_theta_star/p_theta)*(q_theta_given_theta_star/q_theta_star_given_theta) 
-  min(1, cal.lik)
+  # Flat priors on theta => symmetric update probability
+  calc.lik = exp(marg_likelihood_star-marg_likelihood)
+  min(1, calc.lik)
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   
+  # sample from multivariate normal distribution - no adaptive sampling
+  theta_star = as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=covarbasic)))
+  
   # sample from multivariate normal distribution - include adaptive samples (Roberts & Rosenthal, 2009)
-  theta_star = as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=covarbasic)))  #no adaptive sampling
   #theta_star = 0.05*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covarbasic))) +
   #              0.95*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covartheta)))
   
