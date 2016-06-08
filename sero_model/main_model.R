@@ -7,6 +7,7 @@
 library(reshape2)
 library(mvtnorm)
 library(MASS)
+library(coda)
 
 library(foreach)
 library(doMC)
@@ -163,7 +164,7 @@ data.infer <- function(year_test,mcmc.iterations) {
 
 # - - - - - - - - - - - - - - - - - 
 # Run inference
-foreach(kk=c(2013)) %dopar% {
+foreach(kk=c(2011:2013)) %dopar% {
   if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   data.infer(kk1,mcmc.iterations=1e5)
 }

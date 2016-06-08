@@ -334,8 +334,8 @@ SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   mu1=min(20-theta_star[["mu"]],theta_star[["mu"]])
   theta_star[["mu"]]=ifelse(mu1<0,theta_initial[["mu"]],mu1)
   
-  mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
-  theta_star[["muShort"]]=ifelse(mu2<0,theta_initial[["muShort"]],mu2)
+  #mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
+  #theta_star[["muShort"]]=ifelse(mu2<0,theta_initial[["muShort"]],mu2)
   
   # reflective boundary condition for error function
   error2=min(2-theta_star[["error"]],theta_star[["error"]])

@@ -31,30 +31,36 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
   #plot(as.data.frame(thetatab)$sigma[runs1:runsPOST],type="l",ylab="sigma")
   
-  hist(as.data.frame(thetatab)$error[runs1:runsPOST],main=NULL,col=colA,xlab="error",prob=TRUE,xlim=c(0,0.1))
+  # Calculate ESS
+  thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
+  #thetaT=lik.tot[runs1:runsPOST]
+  ESS.calc=effectiveSize(thetaT)
+  ESS.label<-function(x){paste("ESS=",signif(as.numeric(x),3))}
+
+  hist(as.data.frame(thetatab)$error[runs1:runsPOST],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,0.1))
   
   # Plot histogram of boosting
-  hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main=NULL,col=colA,xlab="mu",prob=TRUE,xlim=c(0,5))
+  hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main= ESS.label(ESS.calc[["mu"]]),col=colA,xlab="mu",prob=TRUE,xlim=c(0,5))
   if(simDat==T){abline(v=thetaSim[["mu"]],col="red")}
   
-  hist(as.data.frame(thetatab)$sigma[runs1:runsPOST],main=NULL,col=colA,xlab="sigma",xlim=c(0,0.5))
+  hist(as.data.frame(thetatab)$sigma[runs1:runsPOST],main=ESS.label(ESS.calc[["sigma"]]),col=colA,xlab="sigma",xlim=c(0,0.5))
   if(simDat==T){abline(v=thetaSim[["sigma"]],col="red")}
   
-  hist(as.data.frame(thetatab)$tau1[runs1:runsPOST],main=NULL,col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.7))
+  hist(as.data.frame(thetatab)$tau1[runs1:runsPOST],main=ESS.label(ESS.calc[["tau1"]]),col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.7))
   if(simDat==T){abline(v=thetaSim[["tau1"]],col="red")}
   
-  hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=NULL,col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.7))
+  hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=ESS.label(ESS.calc[["tau2"]]),col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.7))
   if(simDat==T){abline(v=thetaSim[["tau2"]],col="red")}
   
-  hist(as.data.frame(thetatab)$"wane"[runs1:runsPOST],main=NULL,col=colA,xlab="wane",prob=TRUE,xlim=c(0,50))
+  hist(as.data.frame(thetatab)$"wane"[runs1:runsPOST],main=ESS.label(ESS.calc[["wane"]]),col=colA,xlab="wane",prob=TRUE,xlim=c(0,5))
   if(simDat==T){abline(v=thetaSim[["wane"]],col="red")}
   
-  hist(as.data.frame(thetatab)$muShort[runs1:runsPOST],main=NULL,col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,20))
+  hist(as.data.frame(thetatab)$muShort[runs1:runsPOST],main=ESS.label(ESS.calc[["muShort"]]),col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,20))
   if(simDat==T){abline(v=thetaSim[["muShort"]],col="red")}
   
   hist.sample=length(historytabCollect[,1])/n_part
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
-  hist(ind.infN,breaks=seq(-0.5,max(ind.infN)+0.5,1),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
+  hist(ind.infN,breaks=seq(-0.5,max(ind.infN)+0.5,2),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
   
   dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=12,height=8)
   dev.off()
