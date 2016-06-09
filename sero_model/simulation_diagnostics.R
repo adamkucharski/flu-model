@@ -15,8 +15,6 @@ c.nume<-function(x){
 
 plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   
-  loadseed="1" #"1_w12"
-  
   load(paste("posterior_sero_runs/outputR_f",paste(define.year,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
   par(mfrow=c(3,3))
   par(mar = c(5,5,1,1))
@@ -26,36 +24,60 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   lik.tot=rowSums(likelihoodtab)
   maxlik=max(lik.tot)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
-  runs1=ceiling(0.2*runsPOST)
-  plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
+  
+
   #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
   #plot(as.data.frame(thetatab)$sigma[runs1:runsPOST],type="l",ylab="sigma")
   
-  # Calculate ESS
+  # Calculate ESS by burn-in
+  runs1=ceiling(0.25*runsPOST)
+  
+  calculate.ESS<-function(runs1){
+    thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
+    ltheta=length(thetaT[["mu"]])
+    thin.theta=thetaT[seq(1,ltheta,switch1),]
+    
+    ESS.calc=effectiveSize(thin.theta)
+    ESS.calc
+  }
+  
+  #xx.E=seq(0.05,0.4,0.05)
+  #yy.E=sapply(xx.E,function(x){calculate.ESS(ceiling(x*runsPOST))[["mu"]]})
+  
+  #plot(xx.E,yy.E)
+  # Find optimal cutoff
+  #runs1=ceiling(xx.E[min(c(1:length(yy.E))[yy.E==max(yy.E)])]*runsPOST)
+  ESS.calc=calculate.ESS(runs1)
+  
   thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
-  #thetaT=lik.tot[runs1:runsPOST]
-  ESS.calc=effectiveSize(thetaT)
+  ltheta=length(thetaT[["mu"]])
+  thin.theta=thetaT[seq(1,ltheta,switch1),]
+  
   ESS.label<-function(x){paste("ESS=",signif(as.numeric(x),3))}
-
+  
+  # - - - - - - - 
+  # Plot results
+  
+  plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
   hist(as.data.frame(thetatab)$error[runs1:runsPOST],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,0.1))
   
   # Plot histogram of boosting
-  hist(as.data.frame(thetatab)$mu[runs1:runsPOST],main= ESS.label(ESS.calc[["mu"]]),col=colA,xlab="mu",prob=TRUE,xlim=c(0,5))
+  hist(thin.theta[["mu"]],main= ESS.label(ESS.calc[["mu"]]),col=colA,xlab="mu",prob=TRUE,xlim=c(0,5))
   if(simDat==T){abline(v=thetaSim[["mu"]],col="red")}
   
-  hist(as.data.frame(thetatab)$sigma[runs1:runsPOST],main=ESS.label(ESS.calc[["sigma"]]),col=colA,xlab="sigma",xlim=c(0,0.5))
+  hist(thin.theta[["sigma"]],main=ESS.label(ESS.calc[["sigma"]]),col=colA,xlab="sigma",xlim=c(0,0.5))
   if(simDat==T){abline(v=thetaSim[["sigma"]],col="red")}
   
-  hist(as.data.frame(thetatab)$tau1[runs1:runsPOST],main=ESS.label(ESS.calc[["tau1"]]),col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.7))
+  hist(thin.theta[["tau1"]],main=ESS.label(ESS.calc[["tau1"]]),col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.7))
   if(simDat==T){abline(v=thetaSim[["tau1"]],col="red")}
   
-  hist(as.data.frame(thetatab)$tau2[runs1:runsPOST],main=ESS.label(ESS.calc[["tau2"]]),col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.7))
+  hist(thin.theta[["tau2"]],main=ESS.label(ESS.calc[["tau2"]]),col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.7))
   if(simDat==T){abline(v=thetaSim[["tau2"]],col="red")}
   
-  hist(as.data.frame(thetatab)$"wane"[runs1:runsPOST],main=ESS.label(ESS.calc[["wane"]]),col=colA,xlab="wane",prob=TRUE,xlim=c(0,5))
+  hist(thin.theta[["wane"]],main=ESS.label(ESS.calc[["wane"]]),col=colA,xlab="wane",prob=TRUE,xlim=c(0,10))
   if(simDat==T){abline(v=thetaSim[["wane"]],col="red")}
   
-  hist(as.data.frame(thetatab)$muShort[runs1:runsPOST],main=ESS.label(ESS.calc[["muShort"]]),col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,20))
+  hist(thin.theta[["muShort"]],main=ESS.label(ESS.calc[["muShort"]]),col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,40))
   if(simDat==T){abline(v=thetaSim[["muShort"]],col="red")}
   
   hist.sample=length(historytabCollect[,1])/n_part

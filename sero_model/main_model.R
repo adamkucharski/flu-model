@@ -115,11 +115,10 @@ make_trees <- function(n, nspp) {
 # Inference using cross-sectional vs longitudinal data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-data.infer <- function(year_test,mcmc.iterations) {
+data.infer <- function(year_test,mcmc.iterations,loadseed=1) {
   # INFERENCE MODEL
   # Run MCMC for specific data set
-  
-  loadseed=1 # ** Fix for initial testing **
+
   load("R_datasets/HaNam_data.RData")
 
   # Plot simulation data vs history
@@ -130,7 +129,7 @@ data.infer <- function(year_test,mcmc.iterations) {
   theta0[["mu"]]=3 # basic boosting
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
-  theta0[["wane"]]=-log(0.5)/0.5 # short term waning - half life of /X years
+  theta0[["wane"]]=-log(0.5)/0.5 + runif(1,c(-1,1)) # short term waning - half life of /X years
   theta0[["sigma"]]=0.2 # cross-reaction
   theta0[["muShort"]]=5 # short term boosting
   theta0[["error"]]=0.1 # measurement error
@@ -164,16 +163,16 @@ data.infer <- function(year_test,mcmc.iterations) {
 
 # - - - - - - - - - - - - - - - - - 
 # Run inference
-foreach(kk=c(2011:2013)) %dopar% {
-  if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  data.infer(kk1,mcmc.iterations=1e5)
+foreach(kk=1:4) %dopar% {
+  #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
+  kk1=c(2007:2012)
+  data.infer(kk1,mcmc.iterations=1e5,loadseed=kk)
 }
 
 # - - - - - - - - - - - - - - - - - 
 # Plot posteriors
-for(kk in 2007:2013){
-  if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  plot.posteriors(define.year=kk1)
+for(kk in 1:4){
+  plot.posteriors(define.year=c(2007:2012),loadseed=kk)
 }
 
 plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
