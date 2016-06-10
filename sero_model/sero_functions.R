@@ -156,7 +156,7 @@ estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ #
 # - - - - - - - - - - - - - - - -
 # Simulation infection history data
 
-simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1,roundv=F,linD=F){ # ii=participant | jj=test year
+simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1,roundv=F,linD=F,dmatrix.in=NULL){ # ii=participant | jj=test year
   
   # Variables needed: test_years,inf_years,strain_years,n_part
   #strain_years=seq(1968,2010,4)
@@ -175,7 +175,11 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
     return
   }
   
-  dmatrix=outputdmatrix(thetastar,inf_years,linD)
+  if(is.null(dmatrix.in)){
+    dmatrix=outputdmatrix(thetastar,inf_years,linD)
+  }else{
+    dmatrix=dmatrix.in
+  }
   
   #Set per year incidence, to create correlation between participant infection histories
   log.sd=1

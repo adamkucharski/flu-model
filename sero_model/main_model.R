@@ -48,8 +48,8 @@ fnSeedLoop <- function(seed_i) {
   # Run MCMC for specific data set
 
   loadseed=1 # ** Fix for initial testing **
-  load("R_datasets/HaNam_data.RData")
-  #load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
+  #load("R_datasets/HaNam_data.RData")
+  load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
   
   # Plot simulation data vs history
   #source("simulation_plots.R")
@@ -166,7 +166,7 @@ data.infer <- function(year_test,mcmc.iterations,loadseed=1) {
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   kk1=c(2007:2012)
-  data.infer(kk1,mcmc.iterations=1e5,loadseed=kk)
+  data.infer(kk1,mcmc.iterations=5e5,loadseed=kk)
 }
 
 # - - - - - - - - - - - - - - - - - 
