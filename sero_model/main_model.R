@@ -115,7 +115,7 @@ make_trees <- function(n, nspp) {
 # Inference using cross-sectional vs longitudinal data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-data.infer <- function(year_test,mcmc.iterations,loadseed=1) {
+data.infer <- function(year_test,mcmc.iterations,loadseed=1,fix.param=NULL,mushort0=5) {
   # INFERENCE MODEL
   # Run MCMC for specific data set
 
@@ -131,7 +131,7 @@ data.infer <- function(year_test,mcmc.iterations,loadseed=1) {
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/0.5 + runif(1,c(-1,1)) # short term waning - half life of /X years
   theta0[["sigma"]]=0.2 # cross-reaction
-  theta0[["muShort"]]=5 # short term boosting
+  theta0[["muShort"]]=mushort0 # short term boosting
   theta0[["error"]]=0.1 # measurement error
   theta0[["disp_k"]]=0.01 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0
@@ -155,7 +155,7 @@ data.infer <- function(year_test,mcmc.iterations,loadseed=1) {
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
-    pmask=c("disp_k"), #c("wane"), #,"muShort"), # specify parameters to fix
+    pmask=fix.param, #c("disp_k"), #c("wane"), #,"muShort"), # specify parameters to fix
     seedi=loadseed,
     linD=F)
 }
@@ -166,7 +166,12 @@ data.infer <- function(year_test,mcmc.iterations,loadseed=1) {
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   kk1=c(2007:2012)
-  data.infer(kk1,mcmc.iterations=5e5,loadseed=kk)
+  data.infer(kk1,mcmc.iterations=1e2,loadseed=1,fix.param=c("disp_k"))
+}
+
+foreach(kk1=c(2007:2012)) %dopar% {
+  #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
+  data.infer(kk1,mcmc.iterations=1e2,loadseed=1,fix.param=c("disp_k","wane","muShort"),mushort0=1e-5)
 }
 
 # - - - - - - - - - - - - - - - - - 
