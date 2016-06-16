@@ -21,7 +21,7 @@ rm(list=ls(all=TRUE))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 #source("load_data.R") # Reformat HaNam data and save to file
 source("sero_functions.R")
-source("simulation_diagnostics.R")
+source("posterior_analysis_flu.R")
 source("sero_funcs_steven.r") # Load Flu B format
 
 
@@ -163,16 +163,18 @@ data.infer <- function(year_test,mcmc.iterations,loadseed=1,fix.param=NULL,musho
 
 # - - - - - - - - - - - - - - - - - 
 # Run inference
+foreach(kk1=c(2007:2012)) %dopar% {
+  #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
+  data.infer(kk1,mcmc.iterations=1e6,loadseed=1,fix.param=c("disp_k","wane","muShort"),mushort0=1e-5)
+}
+
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   kk1=c(2007:2012)
-  data.infer(kk1,mcmc.iterations=1e2,loadseed=1,fix.param=c("disp_k"))
+  data.infer(kk1,mcmc.iterations=1e6,loadseed=kk,fix.param=c("disp_k"))
 }
 
-foreach(kk1=c(2007:2012)) %dopar% {
-  #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  data.infer(kk1,mcmc.iterations=1e2,loadseed=1,fix.param=c("disp_k","wane","muShort"),mushort0=1e-5)
-}
+
 
 # - - - - - - - - - - - - - - - - - 
 # Plot posteriors

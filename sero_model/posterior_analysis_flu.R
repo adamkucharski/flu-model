@@ -92,7 +92,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Compare multiple MCMC outputs for vector of years
 
-plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007,2012)){
+plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
   
   loadseed="1" #"1_w12"
   n.test=length(define.year.vec)
