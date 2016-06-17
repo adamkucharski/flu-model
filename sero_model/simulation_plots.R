@@ -1,4 +1,4 @@
-
+# This code is deprecated
 # - - -
 # Plot true infections against simulated titres for first strain
 par(mfrow=c(2,5))
