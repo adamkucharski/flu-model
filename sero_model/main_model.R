@@ -162,16 +162,17 @@ data.infer <- function(year_test,mcmc.iterations,loadseed=1,fix.param=NULL,musho
 
 
 # - - - - - - - - - - - - - - - - - 
-# Run inference
+# Run cross-sectional inference
 foreach(kk1=c(2007:2012)) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  data.infer(kk1,mcmc.iterations=1e6,loadseed=1,fix.param=c("disp_k","wane","muShort"),mushort0=1e-5)
+  data.infer(kk1,mcmc.iterations=1e2,loadseed=1,fix.param=c("disp_k","wane","muShort"),mushort0=1e-5)
 }
 
+# Multi-year inference
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   kk1=c(2007:2012)
-  data.infer(kk1,mcmc.iterations=1e6,loadseed=kk,fix.param=c("disp_k"))
+  data.infer(kk1,mcmc.iterations=1e5,loadseed=kk,fix.param=c("disp_k","map.fit"))
 }
 
 
@@ -180,6 +181,10 @@ foreach(kk=1:4) %dopar% {
 # Plot posteriors
 for(kk in 1:4){
   plot.posteriors(define.year=c(2007:2012),loadseed=kk)
+}
+
+for(kk in c(2007:2012)){
+  plot.posteriors(define.year=kk,loadseed=1)
 }
 
 plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))

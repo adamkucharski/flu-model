@@ -30,7 +30,7 @@ simulate_sera_data<-function(strains,inf.years.sera=c(1980:2015),time.series.in=
   # Set year of birth - sample uniformly
   #age.yr=sort(sample(1:50,n_part,replace = TRUE))
   inf.n=length(inf.years.sera)
-  age.yr=c(1:inf.n)
+  age.yr=c(0:(inf.n-1))
   n_part=inf.n
 
   # Generate annual attack rates
@@ -52,8 +52,8 @@ simulate_sera_data<-function(strains,inf.years.sera=c(1980:2015),time.series.in=
   
   historytabSim=NULL
   for(ii in 1:n_part){
-    # Identify which years individual was alive for
-    mask.alive=c(max(1,inf.n-age.yr[ii]):inf.n)
+    # Identify which years individual was alive for (+1 to ensure new borns can be infected)
+    mask.alive=c(max(1,inf.n-(age.yr[ii]+1)):inf.n)
     # Calculate probability of infection with each strain
     if(length(mask.alive)>1){
       prob.inf=1-apply(1-time.series[mask.alive,], 2, prod)
@@ -105,7 +105,7 @@ plot_simulated_sera_data<-function(seedi,strains){
   col.list=list(col1=rgb(0.9,0.6,0),col2=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
   
   f.y<-function(x){rev(x)} # swap order of ages
-  label.age=seq(1,length(age.yr),1)
+  label.age=seq(0,length(age.yr),2)
   lw.1=1.5
   
   # Plot attack rates
@@ -118,7 +118,7 @@ plot_simulated_sera_data<-function(seedi,strains){
   title(main=LETTERS[1],adj=0)
 
   # Plot probability of infection by age
-  plot(f.y(historytabSim[,1]),ylim=c(0,1.01),col=col.list$col1,xaxt="n",xlab="age in 2015",ylab="probability infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  plot(f.y(historytabSim[,1]),ylim=c(0,1.01),col=col.list$col1,xaxt="n",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
   lines(f.y(historytabSim[,2]),col=col.list$col2,lwd=lw.1)
   lines(f.y(historytabSim[,3]),col=col.list$col3,lwd=lw.1)
   lines(f.y(historytabSim[,4]),col=col.list$col4,lwd=lw.1)

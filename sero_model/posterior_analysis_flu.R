@@ -24,7 +24,6 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   lik.tot=rowSums(likelihoodtab)
   maxlik=max(lik.tot)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
-  
 
   #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
   #plot(as.data.frame(thetatab)$sigma[runs1:runsPOST],type="l",ylab="sigma")
@@ -83,6 +82,11 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   hist.sample=length(historytabCollect[,1])/n_part
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
   hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
+  
+  plot(map.tabCollect[1,],type="l")
+  for(ii in 1:length(hist.sample)){
+    lines(map.tabCollect[ii,],type="l")
+  }
   
   dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=12,height=8)
   dev.off()

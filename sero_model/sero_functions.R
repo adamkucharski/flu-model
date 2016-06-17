@@ -54,7 +54,7 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, inf_years){ # ii=par
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Functions to set up parameters for model
-
+#Calculate dmatrix by year
 outputdmatrix<-function(theta,inf_years,linearD=F,locmat=NULL){
   if (is.null(locmat)) {
     # Exponential decay
@@ -71,6 +71,18 @@ outputdmatrix<-function(theta,inf_years,linearD=F,locmat=NULL){
   dmatrix
 }
 
+# Calculate dmatrix from antigenic map data (either fitted or specified) - This makes above function redundant
+outputdmatrix.fromcoord<-function(theta,inf_years,anti.map.in){ #anti.map.in can be vector or matrix - rows give inf_years, columns give location
+  if(length(anti.map.in)==length(inf_years)){
+    (dmatrix=sapply(anti.map.in,function(x){exp(-theta[["sigma"]]*abs(anti.map.in-x))}))
+  }else{
+    (dmatrix=apply(anti.map.in,1,function(x){exp(-theta[["sigma"]]*sqrt(
+      colSums(apply(anti.map.in,1,function(y){(y-x)^2}))
+      ))}))
+  }
+}
+
+# - - - - - - - - - - - - - - - -
 # Compile c code
 compile.c<-function(){
   require("Rcpp")
@@ -156,7 +168,7 @@ estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ #
 # - - - - - - - - - - - - - - - -
 # Simulation infection history data
 
-simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1,roundv=F,linD=F,dmatrix.in=NULL){ # ii=participant | jj=test year
+simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1,roundv=F,linD=F,antigenic.map.in=NULL){ # ii=participant | jj=test year
   
   # Variables needed: test_years,inf_years,strain_years,n_part
   #strain_years=seq(1968,2010,4)
@@ -175,11 +187,9 @@ simulate_data<-function(test_years,historytabPost=NULL, inf_years,strain_years,n
     return
   }
   
-  if(is.null(dmatrix.in)){
-    dmatrix=outputdmatrix(thetastar,inf_years,linD)
-  }else{
-    dmatrix=dmatrix.in
-  }
+  if(is.null(antigenic.map.in)){antigenic.map.in=inf_years} # If no specified antigenic map, use linear function by year
+  dmatrix=outputdmatrix.fromcoord(thetastar,inf_years,antigenic.map.in)
+  
   
   #Set per year incidence, to create correlation between participant infection histories
   log.sd=1
@@ -306,6 +316,18 @@ SampleAge<-function(pick,ageA){
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Resample antigenic location
+
+SampleAntigenicMap<-function(anti.map.star,epsilon.map,inf_years){
+  if(length(anti.map.star)==length(inf_years)){
+    sort(as.numeric(mvrnorm(1,anti.map.star, Sigma=(diag(1+0*inf_years))*epsilon.map)))
+  }else{
+    apply(anti.map.star,2, function(x){as.numeric(mvrnorm(1,x, Sigma=(diag(1+0*inf_years))*epsilon.map))})
+  }
+  
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Convert infection history to binary -- NOTE THIS IS NOT CURRENTLY ACTIVE
 
 convert_binary <- function(x){sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1))-1))}
@@ -370,12 +392,14 @@ run_mcmc<-function(
   switch1=2,
   seedi=1,
   pmask=NULL,
-  linD=F # toggles linear/exponential cross-reactivity function
+  linD=F, # toggles linear/exponential cross-reactivity function
+  antigenic.map.in=NULL # define specific map structure (or initial structure if fitting)
   ){
   
   # DEBUG set params <<<
   # hist.true=NULL; test.yr=c(2007); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=F; pmask=NULL
   
+  if(is.null(antigenic.map.in)){antigenic.map.in=inf_years}
   test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
   sample.index=strain_years-min(strain_years)+1
   historyii=rbinom(inf.n, 1, 0.1) # dummy infection history
@@ -396,6 +420,8 @@ run_mcmc<-function(
   historytab=matrix(NA,nrow=n_part,ncol=inf.n)
   historytabCollect=historytab
   age.tab=matrix(NA,nrow=n_part,ncol=1)
+  map.tab=antigenic.map.in
+  map.tabCollect=NULL
   
   # Pick plausible initial conditions -- using all test years
   if(is.null(hist.true)){
@@ -440,9 +466,18 @@ run_mcmc<-function(
     
     # - - - - - - - - - - - - - - - -
     # Resample parameters
-    
+
     if(m %% switch1==0 | m==1){ # m==1 condition as have to calculate all liks on first step
       theta_star = SampleTheta(thetatab[m,], m,cov_matrix_theta,cov_matrix_basic,nparam=sum(cov_matrix_theta0)) #resample theta
+      
+      if(sum(pmask=="map.fit")>0){ # check whether to fit antigenic map
+        map_star=SampleAntigenicMap(anti.map.star=map.tab,epsilon.map=epsilon0,inf_years) # resample antigenic map
+      }else{
+        map_star=map.tab
+      }
+      
+      SampleAntigenicMap(anti.map.star=inf_years,epsilon.map=0.01,inf_years) # sample antigenic map
+      
       #age_star = age.tab
       history_star = historytab
       pickA=c(1:n_part)
@@ -454,8 +489,8 @@ run_mcmc<-function(
       history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years) #resample history
       theta_star =thetatab[m,]
     }
-    
-    dmatrix=outputdmatrix(theta_star,inf_years,linD) # Arrange parameters
+
+    dmatrix=outputdmatrix.fromcoord(theta_star,inf_years,anti.map.in=map_star) # Arrange antigenic map into cross-reaction matrix
     
     # - - - - - - - - - - - - - - - -
     # LIKELIHOOD function - Only calculate for updated history
@@ -484,6 +519,7 @@ run_mcmc<-function(
     if(runif(1) < output_prob){
       thetatab[m+1,] = theta_star
       if(m %% switch1!=0){historytab = history_star} # Only change if resampled
+      if(m %% switch1==0){map.tab = map_star} # Only change if resampled
       #if(m %% switch1==0){age.tab = age_star} # Only change if resampled - not currently active
       likelihoodtab[m+1,] = lik_val
       if(m %% switch1==0){accepttabT=c(accepttabT,1)}
@@ -508,11 +544,12 @@ run_mcmc<-function(
     
     if(m %% min(runs,20) ==0){
       historytabCollect=rbind(historytabCollect,historytab)
+      map.tabCollect=rbind(map.tabCollect,map.tab)
     }
     
     if(m %% min(runs,1000) ==0){
       print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
+      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,map.tabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
     }
     
   } #End runs loop
