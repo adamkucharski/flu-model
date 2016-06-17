@@ -39,7 +39,7 @@ simulate_sera_data<-function(strains,inf.years.sera=c(1980:2015),time.series.in=
     
     # circulation in last year only for final strain, with 50% attack rate
     time.series[,strains]=0
-    time.series[inf.n,strains]=0.5
+    time.series[inf.n,strains]=zikv.attack
     
   }else{
     time.series=time.series.in
