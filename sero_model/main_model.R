@@ -39,7 +39,7 @@ simulation.infer <- function(seed_i) {
   # SIMULATION MODEL
   # Generate simulated data - tau1=back-boost  / tau2=suppress
   
-  thetaSim = c(mu=4,tau1=0,tau2=0.1,wane=0.01,sigma=0.3,muShort=1e-6,error=0.05,disp_k=1); npartM=300
+  thetaSim = c(mu=4,tau1=0,tau2=0.1,wane=0.01,sigma=0.3,muShort=1e-6,error=0.05,disp_k=1); npartM=500
   
   # Generate 2D map
   inf_years.in=seq(1970,2011,1)
@@ -86,10 +86,10 @@ simulation.infer <- function(seed_i) {
     n_part,
     test.list=test.listSim, # use simulated data as input
     theta=theta0,
-    runs=1e3, # number of MCMC runs
+    runs=1e4, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
-    switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
+    switch1=5, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=c("wane","muShort","map.fit"), # ,"map.fit" specify parameters to fix - no short term dynamics at present
     seedi=loadseed,
     antigenic.map.in= sim.map.in, # Define initial map to fit

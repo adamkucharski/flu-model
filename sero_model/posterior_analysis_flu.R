@@ -13,6 +13,26 @@ c.nume<-function(x){
   as.numeric(bp1)
 }
 
+# Rotate antigenic maps to be uniform
+scale.map<-function(map.pick){
+  f.m=length(map.pick[,1])
+  # translate map to finish at (0,0)
+  map.pick[,1]=map.pick[,1]-map.pick[f.m,1]
+  map.pick[,2]=map.pick[,2]-map.pick[f.m,2]
+  
+  # rotate map so final coordinate is (0,0) and penultimate is (0,1) 
+  r.theta=atan(map.pick[(f.m-1),1]/map.pick[(f.m-1),2]) # angle of rotation
+  
+  map.pick[,1]=map.pick[,1]*cos(r.theta)-map.pick[,2]*sin(r.theta)
+  map.pick[,2]=map.pick[,1]*sin(r.theta)+map.pick[,2]*cos(r.theta)
+  
+  # flip so 3rd from last is positive
+  map.pick[,1]=sign(map.pick[(f.m-2),1])*map.pick[,1]
+  
+  map.pick
+  
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot MCMC posterior distributions
 
@@ -79,6 +99,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   hist(thin.theta[["muShort"]],main=ESS.label(ESS.calc[["muShort"]]),col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,40))
   if(simDat==T){abline(v=thetaSim[["muShort"]],col="red")}
   
+  # Plot distribution of infections
   hist.sample=length(historytabCollect[,1])/n_part
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
   hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
@@ -90,17 +111,31 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   # Plot antigenic map
   par(mfrow=c(1,1))
   par(mar = c(5,5,1,1))
-  
-  plot(map.tabCollect[[1]],type="l",col="grey",xlab="strain dimension 1", xaxs="i", yaxs="i",ylab="strain dimension 2")
+  map.sample=length(map.tabCollect)
+
+  minMT=min(unlist(map.tabCollect)); maxMT=max(unlist(map.tabCollect))
+  MTx=c(-5,15)
+  MTy=c(-5,10)
+  plot(map.tabCollect[[1]],xlim=MTx,ylim=MTy,type="l",col="white",lwd=2,xlab="strain dimension 1", xaxs="i", yaxs="i",ylab="strain dimension 2")
   #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
   #plot(map.tabCollect[1,],0*map.tabCollect[1,],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
-  for(ii in 1:500){
-    pick=sample(hist.sample-1,1)
-    lines(map.tabCollect[[pick]],type="l",col=rgb(0,0,0.4,0.02))
+  for(ii in 1:200){
+    pick=sample(c(round(0.15*map.sample):map.sample),1)
+    
+    map.pick = scale.map(map.tabCollect[[pick]])
+    sigma.scale=as.numeric(as.data.frame(thetatab)[pick*20,]["sigma"]) # scale to one antigenic unit
+    map.pick[,1]=map.pick[,1]/(exp(-sigma.scale))
+    map.pick[,2]=map.pick[,2]/(map.pick[2,2]*exp(-sigma.scale))
+    
+    map.pick = map.tabCollect[[pick]]
+    points(map.pick,col=rgb(0.5,0.5,0.9,0.1),pch=19,cex=1)
   }
   
   if(simDat==T){
-    points(antigenic.map.in)
+    map.pick = scale.map(antigenic.map.in)
+    map.pick[,1]=map.pick[,1]/(exp(-thetaSim[["sigma"]]))
+    map.pick[,2]=map.pick[,2]/(map.pick[2,2]*exp(-thetaSim[["sigma"]]))
+    lines(antigenic.map.in,col="black",lwd=2)
   }
   
   ## Alternative way of plotting linear antigenic space

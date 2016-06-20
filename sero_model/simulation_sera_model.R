@@ -37,7 +37,7 @@ simulate_sera_data<-function(strains,inf.years.sera=c(1980:2015),time.series.in=
   if(is.null(time.series.in)){
     time.series=generate_timeseries(strains,inf.years.sera,n_part,p.inf.in,sd.val.in)
     
-    # circulation in last year only for final strain, with 50% attack rate
+    # circulation in last year only for final strain, with attack rate = zikv.attack
     time.series[,strains]=0
     time.series[inf.n,strains]=zikv.attack
     
@@ -63,6 +63,7 @@ simulate_sera_data<-function(strains,inf.years.sera=c(1980:2015),time.series.in=
     historytabSim=rbind(historytabSim,prob.inf)
   }
 
+  # Define cross reaction matrix
   if(is.null(dmatrix.in)){
     dmatrix=diag(strains)*(1-theta[["error"]])+(1-diag(strains))*theta[["sigma"]] # default cross-reaction structure
   }else{
