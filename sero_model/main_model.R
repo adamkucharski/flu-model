@@ -31,43 +31,48 @@ compile.c() # Compile c code
 # Define simple function of seed
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-fnSeedLoop <- function(seed_i) {
+simulation.infer <- function(seed_i) {
 
-  loadseed=seed_i
+  loadseed="SIM"
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # SIMULATION MODEL
   # Generate simulated data - tau1=back-boost  / tau2=suppress
   
-  thetaSim=c(mu=4,tau1=0.2,tau2=0.2,wane=0.01,sigma=0.3,muShort=0.1,error=0.05,disp_k=1); npartM=300
-  simulate_data(test_years=seq(2007,2008), # this needs to be vector
-                inf_years=seq(1970,2011,1),strain_years=seq(1970,2010,2),n_part=npartM,thetastar=thetaSim,p.inf=0.1,seedi=loadseed)
+  thetaSim = c(mu=4,tau1=0,tau2=0.1,wane=0.01,sigma=0.3,muShort=1e-6,error=0.05,disp_k=1); npartM=300
+  
+  # Generate 2D map
+  inf_years.in=seq(1970,2011,1)
+  sim.map.in = generate.antigenic.map(inf_years.in)
+  
+  simulate_data(test_years=seq(2010,2011), # this needs to be vector
+                inf_years=inf_years.in,strain_years=seq(1970,2010,2),n_part=npartM,
+                roundv=T, # Generate integer titre data
+                thetastar=thetaSim,
+                antigenic.map.in= sim.map.in,
+                p.inf=0.15,seedi=loadseed)
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # INFERENCE MODEL
-  # Run MCMC for specific data set
+  # Run MCMC for simulated data set
 
-  loadseed=1 # ** Fix for initial testing **
-  #load("R_datasets/HaNam_data.RData")
-  load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
-  
-  # Plot simulation data vs history
-  #source("simulation_plots.R")
+  loadseed="SIM" # ** Fix for initial testing **
+  load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep="")) # Load simulation data for inference step that follows
   
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=1)
-  theta0[["mu"]]=3 # basic boosting
-  theta0[["tau1"]]=0.1 # back-boost
+  theta0[["mu"]]=4 # basic boosting
+  theta0[["tau1"]]=0.01 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/1 # short term waning - half life of /X years
-  theta0[["sigma"]]=0.2 # cross-reaction
-  theta0[["muShort"]]=5 # short term boosting
-  theta0[["error"]]=0.2 # measurement error
-  theta0[["disp_k"]]=0.1 # measurement error
+  theta0[["sigma"]]=0.3 # cross-reaction
+  theta0[["muShort"]]=1e-6 # short term boosting
+  theta0[["error"]]=0.1 # measurement error
+  theta0[["disp_k"]]=0.1 # overdispersion (deprecated)
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
   
-  define.year=c(2007:2012) # years to include in inference
+  define.year=seq(2010,2011) # years to include in inference
   
   # browser()
   
@@ -79,17 +84,20 @@ fnSeedLoop <- function(seed_i) {
     inf_years,
     strain_years,
     n_part,
-    test.list,
+    test.list=test.listSim, # use simulated data as input
     theta=theta0,
-    runs=1e5, # number of MCMC runs
+    runs=1e3, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
-    pmask=c("wane"), # specify parameters to fix
+    pmask=c("wane","muShort","map.fit"), # ,"map.fit" specify parameters to fix - no short term dynamics at present
     seedi=loadseed,
+    antigenic.map.in= sim.map.in, # Define initial map to fit
     linD=F)
   
 }
+
+# Run code on network
 
 system.time(
 

@@ -82,6 +82,16 @@ outputdmatrix.fromcoord<-function(theta,inf_years,anti.map.in){ #anti.map.in can
   }
 }
 
+# Generate random walk 2D antigenic map 
+generate.antigenic.map<-function(inf_years){
+  
+  map=matrix(0,ncol=2,nrow=length(inf_years))
+  for(ii in 2:length(inf_years)){
+    map[ii,]=map[ii-1,]+ (1 - 1.7*runif(2)) # Biased random walk of mean size one unit per year # Unbiased walk: (1-2*runif(2)) 
+  }
+  map
+}
+
 # - - - - - - - - - - - - - - - -
 # Compile c code
 compile.c<-function(){
@@ -246,9 +256,9 @@ simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_
   # Export data
   #browser()
   if(is.null(historytabPost)){
-    save(test_years,inf_years,strain_years,n_part,test.listSim,age.yr,historytabSim,file=paste("R_datasets/Simulated_data_",seedi,".RData",sep=""))
+    save(test_years,inf_years,strain_years,n_part,test.listSim,age.yr,antigenic.map.in,historytabSim,file=paste("R_datasets/Simulated_data_",seedi,".RData",sep=""))
   }else{
-    save(test_years,inf_years,strain_years,n_part,test.listSim,age.yr,file=paste("R_datasets/Simulated_dataPost_",seedi,".RData",sep=""))
+    save(test_years,inf_years,strain_years,n_part,test.listSim,age.yr,antigenic.map.in,file=paste("R_datasets/Simulated_dataPost_",seedi,".RData",sep=""))
   }
 }
 
@@ -399,7 +409,7 @@ run_mcmc<-function(
   # DEBUG set params <<<
   # hist.true=NULL; test.yr=c(2007); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=F; pmask=NULL
   
-  if(is.null(antigenic.map.in)){antigenic.map.in=inf_years}
+  if(is.null(antigenic.map.in)){antigenic.map.in=inf_years} # if no input map, assume 1D
   test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
   sample.index=strain_years-min(strain_years)+1
   historyii=rbinom(inf.n, 1, 0.1) # dummy infection history
@@ -421,7 +431,7 @@ run_mcmc<-function(
   historytabCollect=historytab
   age.tab=matrix(NA,nrow=n_part,ncol=1)
   map.tab=antigenic.map.in
-  map.tabCollect=NULL
+  map.tabCollect=list()
   
   # Pick plausible initial conditions -- using all test years
   if(is.null(hist.true)){
@@ -544,12 +554,12 @@ run_mcmc<-function(
     
     if(m %% min(runs,20) ==0){
       historytabCollect=rbind(historytabCollect,historytab)
-      map.tabCollect=rbind(map.tabCollect,map.tab)
+      map.tabCollect[[round(m/20)]]=map.tab
     }
     
     if(m %% min(runs,1000) ==0){
       print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,n_part,test.list,historytab,historytabCollect,map.tabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
+      save(likelihoodtab,thetatab,inf_years,n_part,test.list,historytab,historytabCollect,map.tabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
     }
     
   } #End runs loop

@@ -1,6 +1,6 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Simulation diagnostics
-# Compare MCMC output to simulation data
+# Simulation and inference diagnostics
+# Plot posteriors and compare MCMC output to titre data
 
 # Convert vector to median and 95% CrI
 c.text<-function(x,sigF=3){
@@ -13,21 +13,25 @@ c.nume<-function(x){
   as.numeric(bp1)
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Plot MCMC posterior distributions
+
 plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   
+  loadseed="SIM"
   load(paste("posterior_sero_runs/outputR_f",paste(define.year,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
   par(mfrow=c(3,3))
   par(mar = c(5,5,1,1))
   colA=rgb(0.8,0.8,0.8)
   
-  # Plot profile likelihood
+  # Define lengths and sizes of inputs
   lik.tot=rowSums(likelihoodtab)
-  maxlik=max(lik.tot)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
+  maxlik=max(lik.tot[1:runsPOST])
 
   #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
-  #plot(as.data.frame(thetatab)$sigma[runs1:runsPOST],type="l",ylab="sigma")
   
+  # - - - - - - - 
   # Calculate ESS by burn-in
   runs1=ceiling(0.25*runsPOST)
   
@@ -39,13 +43,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
     ESS.calc=effectiveSize(thin.theta)
     ESS.calc
   }
-  
-  #xx.E=seq(0.05,0.4,0.05)
-  #yy.E=sapply(xx.E,function(x){calculate.ESS(ceiling(x*runsPOST))[["mu"]]})
-  
-  #plot(xx.E,yy.E)
-  # Find optimal cutoff
-  #runs1=ceiling(xx.E[min(c(1:length(yy.E))[yy.E==max(yy.E)])]*runsPOST)
+
   ESS.calc=calculate.ESS(runs1)
   
   thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
@@ -58,9 +56,11 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   # Plot results
   
   plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
-  hist(as.data.frame(thetatab)$error[runs1:runsPOST],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,0.1))
   
-  # Plot histogram of boosting
+  # Plot histograms of parameters
+  hist(as.data.frame(thetatab)$error[runs1:runsPOST],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,0.1))
+  if(simDat==T){abline(v=thetaSim[["error"]],col="red")}
+
   hist(thin.theta[["mu"]],main= ESS.label(ESS.calc[["mu"]]),col=colA,xlab="mu",prob=TRUE,xlim=c(0,5))
   if(simDat==T){abline(v=thetaSim[["mu"]],col="red")}
   
@@ -83,18 +83,43 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2007:2012)){
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
   hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
   
-  plot(map.tabCollect[1,],type="l")
-  for(ii in 1:length(hist.sample)){
-    lines(map.tabCollect[ii,],type="l")
+  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=12,height=8)
+  dev.off()
+  
+  # - - - -
+  # Plot antigenic map
+  par(mfrow=c(1,1))
+  par(mar = c(5,5,1,1))
+  
+  plot(map.tabCollect[[1]],type="l",col="grey",xlab="strain dimension 1", xaxs="i", yaxs="i",ylab="strain dimension 2")
+  #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
+  #plot(map.tabCollect[1,],0*map.tabCollect[1,],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
+  for(ii in 1:500){
+    pick=sample(hist.sample-1,1)
+    lines(map.tabCollect[[pick]],type="l",col=rgb(0,0,0.4,0.02))
   }
   
-  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=12,height=8)
+  if(simDat==T){
+    points(antigenic.map.in)
+  }
+  
+  ## Alternative way of plotting linear antigenic space
+  #plot(map.tabCollect[[1]],0*map.tabCollect[[1]],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
+  #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
+  #for(ii in 1:500){ 
+  #  for(jj in 1:length(map.tabCollect[1,])){
+  #    pick=sample(hist.sample-1,1)
+  #    lines(c(map.tabCollect[[pick]][jj],map.tabCollect[[pick]][jj]),c(0,1),type="l",col=rgb(0.7,0.7,0.8,0.05))
+  #  }
+  #}
+  
+  dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
   dev.off()
 
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Compare multiple MCMC outputs for vector of years
+# Compare multiple MCMC outputs for vector of different years fitted
 
 plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
   
@@ -166,7 +191,7 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012)){
   store.mcmc.test.data=array(NA, dim=c(btstrap,n_part,n.strains,n.test,2)) # Store expected titres for each test year
   store.mcmc.hist.data=array(NA, dim=c(btstrap,n_part,n.inf,n.test)) # Store history for each test year
   
-  # - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - -
   # Sample from MCMC runs to get stored matrices of expected titre and estimated infection years
 
   for(sampk in 1:btstrap){
@@ -249,19 +274,20 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012)){
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Plot simulated data against runs
+# Plot simulated data
 
 plot.sim.data<-function(){
 
-
-  # UPDATE THIS BIT
+  loadseed="SIM"
+  load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
+  
   #Compare model fits using posterior infection history (historytabPost) and parameters
-  simulate_data(define.year,historytabPost=historytab,
+  simulate_data(define.year,historytabPost=historytabSim,
                 inf_years,
                 strain_years,
-                n_part=npartM,thetastar=as.data.frame(thetatab)[runsPOST,],p.inf=0.1)
+                n_part=npartM,thetastar=thetaSim,p.inf=0.1)
   
-  load("R_datasets/Simulated_dataPost.RData")
+  load("R_datasets/Simulated_dataPost_1.RData")
   par(mfrow=c(2,5))
   par(mar = c(5,5,1,1))
   for(ii0 in 1:n_part){
@@ -271,10 +297,10 @@ plot.sim.data<-function(){
     #  lines(c(jj,jj),c(0,9*historytabSim[ii0,jj]),col='red')
     #}
     for(jj in 1:length(lenhis)){
-      lines(c(jj,jj),c(0,9*historytab[ii0,jj]),col='blue')
+      lines(c(jj,jj),c(0,9*historytabSim[ii0,jj]),col='blue')
     }
-    lines(test.list[[ii0]][[1]][4,],test.list[[ii0]][[1]][2,],type="l")
-    points(test.list[[ii0]][[1]][4,],test.list[[ii0]][[1]][2,],pch=19)
+    lines(test.listSim[[ii0]][[1]][4,],test.listSim[[ii0]][[1]][2,],col=rgb(0.8,0.8,0.8),lwd=2) # Plot estimated infections
+    points(test.listSim[[ii0]][[1]][4,],test.listSim[[ii0]][[1]][2,],pch=19)
     if(ii0 %% 10==0){
       dev.copy(pdf,paste("plot_simulations/sim",ii0,"P.pdf",sep=""),width=12,height=6)
       dev.off()
