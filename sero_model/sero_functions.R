@@ -72,11 +72,11 @@ outputdmatrix<-function(theta,inf_years,linearD=F,locmat=NULL){
 }
 
 # Calculate dmatrix from antigenic map data (either fitted or specified) - This makes above function redundant
-outputdmatrix.fromcoord<-function(theta,inf_years,anti.map.in){ #anti.map.in can be vector or matrix - rows give inf_years, columns give location
+outputdmatrix.fromcoord<-function(thetasigma,inf_years,anti.map.in){ #anti.map.in can be vector or matrix - rows give inf_years, columns give location
   if(length(anti.map.in)==length(inf_years)){
-    (dmatrix=sapply(anti.map.in,function(x){exp(-theta[["sigma"]]*abs(anti.map.in-x))}))
+    (dmatrix=sapply(anti.map.in,function(x){exp(-thetasigma*abs(anti.map.in-x))}))
   }else{
-    (dmatrix=apply(anti.map.in,1,function(x){exp(-theta[["sigma"]]*sqrt(
+    (dmatrix=apply(anti.map.in,1,function(x){exp(-thetasigma*sqrt(
       colSums(apply(anti.map.in,1,function(y){(y-x)^2}))
       ))}))
   }
@@ -87,7 +87,7 @@ generate.antigenic.map<-function(inf_years){
   
   map=matrix(0,ncol=2,nrow=length(inf_years))
   for(ii in 2:length(inf_years)){
-    map[ii,]=map[ii-1,]+ (1 - 1.7*runif(2)) # Biased random walk of mean size one unit per year # Unbiased walk: (1-2*runif(2)) 
+    map[ii,]=map[ii-1,]+ (1 - 1.5*runif(2)) # Biased random walk of mean size one unit per year # Unbiased walk: (1-2*runif(2)) 
   }
   map
 }
@@ -108,7 +108,7 @@ compile.c<-function(){
 # - - - - - - - - - - - - - - - -
 # Define expected titre function
 
-func1 <- function(x,titredat,dd,theta,testyear_index) {
+func1 <- function(x,titredat,dd,dd2,theta,testyear_index) {
   if (!is.numeric(x)){stop("argument x must be numeric")}
   out <- .C("c_model2_sr",
             n=as.integer(length(x)),
@@ -119,6 +119,7 @@ func1 <- function(x,titredat,dd,theta,testyear_index) {
             titre=as.double(titredat),
             titrepred=as.double(rep(0,length(titredat))),
             dd=as.double(dd),
+            dd2=as.double(dd2),
             ntheta=as.integer(length(theta)),
             theta=as.double(theta),
             inputtestyr=as.integer(testyear_index)
@@ -152,7 +153,7 @@ likelihood.titre<-function(expect,titredat,theta){
 # - - - - - - - - - - - - - - - -
 # Calculate likelihood for given participant and test year
 
-estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ # ii=participant | jj=test year
+estimatelik<-function(ii,jj,historyii,dmatrix,dmatrix2,theta_star,test.list,testyearI){ # ii=participant | jj=test year
   
   test.II=test.list[[ii]]
   test.jj=test.II[[jj]]
@@ -164,10 +165,13 @@ estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ #
     test.part=as.numeric(test.jj[4,]) # index of sample strains data available for
     titredat=test.jj[2,] # Define titre data
     
-    d.ij=dmatrix[test.part,] # Define cross-immunity matrix for sample strain
+    d.ij=dmatrix[test.part,] # Define cross-immunity matrix 1 for sample strain
     d_vector=melt(t(d.ij))$value #melt is by column
+    
+    d.ij2=dmatrix2[test.part,] # Define cross-immunity matrix 2 for sample strain
+    d_vector2=melt(t(d.ij2))$value #melt is by column
 
-    expect=func1(historyii,titredat,d_vector,theta_star,testyearI) # Output expectation
+    expect=func1(historyii,titredat,d_vector,d_vector2,theta_star,testyearI) # Output expectation
     
     #print(likelihood.titre(expect,titredat,theta_star))
     likelihood.titre(expect,titredat,theta_star)
@@ -178,10 +182,15 @@ estimatelik<-function(ii,jj,historyii,dmatrix,theta_star,test.list,testyearI){ #
 # - - - - - - - - - - - - - - - -
 # Simulation infection history data
 
-simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1,roundv=F,linD=F,antigenic.map.in=NULL){ # ii=participant | jj=test year
+simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1,roundv=F,linD=F,antigenic.map.in=NULL,pmask=NULL){ # ii=participant | jj=test year
   
   # Variables needed: test_years,inf_years,strain_years,n_part
   #strain_years=seq(1968,2010,4)
+  
+  # Make adjustments depending on what is fitted and not
+  if(sum(pmask=="wane")>0){thetastar[["muShort"]]=1e-10} # Set short term boosting ~ 0 if waning not fitted
+  if(sum(pmask=="map.fit")>0){ thetastar[["sigma"]]=1} # Set cross-reactivity = 1 and don't fit if antigenic map also fitted (to avoid overparameterisation)
+  if(sum(pmask=="sigma2")>0){ thetastar[["sigma2"]]=thetastar[["sigma"]] } # Fix equal if sigma same for both 
   
   # Set year of birth
   age.yr=sample(1:80,n_part,replace = TRUE)
@@ -190,6 +199,7 @@ simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_
   inf.n=length(inf_years)
   nstrains=length(strain_years)
   sample.index=strain_years-min(strain_years)+1
+  theta.sim.out=thetastar
   
   # Check inputs are correct
   if(sum(max(test_years)==inf_years)==0){
@@ -198,7 +208,8 @@ simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_
   }
   
   if(is.null(antigenic.map.in)){antigenic.map.in=inf_years} # If no specified antigenic map, use linear function by year
-  dmatrix=outputdmatrix.fromcoord(thetastar,inf_years,antigenic.map.in)
+  dmatrix=outputdmatrix.fromcoord(thetastar[["sigma"]],inf_years,antigenic.map.in)
+  dmatrix2=outputdmatrix.fromcoord(thetastar[["sigma2"]],inf_years,antigenic.map.in)
   
   
   #Set per year incidence, to create correlation between participant infection histories
@@ -232,10 +243,14 @@ simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_
       
       d.ij=dmatrix[sample.index,] # Define cross-immunity matrix for sample strain
       d_vector=melt(t(d.ij))$value
+      
+      d.ij2=dmatrix2[sample.index,] # Define cross-immunity matrix for sample strain
+      d_vector2=melt(t(d.ij2))$value
+      
       testyr=test_years[jj]
       testyearI=c(1:inf.n)[inf_years==testyr]
       
-      expect=func1(historyii,sample.index,d_vector,thetastar,testyearI) # Output expectation
+      expect=func1(historyii,sample.index,d_vector,d_vector2, thetastar,testyearI) # Output expectation
       
       #titredat=sapply(expect,function(x){rpois(1,x)}) # Generate titre
       if(roundv==T){titredat=round(expect)}else{titredat=expect}
@@ -256,9 +271,9 @@ simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_
   # Export data
   #browser()
   if(is.null(historytabPost)){
-    save(test_years,inf_years,strain_years,n_part,test.listSim,age.yr,antigenic.map.in,historytabSim,file=paste("R_datasets/Simulated_data_",seedi,".RData",sep=""))
+    save(test_years,inf_years,strain_years,n_part,test.listSim,theta.sim.out, age.yr,antigenic.map.in,historytabSim,file=paste("R_datasets/Simulated_data_",seedi,".RData",sep=""))
   }else{
-    save(test_years,inf_years,strain_years,n_part,test.listSim,age.yr,antigenic.map.in,file=paste("R_datasets/Simulated_dataPost_",seedi,".RData",sep=""))
+    save(test_years,inf_years,strain_years,n_part,test.listSim,theta.sim.out, age.yr,antigenic.map.in,file=paste("R_datasets/Simulated_dataPost_",seedi,".RData",sep=""))
   }
 }
 
@@ -420,6 +435,14 @@ run_mcmc<-function(
   
   # Specific MCMC parameters
   #browser()
+
+  # Make adjustments depending on what is fitted and not
+  if(sum(pmask=="wane")>0){theta[["muShort"]]=1e-10} # Set short term boosting ~ 0 if waning not fitted
+  if(sum(pmask=="map.fit")>0){ theta[["sigma"]]=1; pmask=c(pmask,"sigma","sigma2")} # Set cross-reactivity = 1 and don't fit if antigenic map also fitted (to avoid overparameterisation)
+  if(sum(pmask=="sigma2")>0){ theta[["sigma2"]]=theta[["sigma"]] } # Fix equal if sigma same for both 
+  
+  
+  # Preallocate memory
   nparam=length(theta); npcov=rep(1,nparam); npcov[match(pmask,names(theta))]=0 # mask specified parameters
   cov_matrix_theta0 = diag(npcov)
   cov_matrix_thetaA=cov_matrix_theta0
@@ -480,6 +503,8 @@ run_mcmc<-function(
     if(m %% switch1==0 | m==1){ # m==1 condition as have to calculate all liks on first step
       theta_star = SampleTheta(thetatab[m,], m,cov_matrix_theta,cov_matrix_basic,nparam=sum(cov_matrix_theta0)) #resample theta
       
+      if(sum(pmask=="sigma2")>0){ theta_star[["sigma2"]]=theta_star[["sigma"]] } # Fix equal if sigma same for both 
+      
       if(sum(pmask=="map.fit")>0){ # check whether to fit antigenic map
         map_star=SampleAntigenicMap(anti.map.star=map.tab,epsilon.map=epsilon0,inf_years) # resample antigenic map
       }else{
@@ -500,7 +525,8 @@ run_mcmc<-function(
       theta_star =thetatab[m,]
     }
 
-    dmatrix=outputdmatrix.fromcoord(theta_star,inf_years,anti.map.in=map_star) # Arrange antigenic map into cross-reaction matrix
+    dmatrix=outputdmatrix.fromcoord(theta_star[["sigma"]],inf_years,anti.map.in=map_star) # Arrange antigenic map into cross-reaction matrix
+    dmatrix2=outputdmatrix.fromcoord(theta_star[["sigma2"]],inf_years,anti.map.in=map_star) # Arrange antigenic map into cross-reaction matrix
     
     # - - - - - - - - - - - - - - - -
     # LIKELIHOOD function - Only calculate for updated history
@@ -511,7 +537,7 @@ run_mcmc<-function(
       lik.ii=rep(NA,sample.n)
       for(kk in 1:sample.n){
         #For DEBUG: set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
-        lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,theta_star,test.list,testyear_index[kk])
+        lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,dmatrix2,theta_star,test.list,testyear_index[kk])
         #if(lik.ii[kk]==-Inf){print(c(ii,kk))  } For DEBUG
       }
       lik_val[ii]=sum(lik.ii)

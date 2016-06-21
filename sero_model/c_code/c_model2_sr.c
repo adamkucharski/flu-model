@@ -10,7 +10,7 @@
  */
 
 void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *titre, 
-                  double *titrepred, double *dd, int *ntheta, 
+                  double *titrepred, double *dd, double *dd2, int *ntheta, 
                   double *theta, int *inputtestyr)
 {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -23,7 +23,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	double T_2 = theta[2];
 	double wane = theta[3];
 	double mu = theta[0];
-	double mu2 = theta[5]; // as sigma is theta[4]
+	double mu2 = theta[6]; // as sigma and sigma 2 is theta[4:5]
 	
 	// This to be made an argument of the function -- gives test year
 	int t_sample = inputtestyr[0]; 
@@ -70,13 +70,13 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	  	    
 		/* Calculate expected titre	- note k indexed from 0 */
 	    /* Note that waning is currently linked with back boosting */
+	    /* dd is long term cross-reaction, dd2 is short-term */
 
 		for (i=0; i<n; i++){
 			x1[i] = maskedInfectionHistory[i] *
 			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0)) *
-			  //  mu ;
-			  (dd[k*n+i] * pow(1.0 + T_1 , (total_inf - cumInfectionHistory[i])) ) *
-			  (mu + mu2 * distanceFromTest[i] );
+			  (pow(1.0 + T_1 , (total_inf - cumInfectionHistory[i])) ) *
+			  (mu * dd[k*n+i] + mu2 * dd2[k*n+i] * distanceFromTest[i] );
 		}
 	
 		for (i=0; i<n; i++){
