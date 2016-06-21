@@ -35,7 +35,7 @@ scale.map<-function(map.pick){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot MCMC posterior distributions
 
-#plot.posteriors(simDat=T,loadseed="SIM")
+# plot.posteriors(simDat=T,loadseed="SIM",define.year=c(2007:2012))
 
 plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2009:2012)){
   
@@ -181,14 +181,14 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot expected titres using sampled posterior estimates against true titres 
 
-#plot.posterior.titres(loadseed="SIM",simDat=T,define.year=c(2009:2012))
+# plot.posterior.titres(loadseed="SIM",simDat=T,define.year=c(2007:2012))
 
 plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
   
   if(simDat==F){
     load("R_datasets/HaNam_data.RData")
   }else{
-    load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
+    load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep=""))
   }
   load(paste("posterior_sero_runs/outputR_f",paste(define.year,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
   
@@ -196,8 +196,8 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
   runsPOST=length(lik.tot[lik.tot!=-Inf])
   runs1=ceiling(0.2*runsPOST)
 
-  # Set up matrices to store
-  btstrap=100
+  # Set up matrices to store -- need btstrap >1
+  btstrap=2
   n.strains=length(strain_years) # this loads from main_model.R
   n.test=length(test.yr)
   n.inf=length(inf_years)
@@ -213,6 +213,7 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
     pickAhist=ceiling(pickA/20)+1 # check which history this specifies
     hist.sample=historytabCollect[((pickAhist-1)*n_part+1):(pickAhist*n_part),1:n.inf]
     theta.max=as.data.frame(thetatab)[pickA,]
+    theta.max[["wane"]]=2  # ** DEBUG **
   
   for(pickyr in 1:n.test){
     
@@ -222,7 +223,7 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
                   inf_years,
                   strain_years,
                   n_part,thetastar=theta.max,p.inf=0.1,
-                  pmask=c("sigma2"), # For old fitted data, need to specify that sigma2 wasn't fitted
+                  #pmask=c("sigma2"), # For old fitted data, need to specify that sigma2 wasn't fitted
                   linD=F)
     
     load("R_datasets/Simulated_dataPost_1.RData")
@@ -254,7 +255,7 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
     for(ii0 in 1:n_part){
       simtitreX=store.mcmc.test.data[,ii0,,pickyr,1]
       simtitreY=store.mcmc.test.data[,ii0,,pickyr,2]
-      hist.sample=store.mcmc.hist.data[,ii0,,pickyr]
+      hist.sample=store.mcmc.hist.data[,ii0,,pickyr] # for participant ii0 in year pickyr
   
       plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,9),col='white',xlab="year",ylab="titre")
       
@@ -295,16 +296,18 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
 plot.sim.data<-function(){
 
   loadseed="SIM"
-  load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
+  load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep=""))
+  
+  #load("R_datasets/Simulated_dataPost_1.RData")
   
   #Compare model fits using posterior infection history (historytabPost) and parameters
-  picktest=c(2009:2012)
+  picktest=c(2007:2012)
   n.test=length(picktest)
   
   simulate_data(test_years=picktest,historytabPost=historytabSim,
                 inf_years,
                 strain_years,
-                n_part=npartM,thetastar=thetaSim,p.inf=0.1)
+                n_part=npartM,thetastar=thetaSim,p.inf=0.1) #theta.max
   
   load("R_datasets/Simulated_dataPost_1.RData")
   par(mfrow=c(2,5))

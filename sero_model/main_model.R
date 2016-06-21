@@ -41,14 +41,15 @@ simulation.infer <- function(seed_i) {
   #tau1=back-boost  / tau2=suppress / disp_k=dispersion (deprecated) 
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
-  thetaSim = c(mu=3,tau1=0,tau2=0.1,wane=1,sigma=0.3,sigma2=0.1,muShort=5,error=0.05,disp_k=1)
-  npartM=50
+  thetaSim = c(mu=3,tau1=0,tau2=0.1,wane=1,sigma=0.3,muShort=5,error=0.05,disp_k=1,sigma2=0.1)
+  npartM=20
   
   # Generate 2D map
+  define.year=c(2007:2012) # test years
   inf_years.in=seq(1970,2012,1)
   sim.map.in = generate.antigenic.map(inf_years.in)
   
-  simulate_data(test_years=c(2009:2012), # this needs to be vector
+  simulate_data(test_years=define.year, # this needs to be vector
                 inf_years=inf_years.in,strain_years=seq(1970,2012,1),n_part=npartM,
                 roundv=T, # Generate integer titre data
                 thetastar=thetaSim,
@@ -64,11 +65,11 @@ simulation.infer <- function(seed_i) {
   load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep="")) # Load simulation data for inference step that follows
   
   # Set initial theta
-  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=1)
-  theta0[["mu"]]=4 # basic boosting
+  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=1,sigma2=0.1)
+  theta0[["mu"]]=2 # basic boosting
   theta0[["tau1"]]=0.1 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
-  theta0[["wane"]]=-log(0.5)/1 # short term waning - half life of /X years
+  theta0[["wane"]]=1  # -log(0.5)/1 # short term waning - half life of /X years
   theta0[["sigma"]]=0.3 # long-term cross-reaction
   theta0[["sigma2"]]=0.1 # short-term cross-reaction
   theta0[["muShort"]]=3 # short term boosting
@@ -76,12 +77,9 @@ simulation.infer <- function(seed_i) {
   theta0[["disp_k"]]=0.1 # overdispersion (deprecated)
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
-  
-  define.year=c(2009:2012) # years to include in inference
-  
+
   # browser()
-  
-  sim.map.in0 = generate.antigenic.map(inf_years.in)
+  sim.map.in0 = generate.antigenic.map(inf_years.in) # Define random initial map to fit
   
   # RUN MCMC
   # Note: NEED TO RE-INITIALISE DATAFRAME IF REPEAT RUN (i.e. reload dataset above)
@@ -93,7 +91,7 @@ simulation.infer <- function(seed_i) {
     n_part,
     test.list=test.listSim, # use simulated data as input
     theta=theta0,
-    runs=1e5, # number of MCMC runs
+    runs=1e4, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
@@ -130,7 +128,7 @@ make_trees <- function(n, nspp) {
 # Inference using cross-sectional vs longitudinal data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-data.infer <- function(year_test,mcmc.iterations,loadseed=1,fix.param=NULL,mushort0=5) {
+data.infer <- function(year_test,mcmc.iterations,loadseed=1,fix.param=NULL) {
   # INFERENCE MODEL
   # Run MCMC for specific data set
 
@@ -140,13 +138,14 @@ data.infer <- function(year_test,mcmc.iterations,loadseed=1,fix.param=NULL,musho
   #source("simulation_plots.R")
   
   # Set initial theta
-  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=NA)
+  theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=NA,sigma2=NA)
   theta0[["mu"]]=3 # basic boosting
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/0.5 + runif(1,c(-1,1)) # short term waning - half life of /X years
   theta0[["sigma"]]=0.2 # cross-reaction
-  theta0[["muShort"]]=mushort0 # short term boosting
+  theta0[["sigma2"]]=0.1 # short-term cross-reaction
+  theta0[["muShort"]]=5 # short term boosting
   theta0[["error"]]=0.1 # measurement error
   theta0[["disp_k"]]=0.01 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0

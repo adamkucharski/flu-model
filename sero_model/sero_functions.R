@@ -200,6 +200,7 @@ simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_
   nstrains=length(strain_years)
   sample.index=strain_years-min(strain_years)+1
   theta.sim.out=thetastar
+  historytabSim2=historytabPost
   
   # Check inputs are correct
   if(sum(max(test_years)==inf_years)==0){
@@ -273,7 +274,7 @@ simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_
   if(is.null(historytabPost)){
     save(test_years,inf_years,strain_years,n_part,test.listSim,theta.sim.out, age.yr,antigenic.map.in,historytabSim,file=paste("R_datasets/Simulated_data_",seedi,".RData",sep=""))
   }else{
-    save(test_years,inf_years,strain_years,n_part,test.listSim,theta.sim.out, age.yr,antigenic.map.in,file=paste("R_datasets/Simulated_dataPost_",seedi,".RData",sep=""))
+    save(test_years,inf_years,strain_years,n_part,test.listSim,theta.sim.out, age.yr,antigenic.map.in,historytabSim2,file=paste("R_datasets/Simulated_dataPost_",seedi,".RData",sep=""))
   }
 }
 
@@ -519,7 +520,7 @@ run_mcmc<-function(
       
     }else{
       pickA=NULL
-      pickA=sample(n_part, ceiling(varpart_prob0*n_part)) # check that not length zero
+      pickA=sample(n_part, ceiling(varpart_prob0*n_part)) # check that not length zero (i.e. at least one person sampled)
       #age_star = age.tab #SampleAge(pickA,age.tab) #resample age (not for now)
       history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years) #resample history
       theta_star =thetatab[m,]
@@ -584,7 +585,7 @@ run_mcmc<-function(
     }
     
     if(m %% min(runs,1000) ==0){
-      print(c(m,accept_rateH,varpart_prob0,round(sum(likelihoodtab[m,]))))
+      print(c(m,accept_rateT,varpart_prob0,round(sum(likelihoodtab[m,]))))
       save(likelihoodtab,thetatab,inf_years,n_part,test.list,historytab,historytabCollect,map.tabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
     }
     
