@@ -128,11 +128,15 @@ make_trees <- function(n, nspp) {
 # Inference using cross-sectional vs longitudinal data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-data.infer <- function(year_test,mcmc.iterations,loadseed=1,fix.param=NULL) {
+data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix.param=NULL) {
   # INFERENCE MODEL
   # Run MCMC for specific data set
-
-  load("R_datasets/HaNam_data.RData")
+  if(flutype=="H3"){
+    load("R_datasets/HaNam_data.RData")
+  }else{
+    load("R_datasets/Fluscape_data_List.RData")
+    year_test=c(2011,2012)
+  }
 
   # Plot simulation data vs history
   #source("simulation_plots.R")
@@ -170,8 +174,9 @@ data.infer <- function(year_test,mcmc.iterations,loadseed=1,fix.param=NULL) {
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=fix.param, #c("disp_k"), #c("wane"), #,"muShort"), # specify parameters to fix
-    seedi=loadseed,
+    seedi=paste(loadseed,"_",flutype,sep=""), # record output
     linD=F)
+  
 }
 
 
@@ -182,11 +187,11 @@ foreach(kk1=c(2007:2012)) %dopar% {
   data.infer(kk1,mcmc.iterations=1e2,loadseed=1,fix.param=c("disp_k","wane","muShort"),mushort0=1e-5)
 }
 
-# Multi-year inference
+# Longitudinal inference
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   kk1=c(2007:2012)
-  data.infer(kk1,mcmc.iterations=1e5,loadseed=kk,fix.param=c("disp_k"))
+  data.infer(kk1,mcmc.iterations=1e2,loadseed=kk,flutype="B",fix.param=c("disp_k"))
 }
 
 

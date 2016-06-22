@@ -90,7 +90,6 @@ make_fluscape_rdata <- function(
   npart <- noP
   test.n <- length(test_years)
   age.yr <- fsd$PART_AGE.V2
-  inf_years <- 0
   nstrains <- 3
   
   fsd <- fsd_tmp[subset_mask,]
