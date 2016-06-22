@@ -45,12 +45,15 @@ make_fluscape_rdata <- function(
                     ) 
   fsd <- fsd_tmp[subset_mask,]
   
-#   [,1] [,2] [,3] [,4] [,5] [,6]
-#   test.year    2010 2010 2010 2010 2010 2010
-#   titredat        1    2    4    3    6    3
-#   strain_years 1990 1994 1998 2002 2006 2010
-#   sample.index    1    5    9   13   17   21
-  
+  test_years <- c(2011,2012)
+  inf_years <- c(1987:2012)
+  if (sero=="YAM") {
+    strain_years=c(1988,2002,2006)
+  } else {
+    stop("only yam implemented in load_fluscape")
+  }
+
+  # SR array function - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # setup return obects problem here with noP
   noP <- dim(fsd)[1]
   rtn_yam_td <- array(
@@ -61,20 +64,13 @@ make_fluscape_rdata <- function(
   
   rtn_yam_td[,"test.year",] <- c(2011,2011,2011,2012,2012,2012)
   rtn_yam_td[,"strain_years",] <- c(1988,2002,2006,1988,2002,2006)
-  rtn_yam_td[,"sample.index",] <- c(1,2,3,1,2,3)
+  rtn_yam_td[,"sample.index",] <- c(1,2,3,1,2,3) # AK: updated to make years from first strain
   
   # Cycle through people putting in the right tire values
   for (i in 1:noP) {
     rtn_yam_td[i,"titredat",] <- as.numeric(fsd[i,asTest])
   }
   
-  test_years <- c(2011,2012)
-  inf_years <- 1987:2012
-  if (sero=="YAM") {
-    strain_years=c(1988,2002,2006)
-  } else {
-    stop("only yam implemented in load_fluscape")
-  }
   npart <- noP
   test.list <- rtn_yam_td
   age.yr <- fsd$PART_AGE.V2
@@ -83,8 +79,66 @@ make_fluscape_rdata <- function(
   save(test_years, strain_years, npart, test.list,
        file="R_datasets/Fluscape_data.RData")
   
+  
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # AK: set up code to return as list by participant
+  # setup return obects problem here with noP
+  
+  asTest1 <- c("HI.B.1988.V1","HI.B.2002.V1","HI.B.2006.V1")
+  asTest2 <- c("HI.B.1988.V2","HI.B.2002.V2","HI.B.2006.V2")
+  
+  npart <- noP
+  test.n <- length(test_years)
+  age.yr <- fsd$PART_AGE.V2
+  inf_years <- 0
+  nstrains <- 3
+  
+  fsd <- fsd_tmp[subset_mask,]
+  noP <- dim(fsd)[1]
+  rtn_yam_td <- array(
+    dim = c(noP,4,6),
+    dimnames = list(1:noP,
+                    c("test.year","titredat","strain_years","sample.index"))
+  )
+  
+  sample.index <- strain_years-min(inf_years)+1 # AK: updated to make years from first strain
+  
+  # Cycle through participants putting in the right tire values
+  
+  test.list <- list()
+  for(ii in 1:npart){
+    
+    subjectn=ii
+    i.list=list()
+    
+    #   FORMAT
+    #   test.year    2010 2010 2010 2010 2010 2010
+    #   titredat        1    2    4    3    6    3
+    #   strain_years 1990 1994 1998 2002 2006 2010 # Year of isolate
+    #   sample.index    1    5    9   13   17   21 # Numerical index of strain isolate (start with first possible year of infection)
+    #   age
+    
+    for(jj in 1:test.n){
+      testyr=test_years[jj]
+      dataI=as.numeric(fsd[ii,asTest1])
+      i.list[[jj]]=rbind(test.year=rep(testyr,nstrains),
+                         titredat=dataI,
+                         strain_years,
+                         sample.index,
+                         age=rep(as.numeric(fsd[ii,"PART_AGE.V1"]))+jj-1 # record age
+      )
+    }
+    test.list[[ii]]=i.list
+  }
+  
+  # Return the list of required output
+  save(test_years, inf_years,strain_years, npart, test.list,
+         file="R_datasets/Fluscape_data_List.RData")
+  
 }
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # simLocations()
 simLocations <- function(
   yrs=rep(2000:2018),

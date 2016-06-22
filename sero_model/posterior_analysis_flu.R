@@ -37,7 +37,7 @@ scale.map<-function(map.pick){
 
 # plot.posteriors(simDat=T,loadseed="SIM",define.year=c(2007:2012))
 
-plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2009:2012)){
+plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2009:2012),plotmap=F){
   
   #loadseed="SIM"
   load(paste("posterior_sero_runs/outputR_f",paste(define.year,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
@@ -72,13 +72,13 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2009:2012)){
   
   # Plot histograms of parameters
   hist(as.data.frame(thetatab)$error[runs1:runsPOST],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,0.1)); if(simDat==T){abline(v=theta.sim.out[["error"]],col="red")}
-  hist(thin.theta[["mu"]],main= ESS.label(ESS.calc[["mu"]]),col=colA,xlab="mu",prob=TRUE,xlim=c(0,10)); if(simDat==T){abline(v=theta.sim.out[["mu"]],col="red")}
+  hist(thin.theta[["mu"]],main= ESS.label(ESS.calc[["mu"]]),col=colA,xlab="mu",prob=TRUE,xlim=c(0,15)); if(simDat==T){abline(v=theta.sim.out[["mu"]],col="red")}
   hist(thin.theta[["sigma"]],main=ESS.label(ESS.calc[["sigma"]]),col=colA,xlab="sigma",xlim=c(0,0.5)); if(simDat==T){abline(v=theta.sim.out[["sigma"]],col="red")}
-  hist(thin.theta[["muShort"]],main=ESS.label(ESS.calc[["muShort"]]),col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,10)); if(simDat==T){abline(v=theta.sim.out[["muShort"]],col="red")}
+  hist(thin.theta[["muShort"]],main=ESS.label(ESS.calc[["muShort"]]),col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,15)); if(simDat==T){abline(v=theta.sim.out[["muShort"]],col="red")}
   hist(thin.theta[["sigma2"]],main=ESS.label(ESS.calc[["sigma2"]]),col=colA,xlab="sigma2",xlim=c(0,0.5)); if(simDat==T){abline(v=theta.sim.out[["sigma2"]],col="red")}
-  hist(thin.theta[["tau1"]],main=ESS.label(ESS.calc[["tau1"]]),col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.7)); if(simDat==T){abline(v=theta.sim.out[["tau1"]],col="red")}
-  hist(thin.theta[["tau2"]],main=ESS.label(ESS.calc[["tau2"]]),col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.7)); if(simDat==T){abline(v=theta.sim.out[["tau2"]],col="red")}
-  hist(thin.theta[["wane"]],main=ESS.label(ESS.calc[["wane"]]),col=colA,xlab="wane",prob=TRUE,xlim=c(0,10)); if(simDat==T){abline(v=theta.sim.out[["wane"]],col="red")}
+  hist(thin.theta[["tau1"]],main=ESS.label(ESS.calc[["tau1"]]),col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.2)); if(simDat==T){abline(v=theta.sim.out[["tau1"]],col="red")}
+  hist(thin.theta[["tau2"]],main=ESS.label(ESS.calc[["tau2"]]),col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.2)); if(simDat==T){abline(v=theta.sim.out[["tau2"]],col="red")}
+  hist(thin.theta[["wane"]],main=ESS.label(ESS.calc[["wane"]]),col=colA,xlab="wane",prob=TRUE,xlim=c(0,5)); if(simDat==T){abline(v=theta.sim.out[["wane"]],col="red")}
   # Plot distribution of infections
   hist.sample=length(historytabCollect[,1])/n_part
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
@@ -89,40 +89,41 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2009:2012)){
   
   # - - - -
   # Plot antigenic map
-  par(mfrow=c(1,1))
-  par(mar = c(5,5,1,1))
-  map.sample=length(map.tabCollect)
-  minMT=min(unlist(map.tabCollect)); maxMT=max(unlist(map.tabCollect))
-  MTx=c(-2,15)
-  MTy=c(-2,15)
-  plot(map.tabCollect[[1]],xlim=MTx,ylim=MTy,type="l",col="white",lwd=2,xlab="strain dimension 1", xaxs="i", yaxs="i",ylab="strain dimension 2")
-  #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
-  #plot(map.tabCollect[1,],0*map.tabCollect[1,],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
-  for(ii in 1:200){
-    pick=sample(c(round(0.15*map.sample):map.sample),1)
-    map.pick = scale.map(map.tabCollect[[pick]])
-    #sigma.scale=as.numeric(as.data.frame(thetatab)[pick*20,]["sigma"]) # scale to one antigenic unit
-    #map.pick = map.tabCollect[[pick]]
-    lines(map.pick,col=rgb(0.5,0.5,0.9,0.1),pch=19,cex=1)
+  if(plotmap==T){
+    par(mfrow=c(1,1))
+    par(mar = c(5,5,1,1))
+    map.sample=length(map.tabCollect)
+    minMT=min(unlist(map.tabCollect)); maxMT=max(unlist(map.tabCollect))
+    MTx=c(-2,15)
+    MTy=c(-2,15)
+    plot(map.tabCollect[[1]],xlim=MTx,ylim=MTy,type="l",col="white",lwd=2,xlab="strain dimension 1", xaxs="i", yaxs="i",ylab="strain dimension 2")
+    #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
+    #plot(map.tabCollect[1,],0*map.tabCollect[1,],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
+    for(ii in 1:200){
+      pick=sample(c(round(0.15*map.sample):map.sample),1)
+      map.pick = scale.map(map.tabCollect[[pick]])
+      #sigma.scale=as.numeric(as.data.frame(thetatab)[pick*20,]["sigma"]) # scale to one antigenic unit
+      #map.pick = map.tabCollect[[pick]]
+      lines(map.pick,col=rgb(0.5,0.5,0.9,0.1),pch=19,cex=1)
+    }
+    
+    if(simDat==T){
+      map.pick = scale.map(antigenic.map.in)
+      lines(map.pick,col="black",lwd=2)
+    }
+    
+    ## Alternative way of plotting linear antigenic space
+    #plot(map.tabCollect[[1]],0*map.tabCollect[[1]],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
+    #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
+    #for(ii in 1:500){ 
+    #  for(jj in 1:length(map.tabCollect[1,])){
+    #    pick=sample(hist.sample-1,1)
+    #    lines(c(map.tabCollect[[pick]][jj],map.tabCollect[[pick]][jj]),c(0,1),type="l",col=rgb(0.7,0.7,0.8,0.05))
+    #  }
+    #}
+    dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
+    dev.off()
   }
-  
-  if(simDat==T){
-    map.pick = scale.map(antigenic.map.in)
-    lines(map.pick,col="black",lwd=2)
-  }
-  
-  ## Alternative way of plotting linear antigenic space
-  #plot(map.tabCollect[[1]],0*map.tabCollect[[1]],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
-  #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
-  #for(ii in 1:500){ 
-  #  for(jj in 1:length(map.tabCollect[1,])){
-  #    pick=sample(hist.sample-1,1)
-  #    lines(c(map.tabCollect[[pick]][jj],map.tabCollect[[pick]][jj]),c(0,1),type="l",col=rgb(0.7,0.7,0.8,0.05))
-  #  }
-  #}
-  
-  dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
-  dev.off()
 
 }
 
@@ -197,7 +198,7 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
   runs1=ceiling(0.2*runsPOST)
 
   # Set up matrices to store -- need btstrap >1
-  btstrap=2
+  btstrap=50
   n.strains=length(strain_years) # this loads from main_model.R
   n.test=length(test.yr)
   n.inf=length(inf_years)
@@ -262,7 +263,7 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
       # Sample from infection history
       for(ksamp in 1:btstrap){
         for(jj in 1:n.inf){
-          lines(min(inf_years)-1+c(jj,jj),c(-1,10*hist.sample[ksamp,jj]-1),col=rgb(0.8,0.8,0.8,0.01),lwd=2) # Plot estimated infections
+          lines(min(inf_years)-1+c(jj,jj),c(-1,12*hist.sample[ksamp,jj]-1),col=rgb(0.8,0.8,0.8,0.01),lwd=2) # Plot estimated infections
         }
       }
       
@@ -277,6 +278,15 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
       # Plot true titres
       points(min(inf_years)-1+test.list[[ii0]][[pickyr]][4,],test.list[[ii0]][[pickyr]][2,],pch=1,col='red')
       
+      # Plot true infections if simulation
+      if(simDat==T){
+        histSim1=historytabSim[ii0,]
+        histSim1[inf_years>picktest[pickyr]]=0 # don't show infections after test year
+        lenhis=rep(0,length(histSim1))
+        for(jj in 1:length(lenhis)){
+          lines(min(inf_years)-1+c(jj,jj),c(10*histSim1[jj]-2,12*histSim1[jj]-2),lwd=2,col=rgb(0,0.5,0))
+        }
+      }
       
       if(ii0 %% 10==0){
         dev.copy(pdf,paste("plot_simulations/sim",ii0,"P_",pickyr,".pdf",sep=""),width=12,height=6)
@@ -324,7 +334,6 @@ plot.sim.data<-function(){
       
       for(jj in 1:length(lenhis)){
         lines(c(jj,jj),c(0,9*histSim1[jj]),col='blue')
-
       }
       lines(test.listSim[[ii0]][[pickyr]][4,],test.listSim[[ii0]][[pickyr]][2,],col=rgb(0.8,0.8,0.8),lwd=2) # Plot estimated infections
       points(test.listSim[[ii0]][[pickyr]][4,],test.listSim[[ii0]][[pickyr]][2,],pch=19)

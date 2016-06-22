@@ -42,7 +42,7 @@ simulation.infer <- function(seed_i) {
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
   thetaSim = c(mu=3,tau1=0,tau2=0.1,wane=1,sigma=0.3,muShort=5,error=0.05,disp_k=1,sigma2=0.1)
-  npartM=20
+  npartM=40
   
   # Generate 2D map
   define.year=c(2007:2012) # test years
@@ -91,7 +91,7 @@ simulation.infer <- function(seed_i) {
     n_part,
     test.list=test.listSim, # use simulated data as input
     theta=theta0,
-    runs=1e4, # number of MCMC runs
+    runs=1e6, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
@@ -186,7 +186,7 @@ foreach(kk1=c(2007:2012)) %dopar% {
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   kk1=c(2007:2012)
-  data.infer(kk1,mcmc.iterations=1e5,loadseed=kk,fix.param=c("disp_k","map.fit"))
+  data.infer(kk1,mcmc.iterations=1e5,loadseed=kk,fix.param=c("disp_k"))
 }
 
 
@@ -197,11 +197,14 @@ for(kk in 1:4){
   plot.posteriors(define.year=c(2007:2012),loadseed=kk)
 }
 
+
+
 for(kk in c(2007:2012)){
   plot.posteriors(define.year=kk,loadseed=1)
 }
 
 plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
+plot.posterior.titres(loadseed=1,simDat=F,define.year=c(2007:2012))
 
-
+make_fluscape_rdata(pathfssvn="~/fluscape/trunk/")
 

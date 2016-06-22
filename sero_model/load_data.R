@@ -51,6 +51,12 @@ for(ii in 1:n_part){
 subjectn=ii
 i.list=list()
 
+#   [,1] [,2] [,3] [,4] [,5] [,6]
+#   test.year    2010 2010 2010 2010 2010 2010
+#   titredat        1    2    4    3    6    3
+#   strain_years 1990 1994 1998 2002 2006 2010 # Year of isolate
+#   sample.index    1    5    9   13   17   21 # Numerical index of strain isolate (start with first possible year of infection)
+
 for(jj in 1:test.n){
 
 testyr=test_years[jj]
@@ -63,8 +69,10 @@ i.list[[jj]]=rbind(rep(testyr,nstrains),
 
 }
 
+
 test.list[[ii]]=i.list
+
+}
 
 save(test_years,inf_years,strain_years,n_part,test.list,file=paste("R_datasets/HaNam_data_V.RData",sep=""))
 
-}
