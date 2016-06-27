@@ -35,12 +35,11 @@ scale.map<-function(map.pick){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot MCMC posterior distributions
 
-# plot.posteriors(simDat=T,loadseed="SIM",define.year=c(2007:2012))
-
-plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2009:2012),plotmap=F){
+plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),plotmap=F,f.lim=F){
   
-  #loadseed="SIM"
-  load(paste("posterior_sero_runs/outputR_f",paste(define.year,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
+  if(simDat==F){loadseed=paste(loadseed,"_",flutype,sep="")}
+  
+  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
   par(mfrow=c(5,2))
   par(mar = c(5,5,1,1))
   colA=rgb(0.8,0.8,0.8)
@@ -71,21 +70,51 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2009:2012),plotmap=F
   plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
   
   # Plot histograms of parameters
-  hist(as.data.frame(thetatab)$error[runs1:runsPOST],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,0.1)); if(simDat==T){abline(v=theta.sim.out[["error"]],col="red")}
-  hist(thin.theta[["mu"]],main= ESS.label(ESS.calc[["mu"]]),col=colA,xlab="mu",prob=TRUE,xlim=c(0,15)); if(simDat==T){abline(v=theta.sim.out[["mu"]],col="red")}
-  hist(thin.theta[["sigma"]],main=ESS.label(ESS.calc[["sigma"]]),col=colA,xlab="sigma",xlim=c(0,0.5)); if(simDat==T){abline(v=theta.sim.out[["sigma"]],col="red")}
-  hist(thin.theta[["muShort"]],main=ESS.label(ESS.calc[["muShort"]]),col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,15)); if(simDat==T){abline(v=theta.sim.out[["muShort"]],col="red")}
-  hist(thin.theta[["sigma2"]],main=ESS.label(ESS.calc[["sigma2"]]),col=colA,xlab="sigma2",xlim=c(0,0.5)); if(simDat==T){abline(v=theta.sim.out[["sigma2"]],col="red")}
-  hist(thin.theta[["tau1"]],main=ESS.label(ESS.calc[["tau1"]]),col=colA,xlab="tau1",prob=TRUE,xlim=c(0,0.2)); if(simDat==T){abline(v=theta.sim.out[["tau1"]],col="red")}
-  hist(thin.theta[["tau2"]],main=ESS.label(ESS.calc[["tau2"]]),col=colA,xlab="tau2",prob=TRUE,xlim=c(0,0.2)); if(simDat==T){abline(v=theta.sim.out[["tau2"]],col="red")}
-  hist(thin.theta[["wane"]],main=ESS.label(ESS.calc[["wane"]]),col=colA,xlab="wane",prob=TRUE,xlim=c(0,5)); if(simDat==T){abline(v=theta.sim.out[["wane"]],col="red")}
+  hist(thin.theta[["error"]],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,ifelse(f.lim==F,15,1.1*max(thin.theta[["error"]])))); if(simDat==T){abline(v=theta.sim.out[["error"]],col="red")}
+  hist(thin.theta[["mu"]],main= ESS.label(ESS.calc[["mu"]]),col=colA,xlab="mu",prob=TRUE,xlim=c(0,ifelse(f.lim==F,15,1.1*max(thin.theta[["mu"]])))); if(simDat==T){abline(v=theta.sim.out[["mu"]],col="red")}
+  hist(thin.theta[["sigma"]],main=ESS.label(ESS.calc[["sigma"]]),col=colA,xlab="sigma",xlim=c(0,ifelse(f.lim==F,0.5,1.1*max(thin.theta[["sigma"]])))); if(simDat==T){abline(v=theta.sim.out[["sigma"]],col="red")}
+  hist(thin.theta[["muShort"]],main=ESS.label(ESS.calc[["muShort"]]),col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,ifelse(f.lim==F,20,1.1*max(thin.theta[["muShort"]])))); if(simDat==T){abline(v=theta.sim.out[["muShort"]],col="red")}
+  hist(thin.theta[["sigma2"]],main=ESS.label(ESS.calc[["sigma2"]]),col=colA,xlab="sigma2",xlim=c(0,ifelse(f.lim==F,0.5,1.1*max(thin.theta[["sigma2"]])))); if(simDat==T){abline(v=theta.sim.out[["sigma2"]],col="red")}
+  hist(thin.theta[["tau1"]],main=ESS.label(ESS.calc[["tau1"]]),col=colA,xlab="tau1",prob=TRUE,xlim=c(0,ifelse(f.lim==F,0.2,1.1*max(thin.theta[["tau1"]])))); if(simDat==T){abline(v=theta.sim.out[["tau1"]],col="red")}
+  hist(thin.theta[["tau2"]],main=ESS.label(ESS.calc[["tau2"]]),col=colA,xlab="tau2",prob=TRUE,xlim=c(0,ifelse(f.lim==F,0.2,1.1*max(thin.theta[["tau2"]])))); if(simDat==T){abline(v=theta.sim.out[["tau2"]],col="red")}
+  hist(thin.theta[["wane"]],main=ESS.label(ESS.calc[["wane"]]),col=colA,xlab="wane",prob=TRUE,xlim=c(0,ifelse(f.lim==F,5,1.1*max(thin.theta[["wane"]])))); if(simDat==T){abline(v=theta.sim.out[["wane"]],col="red")}
   # Plot distribution of infections
-  hist.sample=length(historytabCollect[,1])/n_part
+  hist.sample=length(historytabCollect[,1])/n_part # need this sample value because table is stacked
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
   hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
-  
-  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",theta.sim.out[["mu"]],"_sigma",theta.sim.out[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
+
+  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",theta.sim.out[["mu"]],"_sigma",theta.sim.out[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
   dev.off()
+  
+  # - - - -
+  # Plot attack rates, scaled by proportion alive
+  if(flutype=="H3"){
+    par(mfrow=c(1,1))
+    par(mar = c(5,5,1,1))
+    yob.data=data.frame(read.csv("datasets/HaNam_YOB.csv",header=FALSE)) # Import age distribution
+    n.alive=sapply(inf_years,function(x){sum(yob.data<=x)})
+    
+    attack=colSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])/(length(ind.infN)*(n.alive/length(yob.data[,1]))) #scale by proportion alive
+    attackCI=NULL
+    for(jj in 1:length(inf_years)){
+      htest <- binom.test(round(n.alive*attack)[jj], n.alive[jj], p = 1,conf.level=0.95)
+      meanA=attack[jj]
+      conf1=htest$conf.int[1]
+      conf2=htest$conf.int[2]
+      attackCI=rbind(attackCI,c(meanA,conf1,conf2))
+    }
+    attackCI=data.frame(attackCI)
+    names(attackCI)=c("mean","CI1","CI2")
+    colA=rgb(0,0,0.8)
+    plot(inf_years,attackCI$mean,pch=19,col=colA,ylim=c(0,1),xlab="year",ylab="attack rate")
+    for(kk in 1:length(inf_years)){ # Iterate across test years
+      lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colA)
+    }
+    
+    dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
+    dev.off()
+    
+  }
   
   # - - - -
   # Plot antigenic map
@@ -94,13 +123,14 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2009:2012),plotmap=F
     par(mar = c(5,5,1,1))
     map.sample=length(map.tabCollect)
     minMT=min(unlist(map.tabCollect)); maxMT=max(unlist(map.tabCollect))
-    MTx=c(-2,15)
-    MTy=c(-2,15)
+    MTx=c(-5,15)
+    MTy=c(-5,15)
     plot(map.tabCollect[[1]],xlim=MTx,ylim=MTy,type="l",col="white",lwd=2,xlab="strain dimension 1", xaxs="i", yaxs="i",ylab="strain dimension 2")
     #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
     #plot(map.tabCollect[1,],0*map.tabCollect[1,],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
     for(ii in 1:200){
-      pick=sample(c(round(0.15*map.sample):map.sample),1)
+      #pick=sample(c(round(0.15*map.sample):map.sample),1)
+      pick=sample(c(1:map.sample),1)
       map.pick = scale.map(map.tabCollect[[pick]])
       #sigma.scale=as.numeric(as.data.frame(thetatab)[pick*20,]["sigma"]) # scale to one antigenic unit
       #map.pick = map.tabCollect[[pick]]
@@ -121,7 +151,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,define.year=c(2009:2012),plotmap=F
     #    lines(c(map.tabCollect[[pick]][jj],map.tabCollect[[pick]][jj]),c(0,1),type="l",col=rgb(0.7,0.7,0.8,0.05))
     #  }
     #}
-    dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(define.year,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
+    dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
     dev.off()
   }
 
@@ -184,21 +214,28 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
 
 # plot.posterior.titres(loadseed="SIM",simDat=T,define.year=c(2007:2012))
 
-plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
+plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5){
   
   if(simDat==F){
-    load("R_datasets/HaNam_data.RData")
+    if(flu.type=="H3"){
+      load("R_datasets/HaNam_data.RData")
+    }else{
+      load("R_datasets/Fluscape_data_List.RData")
+      year_test=c(2011,2012)
+    }
+    loadseed=1 # DEBUG
+    loadseed=paste(loadseed,"_",flutype,sep="")
   }else{
     load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep=""))
   }
-  load(paste("posterior_sero_runs/outputR_f",paste(define.year,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
+  
+  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep="")) # Note that this includes test.listPost
   
   lik.tot=rowSums(likelihoodtab)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
   runs1=ceiling(0.2*runsPOST)
 
   # Set up matrices to store -- need btstrap >1
-  btstrap=50
   n.strains=length(strain_years) # this loads from main_model.R
   n.test=length(test.yr)
   n.inf=length(inf_years)
@@ -214,8 +251,7 @@ plot.posterior.titres<-function(loadseed=1,define.year=c(2007:2012),simDat=F){
     pickAhist=ceiling(pickA/20)+1 # check which history this specifies
     hist.sample=historytabCollect[((pickAhist-1)*n_part+1):(pickAhist*n_part),1:n.inf]
     theta.max=as.data.frame(thetatab)[pickA,]
-    theta.max[["wane"]]=2  # ** DEBUG **
-  
+    
   for(pickyr in 1:n.test){
     
     # Note here that inf_years and strain_years are loads from main_model.R
@@ -344,5 +380,123 @@ plot.sim.data<-function(){
     }
   }
 
+}
+
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Rewind history and run with flat incidence
+
+run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010)){
+  
+  if(simDat==F){
+    if(flu.type=="H3"){
+      load("R_datasets/HaNam_data.RData")
+    }else{
+      load("R_datasets/Fluscape_data_List.RData")
+      year_test=c(2011,2012)
+    }
+    loadseed=1 # DEBUG
+    loadseed=paste(loadseed,"_",flutype,sep="")
+  }else{
+    load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep=""))
+  }
+  
+  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep="")) # Note that this includes test.listPost
+  
+  lik.tot=rowSums(likelihoodtab)
+  runsPOST=length(lik.tot[lik.tot!=-Inf])
+  runs1=ceiling(0.2*runsPOST)
+  
+  # Set up matrices to store -- need btstrap >1
+  strain_years=inf_years # look at strains from every year
+  n.strains=length(strain_years) # this loads from main_model.R
+  n.inf=length(inf_years)
+  hist.sample0=rep(c(1,rep(0,9)),100)[1:n.inf] # CURRENTLY JUST FOR ONE PARTICIPANT
+  simTest.year=sort(c(inf_years[hist.sample==1],inf_years[hist.sample==1]+1)) # infection year and one year after
+  n.test=length(simTest.year)
+
+  store.mcmc.test.data=array(NA, dim=c(btstrap,n_partSim,n.strains,n.test,2)) # Store expected titres for each test year
+  store.mcmc.hist.data=array(NA, dim=c(btstrap,n_partSim,n.inf,n.test)) # Store history for each test year
+  
+  # - - - - - - - - - - - -
+  # Sample from MCMC runs to get stored matrices of expected titre and estimated infection years
+  
+  for(sampk in 1:btstrap){
+    pickA=sample(c(runs1:runsPOST),1)
+    pickAhist=ceiling(pickA/20)+1 # check which history this specifies
+    hist.sample=rbind(hist.sample0,hist.sample0)
+    theta.max=as.data.frame(thetatab)[pickA,]
+    
+    for(pickyr in 1:n.test){ # ITERATE OVER TIME HERE
+      
+      # Note here that inf_years and strain_years are loads from main_model
+      #hist.sample0[ inf_years<simTest.year[pickyr] ] # only take years up to test year -- already included in simulation function!
+      simulate_data(simTest.year[pickyr],historytabPost=hist.sample,
+                    inf_years,
+                    strain_years,
+                    n_partSim,thetastar=theta.max,p.inf=0.1,
+                    #pmask=c("sigma2"), # For old fitted data, need to specify that sigma2 wasn't fitted
+                    linD=F)
+      
+      load("R_datasets/Simulated_dataPost_1.RData")
+      
+      # Mask infections after test year
+      for(ii0 in 1){
+        
+        sim.titre=test.listSim[[ii0]][[1]] # sort sample years - drawn from simulated data above
+        hist.sampleB=hist.sample;  hist.sampleB[,as.numeric(colnames(hist.sample))>test.yr[pickyr]]=0 # don't show infections after test year
+        store.mcmc.test.data[sampk,ii0,,pickyr,1]= min(inf_years)-1+sort(sim.titre["sample.index",]) # Sampled strain years
+        s.titre=sim.titre["titredat",order(sim.titre["sample.index",])]
+        store.mcmc.test.data[sampk,ii0,,pickyr,2]=s.titre # Sampled expected titre
+        #store.mcmc.test.data[sampk,ii0,,pickyr,2]=rpois(length(s.titre),lambda=s.titre) # Sampled expected titre - include Poisson noise
+        store.mcmc.hist.data[sampk,ii0,,pickyr]=hist.sampleB[ii0,] # Sampled history
+        
+      }  # end loop over participants
+      
+    } # end loop over test years
+  } # end bootstrap loop
+  
+  # - - - - - - - - - - - - 
+  # Plot development of titres
+  
+  par(mfrow=c(1,1)); par(mar = c(5,5,1,1))
+  
+  plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,9),col='white',xlab="year",ylab="titre",main=simTest.year[pickyr])
+  
+  for(pickyr in 1:n.test){
+
+    # Mask infections after test year
+    
+    for(ii0 in 1){
+      simtitreX=store.mcmc.test.data[,ii0,,pickyr,1]
+      simtitreY=store.mcmc.test.data[,ii0,,pickyr,2]
+      hist.sample=store.mcmc.hist.data[,ii0,,pickyr] # for participant ii0 in year pickyr
+      
+      # Sample from infection history
+      for(ksamp in 1:btstrap){
+        for(jj in 1:n.inf){
+          lines(min(inf_years)-1+c(jj,jj),c(-1,12*hist.sample[ksamp,jj]-1),col=rgb(0.8,0.8,0.8,0.01),lwd=2) # Plot estimated infections
+        }
+      }
+      
+      # Calculate credible interval for expected titres
+      medP=apply(simtitreY,2,function(x){median(x)})
+      ciP1=apply(simtitreY,2,function(x){quantile(x,0.025)})
+      ciP2=apply(simtitreY,2,function(x){quantile(x,0.975)})
+      polygon(c(simtitreX[1,],rev(simtitreX[1,])),c(ciP1,rev(ciP2)),lty=0,col=rgb(0,0.3,1,0.2))
+      lines(simtitreX[1,],medP,pch=1,col='blue')
+      points(simtitreX[1,],medP,pch=19,cex=0.5,col='blue')
+      
+      if(ii0 %% 10==0){
+        dev.copy(pdf,paste("plot_simulations/sim",ii0,"P_",pickyr,".pdf",sep=""),width=12,height=6)
+        dev.off()
+      }
+      
+    }  # end loop over participants
+    
+  } # end loop over test years
+  
+  
 }
 

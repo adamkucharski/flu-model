@@ -20,6 +20,7 @@ rm(list=ls(all=TRUE))
 # Load data and functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 #source("load_data.R") # Reformat HaNam data and save to file
+# make_fluscape_rdata(pathfssvn="~/fluscape/trunk/") # Reformat Flu B data and save to file
 source("sero_functions.R")
 source("posterior_analysis_flu.R")
 source("sero_funcs_steven.r") # Load Flu B format
@@ -79,7 +80,7 @@ simulation.infer <- function(seed_i) {
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
 
   # browser()
-  sim.map.in0 = generate.antigenic.map(inf_years.in) # Define random initial map to fit
+  sim.map.in0 = 0.3*(cbind(inf_years,inf_years)-min(inf_years)) #generate.antigenic.map(inf_years.in) # Define uniform initial map to fit
   
   # RUN MCMC
   # Note: NEED TO RE-INITIALISE DATAFRAME IF REPEAT RUN (i.e. reload dataset above)
@@ -91,11 +92,11 @@ simulation.infer <- function(seed_i) {
     n_part,
     test.list=test.listSim, # use simulated data as input
     theta=theta0,
-    runs=1e6, # number of MCMC runs
+    runs=1e4, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
-    #pmask=c("wane","sigma2"), # ,"map.fit" specify parameters to fix
+    pmask=c("wane","sigma2"), # ,"map.fit" specify parameters to fix
     seedi=loadseed,
     #antigenic.map.in= sim.map.in0, # Define random initial map to fit
     linD=F)
@@ -146,7 +147,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
   theta0[["mu"]]=3 # basic boosting
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
-  theta0[["wane"]]=-log(0.5)/0.5 + runif(1,c(-1,1)) # short term waning - half life of /X years
+  theta0[["wane"]]=-log(0.5)/0.5 + if(sum(fix.param=="wane")==0){runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
   theta0[["sigma"]]=0.2 # cross-reaction
   theta0[["sigma2"]]=0.1 # short-term cross-reaction
   theta0[["muShort"]]=5 # short term boosting
@@ -187,29 +188,40 @@ foreach(kk1=c(2007:2012)) %dopar% {
   data.infer(kk1,mcmc.iterations=1e2,loadseed=1,fix.param=c("disp_k","wane","muShort"),mushort0=1e-5)
 }
 
-# Longitudinal inference
+
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  kk1=c(2007:2012)
-  data.infer(kk1,mcmc.iterations=1e2,loadseed=kk,flutype="B",fix.param=c("disp_k"))
+  flutype0="H3"
+  if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
+  data.infer(year_test=dy1,mcmc.iterations=1e6,loadseed=kk,flutype=flutype0,fix.param=c("disp_k"))
+  
 }
-
 
 
 # - - - - - - - - - - - - - - - - - 
 # Plot posteriors
 for(kk in 1:4){
-  plot.posteriors(define.year=c(2007:2012),loadseed=kk)
+  
+  flutype0="H3"
+  if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
+  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=T)
+  
 }
-
-
 
 for(kk in c(2007:2012)){
-  plot.posteriors(define.year=kk,loadseed=1)
+  plot.posteriors(year_test=kk,loadseed=1)
 }
 
-plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
-plot.posterior.titres(loadseed=1,simDat=F,define.year=c(2007:2012))
+# plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
 
-make_fluscape_rdata(pathfssvn="~/fluscape/trunk/")
+# plot.posteriors(simDat=T,loadseed="SIM",year_test=c(2007:2012),plotmap=T)
+
+# - - - - - - - - - - - - - - - - - 
+# Plot titre vs estimates
+
+flutype="B"
+if(flutype=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
+plot.posterior.titres(loadseed=3,flu.type=flutype,simDat=F,year_test=dy1,btstrap=50)
+
+
 

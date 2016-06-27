@@ -198,7 +198,7 @@ simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_
   test.n=length(test_years)
   inf.n=length(inf_years)
   nstrains=length(strain_years)
-  sample.index=strain_years-min(strain_years)+1
+  sample.index=strain_years-min(inf_years)+1
   theta.sim.out=thetastar
   historytabSim2=historytabPost
   
@@ -345,10 +345,12 @@ SampleAge<-function(pick,ageA){
 # Resample antigenic location
 
 SampleAntigenicMap<-function(anti.map.star,epsilon.map,inf_years){
+  Sigma0=(diag(1+0*inf_years))*epsilon.map
+  #Sigma0[1,1]=0 # Anchor initial point
   if(length(anti.map.star)==length(inf_years)){
-    sort(as.numeric(mvrnorm(1,anti.map.star, Sigma=(diag(1+0*inf_years))*epsilon.map)))
+    sort(as.numeric(mvrnorm(1,anti.map.star, Sigma=Sigma0)))
   }else{
-    apply(anti.map.star,2, function(x){as.numeric(mvrnorm(1,x, Sigma=(diag(1+0*inf_years))*epsilon.map))})
+    apply(anti.map.star,2, function(x){as.numeric(mvrnorm(1,x, Sigma=Sigma0))})
   }
   
 }
@@ -427,7 +429,8 @@ run_mcmc<-function(
   
   if(is.null(antigenic.map.in)){antigenic.map.in=inf_years} # if no input map, assume 1D
   test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
-  sample.index=strain_years-min(strain_years)+1
+  sample.index=strain_years-min(inf_years)+1
+  test.listPost=test.list
   historyii=rbinom(inf.n, 1, 0.1) # dummy infection history
   
   # Index variables
@@ -586,7 +589,7 @@ run_mcmc<-function(
     
     if(m %% min(runs,1000) ==0){
       print(c(m,accept_rateT,varpart_prob0,round(sum(likelihoodtab[m,]))))
-      save(likelihoodtab,thetatab,inf_years,n_part,test.list,historytab,historytabCollect,map.tabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
+      save(likelihoodtab,thetatab,inf_years,n_part,test.listPost,historytab,historytabCollect,map.tabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
     }
     
   } #End runs loop

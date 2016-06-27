@@ -87,7 +87,7 @@ make_fluscape_rdata <- function(
   asTest1 <- c("HI.B.1988.V1","HI.B.2002.V1","HI.B.2006.V1")
   asTest2 <- c("HI.B.1988.V2","HI.B.2002.V2","HI.B.2006.V2")
   
-  npart <- noP
+  n_part <- noP
   test.n <- length(test_years)
   age.yr <- fsd$PART_AGE.V2
   nstrains <- 3
@@ -105,7 +105,7 @@ make_fluscape_rdata <- function(
   # Cycle through participants putting in the right tire values
   
   test.list <- list()
-  for(ii in 1:npart){
+  for(ii in 1:n_part){
     
     subjectn=ii
     i.list=list()
@@ -119,7 +119,8 @@ make_fluscape_rdata <- function(
     
     for(jj in 1:test.n){
       testyr=test_years[jj]
-      dataI=as.numeric(fsd[ii,asTest1])
+      testpick=if(jj==1){asTest1}else{asTest2}
+      dataI=as.numeric(fsd[ii,testpick])
       i.list[[jj]]=rbind(test.year=rep(testyr,nstrains),
                          titredat=dataI,
                          strain_years,
@@ -131,7 +132,7 @@ make_fluscape_rdata <- function(
   }
   
   # Return the list of required output
-  save(test_years, inf_years,strain_years, npart, test.list,
+  save(test_years, inf_years,strain_years, n_part, test.list,
          file="R_datasets/Fluscape_data_List.RData")
   
 }
