@@ -1,4 +1,4 @@
-#!/bin/bash
+I#!/bin/bash
 #$ -N AJK1 
 #$ -V -cwd 
 #$ -q short.q 
