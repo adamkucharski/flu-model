@@ -148,7 +148,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/0.5 + if(sum(fix.param=="wane")==0){runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
-  theta0[["sigma"]]=0.2 # cross-reaction
+  theta0[["sigma"]]=0.3 # cross-reaction
   theta0[["sigma2"]]=0.1 # short-term cross-reaction
   theta0[["muShort"]]=5 # short term boosting
   theta0[["error"]]=0.1 # measurement error
@@ -188,12 +188,15 @@ foreach(kk1=c(2007:2012)) %dopar% {
   data.infer(kk1,mcmc.iterations=1e2,loadseed=1,fix.param=c("disp_k","wane","muShort"),mushort0=1e-5)
 }
 
+# - - - - - - - - - - - - - - - - - 
+# Run cross-sectional inference on H3 or B data
 
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  flutype0="H3"
+  flutype0="B"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
-  data.infer(year_test=dy1,mcmc.iterations=1e6,loadseed=kk,flutype=flutype0,fix.param=c("disp_k"))
+  
+  data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","wane","sigma"))
   
 }
 
@@ -202,11 +205,14 @@ foreach(kk=1:4) %dopar% {
 # Plot posteriors
 for(kk in 1:4){
   
-  flutype0="H3"
+  flutype0="B"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
   plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=T)
   
 }
+
+# - - - - - - - - - - - - - - - - - 
+# Plot posteriors for cross-sectional data
 
 for(kk in c(2007:2012)){
   plot.posteriors(year_test=kk,loadseed=1)
@@ -219,9 +225,9 @@ for(kk in c(2007:2012)){
 # - - - - - - - - - - - - - - - - - 
 # Plot titre vs estimates
 
-flutype="B"
+flutype="H3"
 if(flutype=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
-plot.posterior.titres(loadseed=3,flu.type=flutype,simDat=F,year_test=dy1,btstrap=50)
+plot.posterior.titres(loadseed=4,flu.type=flutype,simDat=F,year_test=dy1,btstrap=100)
 
 
 

@@ -48,7 +48,7 @@ make_fluscape_rdata <- function(
   test_years <- c(2011,2012)
   inf_years <- c(1987:2012)
   if (sero=="YAM") {
-    strain_years=c(1988,2002,2006)
+    strain_years=c(1987,1988,2002,2004,2006,2008)
   } else {
     stop("only yam implemented in load_fluscape")
   }
@@ -84,13 +84,13 @@ make_fluscape_rdata <- function(
   # AK: set up code to return as list by participant
   # setup return obects problem here with noP
   
-  asTest1 <- c("HI.B.1988.V1","HI.B.2002.V1","HI.B.2006.V1")
-  asTest2 <- c("HI.B.1988.V2","HI.B.2002.V2","HI.B.2006.V2")
+  asTest1 <- c("HI.B.1987.V1","HI.B.1988.V1","HI.B.2002.V1","HI.B.2004.V1","HI.B.2006.V1","HI.B.2008.V1")
+  asTest2 <- c("HI.B.1987.V2","HI.B.1988.V2","HI.B.2002.V2","HI.B.2004.V2","HI.B.2006.V2","HI.B.2008.V2")
   
   n_part <- noP
   test.n <- length(test_years)
   age.yr <- fsd$PART_AGE.V2
-  nstrains <- 3
+  nstrains <- 6
   
   fsd <- fsd_tmp[subset_mask,]
   noP <- dim(fsd)[1]

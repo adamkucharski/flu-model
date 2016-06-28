@@ -188,7 +188,7 @@ simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_
   #strain_years=seq(1968,2010,4)
   
   # Make adjustments depending on what is fitted and not
-  if(sum(pmask=="wane")>0){thetastar[["muShort"]]=1e-10} # Set short term boosting ~ 0 if waning not fitted
+  if(sum(pmask=="muShort")>0){thetastar[["muShort"]]=1e-10} # Set short term boosting ~ 0 if waning not fitted
   if(sum(pmask=="map.fit")>0){ thetastar[["sigma"]]=1} # Set cross-reactivity = 1 and don't fit if antigenic map also fitted (to avoid overparameterisation)
   if(sum(pmask=="sigma2")>0){ thetastar[["sigma2"]]=thetastar[["sigma"]] } # Fix equal if sigma same for both 
   
@@ -441,7 +441,7 @@ run_mcmc<-function(
   #browser()
 
   # Make adjustments depending on what is fitted and not
-  if(sum(pmask=="wane")>0){theta[["muShort"]]=1e-10} # Set short term boosting ~ 0 if waning not fitted
+  if(sum(pmask=="muShort")>0){theta[["muShort"]]=1e-10} # Set short term boosting ~ 0 if waning not fitted
   if(sum(pmask=="map.fit")>0){ theta[["sigma"]]=1; pmask=c(pmask,"sigma","sigma2")} # Set cross-reactivity = 1 and don't fit if antigenic map also fitted (to avoid overparameterisation)
   if(sum(pmask=="sigma2")>0){ theta[["sigma2"]]=theta[["sigma"]] } # Fix equal if sigma same for both 
   

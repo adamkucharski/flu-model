@@ -387,7 +387,7 @@ plot.sim.data<-function(){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Rewind history and run with flat incidence
 
-run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010)){
+run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010)){
   
   if(simDat==F){
     if(flu.type=="H3"){
@@ -396,8 +396,7 @@ run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,bts
       load("R_datasets/Fluscape_data_List.RData")
       year_test=c(2011,2012)
     }
-    loadseed=1 # DEBUG
-    loadseed=paste(loadseed,"_",flutype,sep="")
+    loadseed=paste(loadseed,"_",flu.type,sep="")
   }else{
     load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep=""))
   }
@@ -412,8 +411,8 @@ run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,bts
   strain_years=inf_years # look at strains from every year
   n.strains=length(strain_years) # this loads from main_model.R
   n.inf=length(inf_years)
-  hist.sample0=rep(c(1,rep(0,9)),100)[1:n.inf] # CURRENTLY JUST FOR ONE PARTICIPANT
-  simTest.year=sort(c(inf_years[hist.sample==1],inf_years[hist.sample==1]+1)) # infection year and one year after
+  hist.sample0=rep(c(1,rep(0,29)),100)[1:n.inf] # CURRENTLY JUST FOR ONE PARTICIPANT
+  simTest.year=sort(c(inf_years[hist.sample0==1],inf_years[hist.sample0==1]+1)) # infection year and one year after
   n.test=length(simTest.year)
 
   store.mcmc.test.data=array(NA, dim=c(btstrap,n_partSim,n.strains,n.test,2)) # Store expected titres for each test year
@@ -462,7 +461,7 @@ run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,bts
   
   par(mfrow=c(1,1)); par(mar = c(5,5,1,1))
   
-  plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,9),col='white',xlab="year",ylab="titre",main=simTest.year[pickyr])
+  plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,9),col='white',xlab="year",ylab="titre")
   
   for(pickyr in 1:n.test){
 
