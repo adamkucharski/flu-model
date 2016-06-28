@@ -196,7 +196,7 @@ foreach(kk=1:4) %dopar% {
   flutype0="B"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
   
-  data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","wane","sigma"))
+  data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","wane"))
   
 }
 
