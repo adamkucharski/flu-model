@@ -35,10 +35,13 @@ scale.map<-function(map.pick){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot MCMC posterior distributions
 
+
 plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),plotmap=F,f.lim=F){
+
+  #simDat=T;loadseed="SIM";year_test=c(2007:2012);plotmap=F;f.lim=T;flutype="H3"
   
   if(simDat==F){loadseed=paste(loadseed,"_",flutype,sep="")}
-  
+
   load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
   par(mfrow=c(5,2))
   par(mar = c(5,5,1,1))
@@ -67,7 +70,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   # - - - - - - - 
   # Plot results
   
-  plot(rowSums(likelihoodtab)[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
+  plot(lik.tot[runs1:runsPOST],type="l",ylab="likelihood",ylim=c(maxlik-500,maxlik))
   
   # Plot histograms of parameters
   hist(thin.theta[["error"]],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,ifelse(f.lim==F,15,1.1*max(thin.theta[["error"]])))); if(simDat==T){abline(v=theta.sim.out[["error"]],col="red")}
@@ -88,69 +91,73 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   
   # - - - -
   # Plot attack rates, scaled by proportion alive
-  if(flutype=="H3"){
-    par(mfrow=c(1,1))
-    par(mar = c(5,5,1,1))
-    yob.data=data.frame(read.csv("datasets/HaNam_YOB.csv",header=FALSE)) # Import age distribution
-    n.alive=sapply(inf_years,function(x){sum(yob.data<=x)})
-    
-    attack=colSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])/(length(ind.infN)*(n.alive/length(yob.data[,1]))) #scale by proportion alive
-    attackCI=NULL
-    for(jj in 1:length(inf_years)){
-      htest <- binom.test(round(n.alive*attack)[jj], n.alive[jj], p = 1,conf.level=0.95)
-      meanA=attack[jj]
-      conf1=htest$conf.int[1]
-      conf2=htest$conf.int[2]
-      attackCI=rbind(attackCI,c(meanA,conf1,conf2))
-    }
-    attackCI=data.frame(attackCI)
-    names(attackCI)=c("mean","CI1","CI2")
-    colA=rgb(0,0,0.8)
-    plot(inf_years,attackCI$mean,pch=19,col=colA,ylim=c(0,1),xlab="year",ylab="attack rate")
-    for(kk in 1:length(inf_years)){ # Iterate across test years
-      lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colA)
-    }
-    
-    dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
-    dev.off()
-    
+
+  par(mfrow=c(1,1))
+  par(mar = c(5,5,1,1))
+  if(flutype=="H3" & simDat==F){
+      yob.data=data.frame(read.csv("datasets/HaNam_YOB.csv",header=FALSE)) # Import age distribution
+      n.alive=sapply(inf_years,function(x){sum(yob.data<=x)})
+  }else{
+      yob.data=cbind(rep(1,n_part),rep(1,n_part)) # Import age distribution
+      n.alive=n_part+0*inf_years
   }
+    
+  attack=colSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])/(length(ind.infN)*(n.alive/length(yob.data[,1]))) #scale by proportion alive
+  attackCI=NULL
+  for(jj in 1:length(inf_years)){
+    htest <- binom.test(round(n.alive*attack)[jj], n.alive[jj], p = 1,conf.level=0.95)
+    meanA=attack[jj]
+    conf1=htest$conf.int[1]
+    conf2=htest$conf.int[2]
+    attackCI=rbind(attackCI,c(meanA,conf1,conf2))
+  }
+  attackCI=data.frame(attackCI)
+  names(attackCI)=c("mean","CI1","CI2")
+  colA=rgb(0,0,0.8)
+  plot(inf_years,attackCI$mean,pch=19,col=colA,ylim=c(0,1),xlab="year",ylab="attack rate")
+  for(kk in 1:length(inf_years)){ # Iterate across test years
+     lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colA)
+  }
+  if(simDat==T){ #Add simulated attack rates
+     #attack.yr=read.csv("datasets/sim_attack.csv")[,1]
+     load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
+     attack.yr=colSums(historytabSim)/n_part
+     points(inf_years,attack.yr)
+  }
+    
+  dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
+  dev.off()
+
   
   # - - - -
   # Plot antigenic map
   if(plotmap==T){
+    am.spl<-load.flu.map.data() # define spline from antigenic map data
+    ag.coord=read.csv("datasets/antigenic_coords.csv", as.is=T,head=T)
+    
     par(mfrow=c(1,1))
     par(mar = c(5,5,1,1))
+    
+    vals1=predict(am.spl,scalemap(inf_years))
     map.sample=length(map.tabCollect)
-    minMT=min(unlist(map.tabCollect)); maxMT=max(unlist(map.tabCollect))
-    MTx=c(-5,15)
-    MTy=c(-5,15)
-    plot(map.tabCollect[[1]],xlim=MTx,ylim=MTy,type="l",col="white",lwd=2,xlab="strain dimension 1", xaxs="i", yaxs="i",ylab="strain dimension 2")
+
+    MTx=c(332,372)
+    MTy=c(245,262)
+    plot(vals1,type="l",xlim=MTx,ylim=MTy,col="white",lwd=2,xlab="strain dimension 1", xaxs="i", yaxs="i",ylab="strain dimension 2")
+    
     #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
     #plot(map.tabCollect[1,],0*map.tabCollect[1,],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
-    for(ii in 1:200){
+    for(ii in 1:100){
       #pick=sample(c(round(0.15*map.sample):map.sample),1)
       pick=sample(c(1:map.sample),1)
-      map.pick = scale.map(map.tabCollect[[pick]])
+      vals1=predict(am.spl,scalemap(map.tabCollect[[pick]]))
       #sigma.scale=as.numeric(as.data.frame(thetatab)[pick*20,]["sigma"]) # scale to one antigenic unit
       #map.pick = map.tabCollect[[pick]]
-      lines(map.pick,col=rgb(0.5,0.5,0.9,0.1),pch=19,cex=1)
+      points(vals1,col=rgb(0.5,0.5,0.9,0.1),pch=19,cex=1)
     }
     
-    if(simDat==T){
-      map.pick = scale.map(antigenic.map.in)
-      lines(map.pick,col="black",lwd=2)
-    }
-    
-    ## Alternative way of plotting linear antigenic space
-    #plot(map.tabCollect[[1]],0*map.tabCollect[[1]],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
-    #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
-    #for(ii in 1:500){ 
-    #  for(jj in 1:length(map.tabCollect[1,])){
-    #    pick=sample(hist.sample-1,1)
-    #    lines(c(map.tabCollect[[pick]][jj],map.tabCollect[[pick]][jj]),c(0,1),type="l",col=rgb(0.7,0.7,0.8,0.05))
-    #  }
-    #}
+    points(ag.coord$AG_y,ag.coord$AG_x)
+
     dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
     dev.off()
   }
@@ -226,7 +233,9 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
     loadseed=1 # DEBUG
     loadseed=paste(loadseed,"_",flutype,sep="")
   }else{
-    load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep=""))
+    load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
+    test.list=test.listSim
+    hist.true=historytabSim
   }
   
   load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep="")) # Note that this includes test.listPost
@@ -299,7 +308,7 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       # Sample from infection history
       for(ksamp in 1:btstrap){
         for(jj in 1:n.inf){
-          lines(min(inf_years)-1+c(jj,jj),c(-1,12*hist.sample[ksamp,jj]-1),col=rgb(0.8,0.8,0.8,0.01),lwd=2) # Plot estimated infections
+          lines(min(inf_years)-1+c(jj,jj),c(-1,12*hist.sample[ksamp,jj]-1),col=rgb(0.8,0.8,0.8,0.05),lwd=2) # Plot estimated infections
         }
       }
       
@@ -316,8 +325,8 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       
       # Plot true infections if simulation
       if(simDat==T){
-        histSim1=historytabSim[ii0,]
-        histSim1[inf_years>picktest[pickyr]]=0 # don't show infections after test year
+        histSim1=hist.true[ii0,]
+        histSim1[inf_years>year_test[pickyr]]=0 # don't show infections after test year
         lenhis=rep(0,length(histSim1))
         for(jj in 1:length(lenhis)){
           lines(min(inf_years)-1+c(jj,jj),c(10*histSim1[jj]-2,12*histSim1[jj]-2),lwd=2,col=rgb(0,0.5,0))

@@ -32,7 +32,7 @@ compile.c() # Compile c code
 # Define simple function of seed
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-simulation.infer <- function(seed_i) {
+simulation.infer <- function(seed_i,mcmc.iterations=1e3) {
 
   loadseed=paste("SIM_",seed_i,sep="")
   
@@ -42,28 +42,32 @@ simulation.infer <- function(seed_i) {
   #tau1=back-boost  / tau2=suppress / disp_k=dispersion (deprecated) 
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
-  thetaSim = c(mu=3,tau1=0,tau2=0.1,wane=1,sigma=0.3,muShort=5,error=0.05,disp_k=1,sigma2=0.1)
-  npartM=40
+  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=1,sigma=0.3,muShort=5,error=0.05,disp_k=1,sigma2=0.1)
+  npartM=70
   
   # Generate 2D map
   define.year=c(2007:2012) # test years
-  inf_years.in=seq(1970,2012,1)
+  inf_years.in=seq(1968,2012,1)
   sim.map.in = generate.antigenic.map(inf_years.in)
   
+  attack.yr=read.csv("datasets/sim_attack.csv")[,1]
+  
+  #attack.yr=rlnorm(inf_years.in,meanlog=log(0.15)-1^2/2,sdlog=0.5)
+  #write.csv(attack.yr,"datasets/sim_attack.csv")
+  
   simulate_data(test_years=define.year, # this needs to be vector
-                inf_years=inf_years.in,strain_years=seq(1970,2012,1),n_part=npartM,
+                inf_years=inf_years.in,strain_years=seq(1968,2012,1),n_part=npartM,
                 roundv=T, # Generate integer titre data
                 thetastar=thetaSim,
                 #antigenic.map.in = sim.map.in,
                 #pmask=c("wane","sigma2"), # Specify what is included
-                p.inf=0.15,seedi=loadseed)
+                p.inf=attack.yr,seedi=loadseed)
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # INFERENCE MODEL
   # Run MCMC for simulated data set
 
-  loadseed="SIM" # ** Fix for initial testing **
-  load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep="")) # Load simulation data for inference step that follows
+  load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep="")) # Load simulation data for inference step that follows
   
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=1,sigma2=0.1)
@@ -92,37 +96,34 @@ simulation.infer <- function(seed_i) {
     n_part,
     test.list=test.listSim, # use simulated data as input
     theta=theta0,
-    runs=1e4, # number of MCMC runs
+    runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
-    pmask=c("wane","sigma2"), # ,"map.fit" specify parameters to fix
+    pmask=c("disp_k"), # ,"map.fit" specify parameters to fix
     seedi=loadseed,
     #antigenic.map.in= sim.map.in0, # Define random initial map to fit
     linD=F)
   
 }
 
-# Run code on network
-
-system.time(
-
-  for(ii in 1:1){  # Use multiple seeds for simulation code
-    
-    fnSeedLoop(ii)
-    
-  } # End loop over seeds
-    
-)
-
-# Do some of these over the network
-library("didewin")
-didewin::didewin_config_global(credentials="~/.smbcredentials",
-                               home="~/dide/home",
-                               temp="~/dide/tmp")
-
-make_trees <- function(n, nspp) {
-  lapply(seq_len(n), function(...) ape::rtree(nspp))
+# Run code on network (SR code)
+fn.network<-function(){
+  system.time(
+    for(ii in 1:1){  # Use multiple seeds for simulation code
+      fnSeedLoop(ii)
+    } # End loop over seeds
+  )
+  
+  # Do some of these over the network
+  library("didewin")
+  didewin::didewin_config_global(credentials="~/.smbcredentials",
+                                 home="~/dide/home",
+                                 temp="~/dide/tmp")
+  
+  make_trees <- function(n, nspp) {
+    lapply(seq_len(n), function(...) ape::rtree(nspp))
+  }
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -134,9 +135,9 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
   # Run MCMC for specific data set
   if(flutype=="H3"){
     load("R_datasets/HaNam_data.RData")
+    am.spl<-load.flu.map.data() # define spline from antigenic map data
   }else{
     load("R_datasets/Fluscape_data_List.RData")
-    year_test=c(2011,2012)
   }
 
   # Plot simulation data vs history
@@ -148,7 +149,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/0.5 + if(sum(fix.param=="wane")==0){runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
-  theta0[["sigma"]]=0.3 # cross-reaction
+  theta0[["sigma"]]=0.2 # cross-reaction
   theta0[["sigma2"]]=0.1 # short-term cross-reaction
   theta0[["muShort"]]=5 # short term boosting
   theta0[["error"]]=0.1 # measurement error
@@ -176,46 +177,55 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
     switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=fix.param, #c("disp_k"), #c("wane"), #,"muShort"), # specify parameters to fix
     seedi=paste(loadseed,"_",flutype,sep=""), # record output
+    antigenic.map.in=inf_years, # define specific map structure (or initial structure if fitting)
+    am.spline=1, # fit antigenic map along defined spline function
     linD=F)
   
 }
 
 
-# - - - - - - - - - - - - - - - - - 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Run cross-sectional inference
-foreach(kk1=c(2007:2012)) %dopar% {
+foreach(kk1=c(2011:2012)) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  data.infer(kk1,mcmc.iterations=1e2,loadseed=1,fix.param=c("disp_k","wane","muShort"),mushort0=1e-5)
+  flutype0="B"
+  if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
+  
+  data.infer(year_test=kk1,mcmc.iterations=1e5,loadseed=1,flutype=flutype0,fix.param=c("disp_k","wane","muShort"))
 }
 
 # - - - - - - - - - - - - - - - - - 
-# Run cross-sectional inference on H3 or B data
+# Run longtudinal inference on H3 or B data
 
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  flutype0="B"
+  flutype0="H3"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
   
-  data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","wane"))
+  data.infer(year_test=dy1,mcmc.iterations=5e4,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","map.fit"))
   
 }
 
 
-# - - - - - - - - - - - - - - - - - 
-# Plot posteriors
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Plot posteriors for longtudinal data
 for(kk in 1:4){
   
-  flutype0="B"
+  flutype0="H3"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
-  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=T)
+  
+  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=T,plotmap = T)
   
 }
 
 # - - - - - - - - - - - - - - - - - 
 # Plot posteriors for cross-sectional data
 
-for(kk in c(2007:2012)){
-  plot.posteriors(year_test=kk,loadseed=1)
+for(kk in c(2011:2012)){
+  flutype0="B"
+  dy1=kk
+  plot.posteriors(year_test=dy1,loadseed=1,flutype=flutype0,f.lim=T)
 }
 
 # plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
@@ -225,9 +235,22 @@ for(kk in c(2007:2012)){
 # - - - - - - - - - - - - - - - - - 
 # Plot titre vs estimates
 
-flutype="H3"
+flutype="B"
 if(flutype=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
-plot.posterior.titres(loadseed=4,flu.type=flutype,simDat=F,year_test=dy1,btstrap=100)
+dy1=2011
+plot.posterior.titres(loadseed=1,flu.type=flutype,simDat=F,year_test=dy1,btstrap=10)
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Simulation results
+foreach(kk=1:4) %dopar% {
+  simulation.infer(seed_i=kk,mcmc.iterations=5e5) # Run inference
+}
 
+for(kk in 1:4){
+  plot.posteriors(simDat=T,loadseed=paste("SIM_",kk,sep=""),year_test=c(2007:2012),plotmap=F,f.lim=T)
+}
+
+dy1=c(2007:2012)
+kk=1
+plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="",simDat=T,year_test=dy1,btstrap=10)
 
