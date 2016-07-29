@@ -44,8 +44,9 @@ load.flu.map.data<-function(){
   lines(prd1, col = "blue")
   #lines(am.spl, col = "blue")
   #save(ag.coord,ag.coord1,am.spl,file=paste("R_datasets/",Data.load,"_V.RData",sep=""))
-  (am.spl)
+  save(am.spl,file="datasets/spline_fn.RData")
 }
+
 
 # - - - - - - - - - - - - - - - -
 # Set initial condition (for infection history) as infection if titre >=X

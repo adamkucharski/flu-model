@@ -1,7 +1,7 @@
 # Model of serological dynamics - uses PLOS Biology model (Kucharski et al. 2015)
 # Author: AJ Kucharski (2015)
 
-# setwd("~/Documents/flu-model/sero_model/")
+ setwd("~/Documents/flu-model/sero_model/")
 # setwd("~/Dropbox/git/flu-model/sero_model")
 
 library(reshape2)
@@ -29,7 +29,7 @@ source("sero_funcs_steven.r") # Load Flu B format
 compile.c() # Compile c code
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Define simple function of seed
+# Define simulation model
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 simulation.infer <- function(seed_i,mcmc.iterations=1e3) {
@@ -107,6 +107,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3) {
   
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Run code on network (SR code)
 fn.network<-function(){
   system.time(
@@ -135,7 +136,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
   # Run MCMC for specific data set
   if(flutype=="H3"){
     load("R_datasets/HaNam_data.RData")
-    am.spl<-load.flu.map.data() # define spline from antigenic map data
+    #am.spl<-load.flu.map.data() # define spline from antigenic map data
   }else{
     load("R_datasets/Fluscape_data_List.RData")
   }
@@ -149,10 +150,10 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/0.5 + if(sum(fix.param=="wane")==0){runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
-  theta0[["sigma"]]=0.2 # cross-reaction
+  theta0[["sigma"]]=0.3 # cross-reaction
   theta0[["sigma2"]]=0.1 # short-term cross-reaction
-  theta0[["muShort"]]=5 # short term boosting
-  theta0[["error"]]=0.1 # measurement error
+  theta0[["muShort"]]=6 # short term boosting
+  theta0[["error"]]=0.05 # measurement error
   theta0[["disp_k"]]=0.01 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
@@ -186,6 +187,9 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# RUN INFERENCE
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
 # Run cross-sectional inference
 foreach(kk1=c(2011:2012)) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
@@ -198,15 +202,21 @@ foreach(kk1=c(2011:2012)) %dopar% {
 # - - - - - - - - - - - - - - - - - 
 # Run longtudinal inference on H3 or B data
 
+load.flu.map.data() # define spline from H3 antigenic map data
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
+  load("datasets/spline_fn.RData") # load spline function for map
+  
   flutype0="H3"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
   
-  data.infer(year_test=dy1,mcmc.iterations=5e4,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","map.fit"))
+  data.infer(year_test=dy1,mcmc.iterations=1e7,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","map.fit")) #,"map.fit"
   
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# PLOT POSTERIORS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot posteriors for longtudinal data
@@ -215,7 +225,7 @@ for(kk in 1:4){
   flutype0="H3"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
   
-  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=T,plotmap = T)
+  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=F,plotmap = T)
   
 }
 
@@ -229,7 +239,6 @@ for(kk in c(2011:2012)){
 }
 
 # plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
-
 # plot.posteriors(simDat=T,loadseed="SIM",year_test=c(2007:2012),plotmap=T)
 
 # - - - - - - - - - - - - - - - - - 

@@ -41,6 +41,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   #simDat=T;loadseed="SIM";year_test=c(2007:2012);plotmap=F;f.lim=T;flutype="H3"
   
   if(simDat==F){loadseed=paste(loadseed,"_",flutype,sep="")}
+  if(simDat==T){load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))}
 
   load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
   par(mfrow=c(5,2))
@@ -86,7 +87,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
   hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col=colA,xlab="infections",prob=TRUE,main=paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep=""),xlim=c(0,40))
 
-  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,paste("mu",theta.sim.out[["mu"]],"_sigma",theta.sim.out[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
+  dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
   dev.off()
   
   # - - - -
@@ -125,14 +126,14 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
      points(inf_years,attack.yr)
   }
     
-  dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
+  dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
   dev.off()
 
   
   # - - - -
   # Plot antigenic map
   if(plotmap==T){
-    am.spl<-load.flu.map.data() # define spline from antigenic map data
+    load("datasets/spline_fn.RData") # load spline function for map
     ag.coord=read.csv("datasets/antigenic_coords.csv", as.is=T,head=T)
     
     par(mfrow=c(1,1))
@@ -158,7 +159,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
     
     points(ag.coord$AG_y,ag.coord$AG_x)
 
-    dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,paste("mu",thetaSim[["mu"]],"_sigma",thetaSim[["sigma"]],sep=""),""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
+    dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
     dev.off()
   }
 
@@ -505,6 +506,74 @@ run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=
     
   } # end loop over test years
   
-  
 }
 
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Rewind history and run with flat incidence
+
+plot.processes<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),plotmap=F,f.lim=F){
+  
+  #simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;f.lim=T;flutype="H3"
+  
+  if(simDat==F){loadseed=paste(loadseed,"_",flutype,sep="")}
+  if(simDat==T){load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))}
+  
+  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
+  par(mfcol=c(2,2))
+  par(mar = c(5,5,1,1))
+  colA=rgb(0.8,0.8,0.8)
+  
+  # Define lengths and sizes of inputs
+  lik.tot=rowSums(likelihoodtab)
+  runsPOST=length(lik.tot[lik.tot!=-Inf])
+  maxlik=max(lik.tot[1:runsPOST])
+  #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
+  
+  # - - - - - - - 
+  # Calculate ESS by burn-in
+  runs1=ceiling(0.25*runsPOST)
+  calculate.ESS<-function(runs1){
+    thetaT=as.data.frame(thetatab)[runs1:runsPOST,]; ltheta=length(thetaT[["mu"]]); thin.theta=thetaT[seq(1,ltheta,switch1),]
+    ESS.calc=effectiveSize(thin.theta); ESS.calc
+  }
+  
+  ESS.calc=calculate.ESS(runs1)
+  thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
+  ltheta=length(thetaT[["mu"]])
+  thin.theta=thetaT[seq(1,ltheta,switch1),]
+  ESS.label<-function(x){paste("ESS=",signif(as.numeric(x),3))}
+  
+  # - - - - - - - 
+  # Plot results
+
+  t.step=seq(0,5,0.1)
+  
+  decay1=sapply(t.step,function(x){c.nume(thin.theta[["mu"]]+thin.theta[["muShort"]]*exp(-thin.theta[["wane"]]*x))})
+  mu.1.p=c.nume(thin.theta[["mu"]])
+  
+  a.unit=5
+  decay2=sapply(t.step,function(x){c.nume(thin.theta[["mu"]]*exp(-a.unit*thin.theta[["sigma"]])+thin.theta[["muShort"]]*exp(-thin.theta[["wane"]]*x)*exp(-a.unit*thin.theta[["sigma2"]]))})
+  mu.2.p=c.nume(thin.theta[["mu"]]*exp(-a.unit*thin.theta[["sigma"]]))
+  
+  # Plot homologous infection
+  plot(t.step,decay1[1,],type="l",ylab="titre",ylim=c(0,8))
+  polygon(c(t.step,rev(t.step)),c(decay1[2,],rev(decay1[3,])),lty=0,col=rgb(0,0.3,1,0.2))
+  lines(t.step,decay1[1,],col="blue")
+  polygon(c(t.step,rev(t.step)),c(0*t.step+mu.1.p[2],rev(0*t.step+mu.1.p[3])),lty=0,col=rgb(0,0.5,0,0.1))
+  lines(t.step,0*t.step+mu.1.p[1],col=rgb(0,0.5,0))
+ 
+  # Plot hetrologous infection
+  #plot(t.step,decay2[1,],type="l",ylab="titre",ylim=c(0,8))
+  polygon(c(t.step,rev(t.step)),c(decay2[2,],rev(decay2[3,])),lty=0,col=rgb(0,0.3,1,0.2))
+  lines(t.step,decay2[1,],col="blue")
+  polygon(c(t.step,rev(t.step)),c(0*t.step+mu.2.p[2],rev(0*t.step+mu.2.p[3])),lty=0,col=rgb(0,0.5,0,0.1))
+  lines(t.step,0*t.step+mu.2.p[1],col=rgb(0,0.5,0))
+  
+  
+  # Plot histograms of parameters
+  dev.copy(pdf,paste("plot_simulations/paper_plots/process",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
+  dev.off()
+
+}
