@@ -76,9 +76,9 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   # Plot histograms of parameters
   hist(thin.theta[["error"]],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,ifelse(f.lim==F,15,1.1*max(thin.theta[["error"]])))); if(simDat==T){abline(v=theta.sim.out[["error"]],col="red")}
   hist(thin.theta[["mu"]],main= ESS.label(ESS.calc[["mu"]]),col=colA,xlab="mu",prob=TRUE,xlim=c(0,ifelse(f.lim==F,15,1.1*max(thin.theta[["mu"]])))); if(simDat==T){abline(v=theta.sim.out[["mu"]],col="red")}
-  hist(thin.theta[["sigma"]],main=ESS.label(ESS.calc[["sigma"]]),col=colA,xlab="sigma",xlim=c(0,ifelse(f.lim==F,0.5,1.1*max(thin.theta[["sigma"]])))); if(simDat==T){abline(v=theta.sim.out[["sigma"]],col="red")}
+  hist(thin.theta[["sigma"]],main=ESS.label(ESS.calc[["sigma"]]),col=colA,xlab="sigma",xlim=c(0,ifelse(f.lim==F,1,1.1*max(thin.theta[["sigma"]])))); if(simDat==T){abline(v=theta.sim.out[["sigma"]],col="red")}
   hist(thin.theta[["muShort"]],main=ESS.label(ESS.calc[["muShort"]]),col=colA,xlab="mu_Short",prob=TRUE,xlim=c(0,ifelse(f.lim==F,20,1.1*max(thin.theta[["muShort"]])))); if(simDat==T){abline(v=theta.sim.out[["muShort"]],col="red")}
-  hist(thin.theta[["sigma2"]],main=ESS.label(ESS.calc[["sigma2"]]),col=colA,xlab="sigma2",xlim=c(0,ifelse(f.lim==F,0.5,1.1*max(thin.theta[["sigma2"]])))); if(simDat==T){abline(v=theta.sim.out[["sigma2"]],col="red")}
+  hist(thin.theta[["sigma2"]],main=ESS.label(ESS.calc[["sigma2"]]),col=colA,xlab="sigma2",xlim=c(0,ifelse(f.lim==F,1,1.1*max(thin.theta[["sigma2"]])))); if(simDat==T){abline(v=theta.sim.out[["sigma2"]],col="red")}
   hist(thin.theta[["tau1"]],main=ESS.label(ESS.calc[["tau1"]]),col=colA,xlab="tau1",prob=TRUE,xlim=c(0,ifelse(f.lim==F,0.2,1.1*max(thin.theta[["tau1"]])))); if(simDat==T){abline(v=theta.sim.out[["tau1"]],col="red")}
   hist(thin.theta[["tau2"]],main=ESS.label(ESS.calc[["tau2"]]),col=colA,xlab="tau2",prob=TRUE,xlim=c(0,ifelse(f.lim==F,0.2,1.1*max(thin.theta[["tau2"]])))); if(simDat==T){abline(v=theta.sim.out[["tau2"]],col="red")}
   hist(thin.theta[["wane"]],main=ESS.label(ESS.calc[["wane"]]),col=colA,xlab="wane",prob=TRUE,xlim=c(0,ifelse(f.lim==F,5,1.1*max(thin.theta[["wane"]])))); if(simDat==T){abline(v=theta.sim.out[["wane"]],col="red")}
@@ -506,74 +506,6 @@ run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=
     
   } # end loop over test years
   
+  
 }
 
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Rewind history and run with flat incidence
-
-plot.processes<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),plotmap=F,f.lim=F){
-  
-  #simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;f.lim=T;flutype="H3"
-  
-  if(simDat==F){loadseed=paste(loadseed,"_",flutype,sep="")}
-  if(simDat==T){load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))}
-  
-  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
-  par(mfcol=c(2,2))
-  par(mar = c(5,5,1,1))
-  colA=rgb(0.8,0.8,0.8)
-  
-  # Define lengths and sizes of inputs
-  lik.tot=rowSums(likelihoodtab)
-  runsPOST=length(lik.tot[lik.tot!=-Inf])
-  maxlik=max(lik.tot[1:runsPOST])
-  #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
-  
-  # - - - - - - - 
-  # Calculate ESS by burn-in
-  runs1=ceiling(0.25*runsPOST)
-  calculate.ESS<-function(runs1){
-    thetaT=as.data.frame(thetatab)[runs1:runsPOST,]; ltheta=length(thetaT[["mu"]]); thin.theta=thetaT[seq(1,ltheta,switch1),]
-    ESS.calc=effectiveSize(thin.theta); ESS.calc
-  }
-  
-  ESS.calc=calculate.ESS(runs1)
-  thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
-  ltheta=length(thetaT[["mu"]])
-  thin.theta=thetaT[seq(1,ltheta,switch1),]
-  ESS.label<-function(x){paste("ESS=",signif(as.numeric(x),3))}
-  
-  # - - - - - - - 
-  # Plot results
-
-  t.step=seq(0,5,0.1)
-  
-  decay1=sapply(t.step,function(x){c.nume(thin.theta[["mu"]]+thin.theta[["muShort"]]*exp(-thin.theta[["wane"]]*x))})
-  mu.1.p=c.nume(thin.theta[["mu"]])
-  
-  a.unit=5
-  decay2=sapply(t.step,function(x){c.nume(thin.theta[["mu"]]*exp(-a.unit*thin.theta[["sigma"]])+thin.theta[["muShort"]]*exp(-thin.theta[["wane"]]*x)*exp(-a.unit*thin.theta[["sigma2"]]))})
-  mu.2.p=c.nume(thin.theta[["mu"]]*exp(-a.unit*thin.theta[["sigma"]]))
-  
-  # Plot homologous infection
-  plot(t.step,decay1[1,],type="l",ylab="titre",ylim=c(0,8))
-  polygon(c(t.step,rev(t.step)),c(decay1[2,],rev(decay1[3,])),lty=0,col=rgb(0,0.3,1,0.2))
-  lines(t.step,decay1[1,],col="blue")
-  polygon(c(t.step,rev(t.step)),c(0*t.step+mu.1.p[2],rev(0*t.step+mu.1.p[3])),lty=0,col=rgb(0,0.5,0,0.1))
-  lines(t.step,0*t.step+mu.1.p[1],col=rgb(0,0.5,0))
- 
-  # Plot hetrologous infection
-  #plot(t.step,decay2[1,],type="l",ylab="titre",ylim=c(0,8))
-  polygon(c(t.step,rev(t.step)),c(decay2[2,],rev(decay2[3,])),lty=0,col=rgb(0,0.3,1,0.2))
-  lines(t.step,decay2[1,],col="blue")
-  polygon(c(t.step,rev(t.step)),c(0*t.step+mu.2.p[2],rev(0*t.step+mu.2.p[3])),lty=0,col=rgb(0,0.5,0,0.1))
-  lines(t.step,0*t.step+mu.2.p[1],col=rgb(0,0.5,0))
-  
-  
-  # Plot histograms of parameters
-  dev.copy(pdf,paste("plot_simulations/paper_plots/process",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
-  dev.off()
-
-}

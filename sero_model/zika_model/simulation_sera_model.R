@@ -1,5 +1,6 @@
 # Simulate artificial serological data for DENV/ZIKV
 # Use model with cross reaction
+# Author: AJ Kucharski (2016)
 
 library(mvtnorm)
 
@@ -18,12 +19,22 @@ generate_timeseries<-function(strains,inf_years,n_part=20,p.inf.in=0.2,sd.val.in
   time_series
 }
 
+c.nume<-function(x){
+  bp1=c(median(x),quantile(x,0.025),quantile(x,0.975))
+  as.numeric(bp1)
+}
+
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Simulate serological data
 
-simulate_sera_data<-function(strains,inf.years.sera=c(1980:2015),time.series.in=NULL,theta=c(error=0.05,sigma=0.4),p.inf.in=0.2,sd.val.in=1,seedi=1,roundv=F,dmatrix.in=NULL,zikv.attack=0.5){ # ii=participant | jj=test year
+simulate_sera_data<-function(strains,inf.years.sera=c(1980:2015),time.series.in=NULL,
+                             theta=c(error=0.05,sigma=0.4),p.inf.in=0.2,sd.val.in=1,seedi=1,
+                             roundv=F,dmatrix.in=NULL,zikv.attack=0.5,
+                             per_sample=50){ # ii=participant | jj=test year
+  
+  set.seed(seedK)
   
   # theta guide:
   # error = probability negative given infection (i.e. 1 - sensitivity)
@@ -41,7 +52,7 @@ simulate_sera_data<-function(strains,inf.years.sera=c(1980:2015),time.series.in=
     
     # circulation in last year only for final strain, with attack rate = zikv.attack
     time.series[,strains]=0
-    time.series[inf.n,strains]=zikv.attack
+    time.series[c((inf.n)),strains]=zikv.attack
     
   }else{
     time.series=time.series.in
@@ -82,12 +93,31 @@ simulate_sera_data<-function(strains,inf.years.sera=c(1980:2015),time.series.in=
     prob.positive = 1-apply(1-t(dmatrix*prob.inf),1,prod)
     test.list.sera = rbind(test.list.sera,prob.positive)
   }
+
+  # - - - - - - 
+  # Simulate binomial results for each participant
+  
+  n_sample=matrix(per_sample,nrow=strains,ncol=length(inf.years.sera))
+  titre.prob=t(test.list.sera)
+  
+  prob_inf0=t(time.series) # Fix initial conditions to correct history
+  prob_inf0=as.matrix(prob_inf0[,c(length(prob_inf0[1,]):1)])
+  
+  titre.data=NULL
+  for(jj in 1:strains){
+    tstrain=NULL
+    for(kk in 1:length(inf.years.sera)){
+      rand=rbinom(1,size=n_sample[jj,kk],prob=titre.prob[jj,kk])/per_sample
+      tstrain=cbind(tstrain,rand)
+    }
+    titre.data=rbind(titre.data,tstrain)
+  }
   
   #test.list.sera
   
   # - - - - - - 
   # Export data
-  save(test.list.sera,historytabSim,inf.years.sera,strains,n_part,time.series,age.yr,theta,file=paste("R_datasets/Sero_sim_",seedi,"_",strains,".RData",sep=""))
+  save(test.list.sera,titre.data,n_sample,prob_inf0,historytabSim,inf.years.sera,strains,n_part,time.series,age.yr,theta,file=paste("R_datasets/Sero_sim_",seedi,"_",strains,".RData",sep=""))
 
 }
 
@@ -101,6 +131,7 @@ plot_simulated_sera_data<-function(seedi,strains){
 
   load(paste("R_datasets/Sero_sim_",seedi,"_",strains,".RData",sep=""))
   
+  par(mar = c(5,5,1,1))
   par(mfrow=c(3,1))
   
   col.list=list(col1=rgb(0.9,0.6,0),col2=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
@@ -117,7 +148,7 @@ plot_simulated_sera_data<-function(seedi,strains){
   title(main=LETTERS[1],adj=0)
 
   # Plot probability of infection by age
-  plot(f.y(historytabSim[,1]),ylim=c(0,1.01),col=col.list$col1,xaxt="n",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  plot(f.y(historytabSim[,1]),ylim=c(0,1.01),col=col.list$col1,xaxt="n",xlab="age in 2016",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
   lines(f.y(historytabSim[,2]),col=col.list$col2,lwd=lw.1)
   lines(f.y(historytabSim[,3]),col=col.list$col3,lwd=lw.1)
   lines(f.y(historytabSim[,4]),col=col.list$col4,lwd=lw.1)
@@ -127,7 +158,7 @@ plot_simulated_sera_data<-function(seedi,strains){
   title(main=LETTERS[2],adj=0)
   
   # Plot probability of seropositivity by age
-  plot(f.y(test.list.sera[,1]),ylim=c(0.2,1.01),col=col.list$col1,xaxt="n",xlab="age in 2015",ylab="probability seropositive",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  plot(f.y(test.list.sera[,1]),ylim=c(0.2,1.01),col=col.list$col1,xaxt="n",xlab="age in 2016",ylab="probability seropositive",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
   lines(f.y(test.list.sera[,2]),col=col.list$col2,lwd=lw.1)
   lines(f.y(test.list.sera[,3]),col=col.list$col3,lwd=lw.1)
   lines(f.y(test.list.sera[,4]),col=col.list$col4,lwd=lw.1)
@@ -136,7 +167,7 @@ plot_simulated_sera_data<-function(seedi,strains){
   title(main=LETTERS[3],adj=0)
   #grid(ny = NULL, nx = 0, col = rgb(0.9,0.9,0.9), lty = "solid")
   
-  dev.copy(pdf,paste("plot_simulations/serology_plot.pdf",sep=""),width=7,height=10)
+  dev.copy(pdf,paste("plot_simulations/serology_plot.pdf",sep=""),width=5,height=8)
   dev.off()
   
 }
@@ -203,24 +234,28 @@ run_mcmc<-function(
   force_constrain, # matrix to constrain circulation years - Note that this is increasing age
   switch1=2,
   runs,
-  seedi=1
+  seedi=1,
+  pmask=NULL
 ){
+  
+  if(sum(pmask=="sigma")>0){ theta[["sigma"]] = 0 } # Fix sigma 0 if hidden
 
   inf.n=length(inf_years)
   # Preallocate memory
-  nparam=length(theta); npcov=rep(1,nparam)
+  nparam=length(theta); npcov=rep(1,nparam); npcov[match(pmask,names(theta))]=0 # mask specified parameters
   cov_matrix_theta0 = diag(npcov)
   cov_matrix_force0 = diag(rep(1,inf.n))
   
   thetatab=matrix(NA,nrow=(runs+1),ncol=length(theta)); colnames(thetatab)=names(theta)
   thetatab[1,]=theta
-  
+
   if(!is.null(prob_inf)){
     # Convert attack rate to FoI
     #diff=as.matrix(prob_inf)-as.matrix(cbind(rep(0,strains),prob_inf[,1:(length(prob_inf[1,])-1)]))
-    forcetab=-log(1-prob_inf)
+    forcetab=-log(1-prob_inf)+0.001 # Add to ensure mixing if zero in simulation
   }else{
-    forcetab=matrix(0.01,nrow=strains,ncol=inf.n)
+    forcetab=matrix(0.1,nrow=strains,ncol=inf.n)
+    forcetab[strains,1]=1 # Increase FOI for ZIKV
   }
   forcetab=force_constrain*forcetab
   forcetabCollect=forcetab
@@ -308,5 +343,232 @@ run_mcmc<-function(
     
   } #End runs loop
   
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Run inference
+
+inference_model<-function(seedK,strains,runsMCMC,scenario,per_sample){
+  
+  # Convert simulated samples into probabilities
+  set.seed(seedK)
+  
+  load(paste("R_datasets/Sero_sim_",seedK,"_",strains,".RData",sep=""))
+  
+  # Impose ICs and run MCMC
+  
+  if(scenario==1){
+    pmask0=c("sigma")
+    force_constrain=matrix(1,nrow=strains,ncol=length(inf.years.sera))
+  }
+  
+  if(scenario==2){
+    pmask0=NULL
+    force_constrain=matrix(1,nrow=strains,ncol=length(inf.years.sera))
+  }
+  
+  if(scenario==3){
+    pmask0=NULL
+    force_constrain=matrix(1,nrow=strains,ncol=length(inf.years.sera))
+    force_constrain[strains,2:length(inf.years.sera)]=0 # Constrain ZIKV to final year only
+  }
+  
+  if(scenario==4){
+    pmask0=NULL
+    force_constrain=matrix(1,nrow=strains,ncol=length(inf.years.sera))
+    force_constrain=prob_inf0>0.01 # Constrain any year <1%
+  }
+  
+  
+  # TO ADD: FIT STRAINS
+  
+  run_mcmc(
+    titre.data, # Note that this starts present and goes back into past (i.e. ordered with age). Data as proportions
+    n_sample, # Total samples in each age group and each strain
+    inf.years.sera,
+    theta=c(error=0.1,sigma=0.2),
+    strains,
+    prob_inf=NULL, #prob_inf0, # initial conditions
+    force_constrain, # matrix to constrain circulation years - Note that this is increasing age
+    runs=runsMCMC,
+    switch1=5, # How often sample FOI vs theta
+    seedi=paste(per_sample,"_",scenario,"_",seedK,sep=""),
+    pmask=pmask0 #NULL #
+  )
+  
+}
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Plot dot distribution
+
+plot.performance<-function(per_sample,age_out,strains,scenarioN=4,runs){
+  
+  par(mfrow=c(1,1))
+  
+  store.prop = array(NA,dim=c(runs,scenarioN))
+  
+  for(scenario in 1:scenarioN){
+    
+    if(scenario==0){
+      # Leave out the base case for now...
+      #for(seedK in 1:runs){
+      #  load(paste("R_datasets/Sero_sim_",seedK,"_",strains,".RData",sep=""))
+      #  store.prop[seedK,scenario+1] = as.numeric(prob_inf0[5,age_out])
+      #}
+      
+    }else{
+      
+      # Estimate median probability for each inference runs
+      
+      for(seedK in 1:runs){
+        load(paste("R_datasets/Sero_sim_",seedK,"_",strains,".RData",sep=""))
+        load(paste("posterior_runs/outputR_f",paste(per_sample,"_",scenario,"_",seedK,sep=""),".RData",sep=""))
+        
+        siml_force=t(time.series); 
+        nblock=length(forcetabCollect)/(length(inf_years)*strains) # get blocks
+        post_force=forcetabCollect[((nblock-1)*strains+1):(nblock*strains),]
+        store.val=array(NA,dim=c(3,strains,inf.n))
+        store.valCI=array(NA,dim=c(3,strains,inf.n))
+        
+        # Calculate median etc.
+        for(ii in 1:strains){
+          post_forceA=forcetabCollect[c(0:(nblock-1))*strains+ii,]
+          store.val[,ii,] = apply(post_forceA,2,function(x){c.nume(x)})
+        }
+        
+        lik=NULL
+        
+        # Store 95% CI
+        for(kk in 1:3){
+          for(ii in 1:(inf.n)){ # Iterate across years
+            p.inf=NULL
+            for(jj in 1:strains){ # Iterate across strains
+              p.inf=c(p.inf,1-exp(-sum(store.val[kk,jj,1:(ii)]))) # Infected in this period with strain j
+            }
+            # Convert to probability of infection
+            store.valCI[kk, , ii] = p.inf
+          }
+        }
+        
+        store.prop[seedK,scenario] = store.valCI[1,5,age_out]
+        
+      } # end seed loop
+
+    } # end scenario check
+    
+  } # end scenario loop
+  
+  plot_table=store.prop
+  dim(plot_table)=NULL
+  
+  x_axis=rep((2*runif(runs)-1)*0.1,scenarioN)+rep(1:scenarioN, each = runs) # Add scatter
+  
+  plot(x_axis,plot_table,xlim=c(0.5,4.5),ylim=c(0.4,1))
+  lines(c(0,5),c(0.5,0.5),col="red")
+  
+  dev.copy(pdf,paste("plot_simulations/performance.pdf",sep=""),width=5,height=5)
+  dev.off()
+  
+}
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Plot posteriors
+
+plot.posteriors<-function(per_sample,scenario,seedK){
+  load(paste("R_datasets/Sero_sim_",seedK,"_",strains,".RData",sep=""))
+  load(paste("posterior_runs/outputR_f",paste(per_sample,"_",scenario,"_",seedK,sep=""),".RData",sep=""))
+  
+  par(mfrow=c(2,4))
+  colA=rgb(0.8,0.8,0.8)
+  col.list=list(col1=rgb(0.9,0.6,0),col2=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
+  alphc=0.2
+  col.listF=list(col1=rgb(0.9,0.6,0,alphc),col2=rgb(0.2,0,0.8,alphc),col3=rgb(0.1,0.6,0.2,alphc),col4=rgb(1,0.4,1,alphc),col5=rgb(0.8,0,0.2,alphc))
+  lw.1=1.5
+  age.yr=c(0:(inf.n-1))
+  label.age=seq(0,length(age.yr),2)
+  
+  # Plot posteriors
+  maxlik=(likelihoodtab==max(likelihoodtab))
+  run2=length(likelihoodtab)
+  run1=round(0.2*run2)
+  plot(likelihoodtab[run1:run2],type="l",ylab="log likelihood",xlab="iteration")
+  theta_post=data.frame(thetatab[run1:run2,])
+  hist(1-theta_post[["sigma"]],main="",col=colA,xlab="specificity",prob=TRUE,xlim=c(0.5,1)); abline(v=1-theta.serology[["sigma"]],col="red")
+  hist(1-theta_post[["error"]],main="",col=colA,xlab="sensitivity",prob=TRUE,xlim=c(0.5,1)); abline(v=1-theta.serology[["error"]],col="red")
+  
+  # - - - 
+  # Plot infection curves -  last sample from MCMC against observed data
+  
+  siml_force=t(time.series); 
+  
+  nblock=length(forcetabCollect)/(length(inf_years)*strains) # get blocks
+  post_force=forcetabCollect[((nblock-1)*strains+1):(nblock*strains),]
+  #post_force=1-exp(-post_force) # Convert FoI to probability
+  #post_force=post_force[,c(length(inf_years):1)] # Swap arrangement to match
+  
+  store.val=array(NA,dim=c(3,strains,inf.n))
+  store.valCI=array(NA,dim=c(3,strains,inf.n))
+  
+  # Calculate median etc.
+  for(ii in 1:strains){
+    post_forceA=forcetabCollect[c(0:(nblock-1))*strains+ii,]
+    store.val[,ii,] = apply(post_forceA,2,function(x){c.nume(x)})
+  }
+  
+  lik=NULL
+  
+  # Store 95% CI
+  
+  for(kk in 1:3){
+    for(ii in 1:(inf.n)){ # Iterate across years
+      p.inf=NULL
+      for(jj in 1:strains){ # Iterate across strains
+        p.inf=c(p.inf,1-exp(-sum(store.val[kk,jj,1:(ii)]))) # Infected in this period with strain j
+      }
+      # Convert to probability of infection
+      store.valCI[kk, , ii] = p.inf
+    }
+  }
+  
+  #for(ii in 1:(inf.n)){ # Iterate across years
+  #  p.inf=NULL
+  #  for(jj in 1:strains){ # Iterate across strains
+  #    p.inf=c(p.inf,1-exp(-sum(post_force[jj,1:(ii)]))) # Infected in this period with strain j
+  #  }
+  #  # Convert to probability of infection
+  #  prob.positive = p.inf # 1-apply(1-t(dmatrix*p.inf),1,prod)
+  #  lik=rbind(lik,prob.positive)
+  #}
+  
+  
+  plot(f.y(historytabSim[,1]),ylim=c(0,1.01),col=col.list$col1,xaxt="n",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(f.y(store.valCI[1,1,]),col=col.list$col1,lty=2,lwd=lw.1)
+  polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,1,]),rev(f.y(store.valCI[3,1,]))),lty=0,col=col.listF$col1)
+  axis(1,at=label.age,labels=rev(label.age))
+  
+  plot(f.y(historytabSim[,2]),ylim=c(0,1.01),col=col.list$col2,xaxt="n",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(f.y(store.valCI[1,2,]),col=col.list$col2,lty=2,lwd=lw.1)
+  polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,2,]),rev(f.y(store.valCI[3,2,]))),lty=0,col=col.listF$col2)
+  axis(1,at=label.age,labels=rev(label.age))
+  
+  plot(f.y(historytabSim[,3]),ylim=c(0,1.01),col=col.list$col3,xaxt="n",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(f.y(store.valCI[1,3,]),col=col.list$col3,lty=2,lwd=lw.1)
+  polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,3,]),rev(f.y(store.valCI[3,3,]))),lty=0,col=col.listF$col3)
+  axis(1,at=label.age,labels=rev(label.age))
+  
+  plot(f.y(historytabSim[,4]),ylim=c(0,1.01),col=col.list$col4,xaxt="n",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(f.y(store.valCI[1,4,]),col=col.list$col4,lty=2,lwd=lw.1)
+  polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,4,]),rev(f.y(store.valCI[3,4,]))),lty=0,col=col.listF$col4)
+  axis(1,at=label.age,labels=rev(label.age))
+  
+  plot(f.y(historytabSim[,5]),ylim=c(0,1.01),col=col.list$col5,xaxt="n",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(f.y(store.valCI[1,5,]),col=col.list$col5,lty=2,lwd=lw.1)
+  polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,5,]),rev(f.y(store.valCI[3,5,]))),lty=0,col=col.listF$col5)
+  axis(1,at=label.age,labels=rev(label.age))
+  dev.copy(pdf,paste("plot_simulations/posterior_plot",paste(per_sample0,"_",scenario,"_",seedK,sep=""),".pdf",sep=""),width=10,height=6)
+  dev.off()
+
 }
 
