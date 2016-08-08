@@ -89,3 +89,59 @@ if(plotmap==T){
 }
   
 }
+
+
+
+# 2D plots
+# Store bootstrap runs
+storetitreS = array(NA,dim = c(length(year_x),length(cross_x)))
+storetitreL = array(NA,dim = c(length(year_x),length(cross_x)))
+
+for(ii in 1:length(year_x)){
+  for(cc in 1:length(cross_x)){
+    SS1=NULL
+    SL1=NULL
+    for(sampk in 1:btstrap){
+      # - - - - - - - - - - - -
+      # Sample from MCMC posterior to get trajectory
+      
+      pickA=sample(c(runs1:runsPOST),1)
+      theta.max=as.data.frame(thetatab)[pickA,]
+      
+      SS1 = c(SS1, theta.max$mu*exp(-theta.max$sigma*abs(cross_x[cc])) )
+      
+      SL1 = c(SL1, min(8, theta.max$mu*exp(-theta.max$sigma*abs(cross_x[cc])) + theta.max$muShort*exp(-theta.max$sigma2*abs(cross_x[cc])) * exp(- year_x[ii] * theta.max$wane) ) )
+      
+    }
+    
+    storetitreS[ii,cc] = median(SS1)
+    storetitreL[ii,cc] = median(SL1)
+    
+  }
+}
+
+storetitreS2=data.frame(melt(storetitreS))
+names(storetitreS2)=c("x","y","z")
+
+storetitreL2=data.frame(melt(storetitreL))
+names(storetitreL2)=c("x","y","z")
+
+par(mfrow=c(2,1))
+p1 = ggplot(storetitreS2, aes(x, y, z = z)) +
+  #stat_contour(aes(colour = ..level..))
+  geom_raster(aes(fill = z)) +
+  geom_contour(colour = "white")
+#geom_tile(aes(fill = z)) #+ stat_contour(aes(colour = ..level..))
+
+p2 = ggplot(storetitreL2, aes(x, y, z = z)) +
+  theme(plot.title=element_text(hjust=0,face="bold"),panel.grid.minor=element_blank(), panel.grid.major.x=element_blank(), panel.grid.major.y=element_line(size = 1,rgb(0.95,0.95,0.95)),panel.background=element_blank(),panel.border=element_rect(colour = "black", fill=FALSE))+
+  geom_raster(aes(fill = z)) +
+  geom_contour(colour = "white")
+#geom_tile(aes(fill = z)) #+ stat_contour(aes(colour = ..level..))
+
+theme(plot.title=element_text(hjust=0,face="bold"),panel.grid.minor=element_blank(), panel.grid.major.x=element_blank(), panel.grid.major.y=element_line(size = 1,rgb(0.95,0.95,0.95)),panel.background=element_blank(),panel.border=element_rect(colour = "black", fill=FALSE))+
+  xlab("age") +
+  ylab("proportion seropositive 2015") +
+  ylim(0,1)
+
+grid.arrange(p1,p2,  ncol=1) #,main=paste(ifelse(wvacc==1,"With vaccine","Without vaccine"),sep=""))

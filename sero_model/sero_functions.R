@@ -135,6 +135,9 @@ outputdmatrix.fromcoord<-function(thetasigma,inf_years,anti.map.in,spl.fn=NULL){
       xx=scalemap(anti.map.in)
       yy=predict(am.spl,xx)$y
       am2=cbind(xx,yy)
+      
+      print(am2)
+      
       (dmatrix=apply(am2,1,function(x){exp(-thetasigma*sqrt(
         colSums(apply(am2,1,function(y){(y-x)^2}))
       ))}))
@@ -597,7 +600,8 @@ run_mcmc<-function(
       history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years) #resample history
       theta_star =thetatab[m,]
     }
-    
+
+    #print(am.spline) # DEBUG
     dmatrix= outputdmatrix.fromcoord(theta_star[["sigma"]] ,inf_years,anti.map.in=map_star,spl.fn=am.spline) # Arrange antigenic map into cross-reaction matrix
     dmatrix2=outputdmatrix.fromcoord(theta_star[["sigma2"]],inf_years,anti.map.in=map_star,spl.fn=am.spline) # Arrange antigenic map into cross-reaction matrix
     

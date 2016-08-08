@@ -24,17 +24,17 @@ source("simulation_sera_model.R")
 # error = probability negative given infection (1-sensitivity)
 # sigma = probability positive from cross-reaction (1-specificity)
 
-theta.serology=c(error=0.1,sigma=0.3) 
+theta.serology=c(error=0.05,sigma=0.3) 
 per_sample0=50
-seedRuns=10
+seedRuns=100
 
 for(seedK in 1:seedRuns){
 
-  simulate_sera_data(strains=5,inf.years.sera=c(1985:2016),time.series.in=NULL,theta=theta.serology,
+  simulate_sera_data(strains=5,inf.years.sera=c(1987:2016),time.series.in=NULL,theta=theta.serology,
                      p.inf.in=0.05*c(1,1,1,1,1),sd.val.in=1.5,seedi=seedK,roundv=F,dmatrix.in=NULL,zikv.attack=0.5,per_sample=per_sample0)
 
   # Plot results
-  #plot_simulated_sera_data(strains=5,seedi=seedK)
+  plot_simulated_sera_data(strains=5,seedi=1)
 
 }
 
@@ -43,14 +43,16 @@ for(seedK in 1:seedRuns){
 
 for(scenario in 1:4){
   foreach(seedK=c(1:seedRuns)) %dopar% {
-    inference_model(seedK,strains=5,runsMCMC=1e4,scenario,per_sample=per_sample0)
+    inference_model(seedK,strains=5,runsMCMC=1e5,scenario,per_sample=per_sample0,switch0=10)
   }
 }
 
 # - - - - - - - - - - - - - - - - - 
 # Plot output
 
-plot.posteriors(per_sample=per_sample0,scenario=3,seedK=1)
-plot.performance(per_sample=per_sample0,age_out=15,strains,scenarioN=4,runs=seedRuns)
+plot.posteriors(per_sample=per_sample0,strains=5,scenario=3,seedK=2)
+
+
+plot.performance(per_sample=per_sample0,age_out=20,strains=5,scenarioN=4,runs=seedRuns)
 
 

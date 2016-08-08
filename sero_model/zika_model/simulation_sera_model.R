@@ -167,7 +167,7 @@ plot_simulated_sera_data<-function(seedi,strains){
   title(main=LETTERS[3],adj=0)
   #grid(ny = NULL, nx = 0, col = rgb(0.9,0.9,0.9), lty = "solid")
   
-  dev.copy(pdf,paste("plot_simulations/serology_plot.pdf",sep=""),width=5,height=8)
+  dev.copy(pdf,paste("plot_simulations/serology_plot.pdf",sep=""),width=3.5,height=7)
   dev.off()
   
 }
@@ -346,9 +346,9 @@ run_mcmc<-function(
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Run inference
+# RUN INFERENCE
 
-inference_model<-function(seedK,strains,runsMCMC,scenario,per_sample){
+inference_model<-function(seedK,strains,runsMCMC,scenario,per_sample,switch0=5){
   
   # Convert simulated samples into probabilities
   set.seed(seedK)
@@ -376,22 +376,21 @@ inference_model<-function(seedK,strains,runsMCMC,scenario,per_sample){
   if(scenario==4){
     pmask0=NULL
     force_constrain=matrix(1,nrow=strains,ncol=length(inf.years.sera))
-    force_constrain=prob_inf0>0.01 # Constrain any year <1%
+    force_constrain=(prob_inf0>0.01) # Constrain any year <1%
   }
   
   
   # TO ADD: FIT STRAINS
-  
   run_mcmc(
     titre.data, # Note that this starts present and goes back into past (i.e. ordered with age). Data as proportions
     n_sample, # Total samples in each age group and each strain
     inf.years.sera,
-    theta=c(error=0.1,sigma=0.2),
+    theta=c(error=0.05,sigma=0.2),
     strains,
     prob_inf=NULL, #prob_inf0, # initial conditions
     force_constrain, # matrix to constrain circulation years - Note that this is increasing age
     runs=runsMCMC,
-    switch1=5, # How often sample FOI vs theta
+    switch1=switch0, # How often sample FOI vs theta
     seedi=paste(per_sample,"_",scenario,"_",seedK,sep=""),
     pmask=pmask0 #NULL #
   )
@@ -433,7 +432,8 @@ plot.performance<-function(per_sample,age_out,strains,scenarioN=4,runs){
         
         # Calculate median etc.
         for(ii in 1:strains){
-          post_forceA=forcetabCollect[c(0:(nblock-1))*strains+ii,]
+          minN=round(0.2*(nblock-1))
+          post_forceA=forcetabCollect[c(minN:(nblock-1))*strains+ii,]
           store.val[,ii,] = apply(post_forceA,2,function(x){c.nume(x)})
         }
         
@@ -462,10 +462,10 @@ plot.performance<-function(per_sample,age_out,strains,scenarioN=4,runs){
   plot_table=store.prop
   dim(plot_table)=NULL
   
-  x_axis=rep((2*runif(runs)-1)*0.1,scenarioN)+rep(1:scenarioN, each = runs) # Add scatter
+  x_axis=rep((2*runif(runs)-1)*0.15,scenarioN)+rep(1:scenarioN, each = runs) # Add scatter
   
-  plot(x_axis,plot_table,xlim=c(0.5,4.5),ylim=c(0.4,1))
-  lines(c(0,5),c(0.5,0.5),col="red")
+  plot(x_axis,plot_table,xlim=c(0.5,4.5),ylim=c(0.4,1),cex=0.5,pch=19,ylab=paste("probability ",age_out,"yo previously infected with ZIKV",sep=""), xlab="model")
+  lines(c(0,5),c(0.5,0.5),col="blue")
   
   dev.copy(pdf,paste("plot_simulations/performance.pdf",sep=""),width=5,height=5)
   dev.off()
@@ -476,7 +476,7 @@ plot.performance<-function(per_sample,age_out,strains,scenarioN=4,runs){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot posteriors
 
-plot.posteriors<-function(per_sample,scenario,seedK){
+plot.posteriors<-function(per_sample,strains,scenario,seedK){
   load(paste("R_datasets/Sero_sim_",seedK,"_",strains,".RData",sep=""))
   load(paste("posterior_runs/outputR_f",paste(per_sample,"_",scenario,"_",seedK,sep=""),".RData",sep=""))
   

@@ -8,6 +8,7 @@ library(reshape2)
 library(mvtnorm)
 library(MASS)
 library(coda)
+library(RColorBrewer)
 
 library(foreach)
 library(doMC)
@@ -131,7 +132,7 @@ fn.network<-function(){
 # Inference using cross-sectional vs longitudinal data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix.param=NULL) {
+data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix.param=NULL , fit.spline=NULL) {
   # INFERENCE MODEL
   # Run MCMC for specific data set
   if(flutype=="H3"){
@@ -150,9 +151,9 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/0.5 + if(sum(fix.param=="wane")==0){runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
-  theta0[["sigma"]]=0.3 # cross-reaction
-  theta0[["sigma2"]]=0.1 # short-term cross-reaction
-  theta0[["muShort"]]=6 # short term boosting
+  theta0[["sigma"]]=0.3 + if(sum(fix.param=="wane")==0){0.1*runif(1,c(-1,1))}else{0} # cross-reaction
+  theta0[["sigma2"]]=0.1 + if(sum(fix.param=="wane")==0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
+  theta0[["muShort"]]=6 + if(sum(fix.param=="wane")==0){2*runif(1,c(-1,1))}else{0} # short term boosting
   theta0[["error"]]=0.05 # measurement error
   theta0[["disp_k"]]=0.01 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0
@@ -179,7 +180,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
     pmask=fix.param, #c("disp_k"), #c("wane"), #,"muShort"), # specify parameters to fix
     seedi=paste(loadseed,"_",flutype,sep=""), # record output
     antigenic.map.in=inf_years, # define specific map structure (or initial structure if fitting)
-    am.spline=1, # fit antigenic map along defined spline function
+    am.spline=fit.spline, # decide whether to fit antigenic map along "am.spl" spline function
     linD=F)
   
 }
@@ -202,15 +203,16 @@ foreach(kk1=c(2011:2012)) %dopar% {
 # - - - - - - - - - - - - - - - - - 
 # Run longtudinal inference on H3 or B data
 
-load.flu.map.data() # define spline from H3 antigenic map data
-foreach(kk=1:4) %dopar% {
+#load.flu.map.data() # define spline from H3 antigenic map data
+load("datasets/spline_fn.RData") # load spline function for map
+
+for(kk in 1){
+#foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  load("datasets/spline_fn.RData") # load spline function for map
-  
   flutype0="H3"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
-  
-  data.infer(year_test=dy1,mcmc.iterations=1e7,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","map.fit")) #,"map.fit"
+  # Fits to spline if am.spl is defined
+  data.infer(year_test=dy1,mcmc.iterations=2e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k"),fit.spline=1) #,"map.fit"
   
 }
 
@@ -225,7 +227,7 @@ for(kk in 1:4){
   flutype0="H3"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
   
-  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=F,plotmap = T)
+  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=T,plotmap = T)
   
 }
 
@@ -244,10 +246,10 @@ for(kk in c(2011:2012)){
 # - - - - - - - - - - - - - - - - - 
 # Plot titre vs estimates
 
-flutype="B"
+flutype="H3"
 if(flutype=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
-dy1=2011
 plot.posterior.titres(loadseed=1,flu.type=flutype,simDat=F,year_test=dy1,btstrap=10)
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Simulation results
