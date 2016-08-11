@@ -28,29 +28,37 @@ theta.serology=c(error=0.05,sigma=0.3)
 per_sample0=50
 seedRuns=100
 
-for(seedK in 1:seedRuns){
+# Paper code
+#theta.serology=c(error=0.1,sigma=0.3) 
+#per_sample0=10
+#seedRuns=100
 
-  simulate_sera_data(strains=5,inf.years.sera=c(1987:2016),time.series.in=NULL,theta=theta.serology,
-                     p.inf.in=0.05*c(1,1,1,1,1),sd.val.in=1.5,seedi=seedK,roundv=F,dmatrix.in=NULL,zikv.attack=0.5,per_sample=per_sample0)
+for(seedK in 1:seedRuns){
+  
+  seedK=2
+  
+  simulate_sera_data(strains=5,inf.years.sera=c(1985:2015),time.series.in=NULL,theta=theta.serology,
+                     p.inf.in=0.05*c(1,1,1,1,1),sd.val.in=1.5,seedi=seedK,roundv=F,dmatrix.in=NULL,zikv.attack=0.4,per_sample=per_sample0)
 
   # Plot results
-  plot_simulated_sera_data(strains=5,seedi=1)
+  plot_simulated_sera_data(strains=5,seedi=seedK)
 
 }
 
 # - - - - - - - - - - - - - - - - - 
 # Run MCMC inference
 
-for(scenario in 1:4){
-  foreach(seedK=c(1:seedRuns)) %dopar% {
+#for(scenario in c(1,4)){
+  foreach(scenario=c(1,4)) %dopar% {
+  #foreach(seedK=c(1:seedRuns)) %dopar% {
     inference_model(seedK,strains=5,runsMCMC=1e5,scenario,per_sample=per_sample0,switch0=10)
-  }
+  #}
 }
 
 # - - - - - - - - - - - - - - - - - 
 # Plot output
 
-plot.posteriors(per_sample=per_sample0,strains=5,scenario=3,seedK=2)
+plot.posteriors(per_sample=per_sample0,strains=5,scenario=1,seedK=4)
 
 
 plot.performance(per_sample=per_sample0,age_out=20,strains=5,scenarioN=4,runs=seedRuns)

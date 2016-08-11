@@ -221,7 +221,7 @@ for(kk in 1){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Plot posteriors for longtudinal data
+# Plot posteriors for longtudinal data (FIG 3)
 for(kk in 1:4){
   
   flutype0="H3"
@@ -250,6 +250,11 @@ flutype="H3"
 if(flutype=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
 plot.posterior.titres(loadseed=1,flu.type=flutype,simDat=F,year_test=dy1,btstrap=10)
 
+# - - - - 
+# Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG 2)
+
+plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=50,part_pick=c(31,57,25),year_pick=c(2008:2010))
+plot.antibody.changes()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Simulation results

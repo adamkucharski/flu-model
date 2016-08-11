@@ -1,6 +1,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Simulation and inference diagnostics
 # Plot posteriors and compare MCMC output to titre data
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Convert vector to median and 95% CrI
 c.text<-function(x,sigF=3){
@@ -34,7 +35,7 @@ scale.map<-function(map.pick){
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot MCMC posterior distributions
-
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),plotmap=F,f.lim=F){
 
@@ -90,7 +91,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   dev.copy(pdf,paste("plot_simulations/posterior",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
   dev.off()
   
-  # - - - - - - - - - - - -
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Plot attack rates, scaled by proportion alive
 
   par(mfrow=c(1,1))
@@ -114,7 +115,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   }
   attackCI=data.frame(attackCI)
   names(attackCI)=c("mean","CI1","CI2")
-  colA=rgb(0,0,0.8)
+  colB=rgb(0,0,0.8)
   plot(inf_years,attackCI$mean,pch=19,col=colA,ylim=c(0,1),xlab="year",ylab="attack rate")
   for(kk in 1:length(inf_years)){ # Iterate across test years
      lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colA)
@@ -135,7 +136,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   dev.copy(pdf,paste("plot_simulations/attackSimple",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
   dev.off()
   
-  # - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Plot estimated attack rates against virus isolates that year
   
   if(flutype=="H3"){
@@ -202,35 +203,34 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
     # Replot attack rates
     pick_years = match(test.yr[2:6],inf_years)
     
-    par(mfrow=c(1,2))
-    par(mar = c(4,4,1,1))
-    
-    colA0=c(rep(colA,length(inf_years)-5),rep("red",5))
+    par(mfrow=c(1,3))
+    par(mar = c(3,3,1,1))
+    par(mgp=c(1.8,0.6,0))
+    colA0=c(rep(colB,length(inf_years)-5),rep("red",5))
     
     plot(inf_years,attackCI$mean,pch=19,col=colA0,ylim=c(0,1),xlab="year",ylab="estimated attack rate", yaxs="i")
     for(kk in 1:length(inf_years)){ # Iterate across test years
       lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colA0[kk])
     }
-
-    plot(isolatetab,attackCI$mean[pick_years],pch=19,cex=1.2,col="red",ylim=c(0,0.52),xlim=c(0,700),xlab="H3 isolates during sample period",ylab="estimated attack rate", xaxs="i", yaxs="i")
+    title(main=LETTERS[1],adj=0)
     
-    #points(isolatetab,sconverttab[,1],cex=1.2)
-    #for(kk in 1:5){ # Iterate across test years
-    #  lines(c(isolatetab[kk],isolatetab[kk])+0.1,c(attackCIsero$CI1[kk],attackCIsero$CI2[kk]),col="black")
-    #}
-    
+    plot(isolatetab,attackCI$mean[pick_years],pch=19,cex=1.2,col="red",ylim=c(0,0.55),xlim=c(0,700),xlab="H3 isolates during sample period",ylab="estimated attack rate", xaxs="i", yaxs="i")
     for(kk in 1:length(pick_years)){ # Iterate across test years
       lines(c(isolatetab[kk],isolatetab[kk])+0.5,c(attackCI$CI1[pick_years[kk]],attackCI$CI2[pick_years[kk]]),col="red")
     }
+    title(main=LETTERS[2],adj=0)
+
+    ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
+    hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col =rgb(0.8,0.8,0.8),xlab="number of infections",prob=TRUE,xlim=c(0,50),ylim=c(0,0.1),xaxs="i",yaxs="i", main=NULL,ylab="density")
+    abline(v=median(ind.infN),col="red",lty=2,lwd=1.5); abline(v=mean(ind.infN),col="red",lwd=1.5)
+    title(main=LETTERS[3],adj=0)
     
-    dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=10,height=5)
+    dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=3)
     dev.off()
-    
     
   }
     
 
-  
   # - - - - - - - - - - - -
   # Plot antigenic map
   if(plotmap==T){
@@ -268,6 +268,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Compare multiple MCMC outputs for vector of different years fitted
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
   
@@ -320,6 +321,7 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot expected titres using sampled posterior estimates against true titres 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # plot.posterior.titres(loadseed="SIM",simDat=T,define.year=c(2007:2012))
 
@@ -392,7 +394,25 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
   } # end loop over test years
   } # end bootstrap loop
   
-  # - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - 
+  # Plot histogram of estimated vs true titre
+  compTab = NULL
+  for(pickyr in 1:n.test){
+    for(ii0 in 1:n_part){
+    estT = apply(store.mcmc.test.data[,ii0,,pickyr,2],2,function(x){median(x)})
+    truT = test.list[[ii0]][[pickyr]][2,]
+    
+    compTab = c(compTab, estT - truT)
+    }
+  }
+  compTab = as.numeric(compTab); compTab = compTab[!is.na(compTab)]
+  
+  par(mar = c(5,5,1,1))
+  hist(compTab , breaks = seq(-10.5,10.5,1) , col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - observed titre")
+  dev.copy(pdf,paste("plot_simulations/titre_compare/Residuals_",loadseed,".pdf",sep=""),width=6,height=4)
+  dev.off()
+  
+  # - - - - - - - - - - - - - - - - - - - 
   # Plot figures from MCMC posteriors
   
   for(pickyr in 1:n.test){
@@ -528,7 +548,7 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   
   par(mfrow=c(3,3)); #layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
   par(mgp=c(1.8,0.6,0))
-  ymax=8.2
+  ymax=8.2 ; titleN = 1
   
   for(ii0 in 1:n.ppart){
 
@@ -542,7 +562,7 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
       #par(mar = c(2,2,1,1)) #B L T R
       
       if(ii0 < 3 & pickyr > 1){
-        par(mar = c(0,0,1,1))
+        par(mar = c(1,0,1,1))
         plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,ymax),col='white',xlab=ifelse(ii0==3,"",""),ylab=ifelse(pickyr==1,"",""),xaxt="n",yaxt="n",main=ifelse(ii0==1,year_pick[pickyr],""))
         axis(side = 1, at = inf_years, labels = FALSE, tck = -0.01)
       }
@@ -554,7 +574,7 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
       }
       
       if(pickyr == 1 & ii0 < 3){
-        par(mar = c(0,2,1,1))
+        par(mar = c(1,2,1,1))
         plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,ymax),col='white',xlab=ifelse(ii0==3,"",""),ylab=ifelse(pickyr==1,"",""),xaxt="n",main=ifelse(ii0==1,year_pick[pickyr],""))
         axis(side = 1, at = inf_years, labels = FALSE, tck = -0.01)
       }
@@ -584,6 +604,9 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
       
       # Plot true titres - check select correct values
       points(min(inf_years)-1+test.list[[ part_pick[ii0] ]][[ n.testMatch[pickyr] ]][4,],test.list[[ part_pick[ii0] ]][[ n.testMatch[pickyr] ]][2,],pch=1,col='red')
+      
+      title(main=LETTERS[titleN],adj=0)
+      titleN=titleN+1
       
     }  # end loop over participants
   } # end loop over test years
@@ -768,83 +791,105 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",
   loadseed=paste(loadseed,"_",flu.type,sep="")
 
   load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep="")) # Note that this includes test.listPost
-  
-  
+
   lik.tot=rowSums(likelihoodtab)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
   runs1=ceiling(0.2*runsPOST)
-  
   thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
   
-  year_x = seq(0,3,0.01)
-  cross_x = seq(-30,0,0.01)
-  Dmed = 3; Dlong = 10; Tmed = 0.5; Tlon = 2 # Define values for plots
+  sampleX = 10
+  year_x = seq(0,3,0.01) ;   year_x2 = seq(0,3,0.1) ; cross_x = seq(0,30,0.1) ;  cross_x2 = seq(0,30,1)
+  Dmed = 3; Dlong = 10; Tmed = 0.5; Tlon = 3 # Define values for plots
   
   # 1D plots
   # Store bootstrap runs
-  storetitreS = NULL
-  storetitreM = NULL
-  storetitreL = NULL
-  storetitreCrossS = NULL
-  storetitreCrossM = NULL
-  storetitreCrossL = NULL
+  storetitreS = NULL; storetitreM = NULL; storetitreL = NULL;
+  storetitreCrossS = NULL ; storetitreCrossM = NULL; storetitreCrossL = NULL
   
   for(sampk in 1:btstrap){
-    
-    # - - - - - - - - - - - -
     # Sample from MCMC posterior to get trajectory
-    
     pickA=sample(c(runs1:runsPOST),1)
     theta.max=as.data.frame(thetatab)[pickA,]
     
     storetitreS = rbind(storetitreS, sapply( theta.max$mu + theta.max$muShort*exp(- year_x * theta.max$wane), function(x){min(8, x)}) )
-    storetitreM = rbind(storetitreM, sapply( theta.max$mu*exp(-theta.max$sigma*Dmed) + theta.max$muShort*exp(- year_x * theta.max$wane)*exp(-theta.max$sigma2*Dmed), function(x){min(8, x)}) )
+    #storetitreM = rbind(storetitreM, sapply( theta.max$mu*exp(-theta.max$sigma*Dmed) + theta.max$muShort*exp(- year_x * theta.max$wane)*exp(-theta.max$sigma2*Dmed), function(x){min(8, x)}) )
     storetitreL = rbind(storetitreL, sapply( theta.max$mu*exp(-theta.max$sigma*Dlong) + theta.max$muShort*exp(- year_x * theta.max$wane)*exp(-theta.max$sigma2*Dlong), function(x){min(8, x)}) )
     
     storetitreCrossS = rbind(storetitreCrossS, sapply( theta.max$mu*exp(-theta.max$sigma*abs(cross_x)) + theta.max$muShort*exp(-theta.max$sigma2*abs(cross_x)), function(x){min(8, x)}) )
-    storetitreCrossM = rbind(storetitreCrossM, sapply( theta.max$mu*exp(-theta.max$sigma*abs(cross_x)) + theta.max$muShort*exp(-theta.max$sigma2*abs(cross_x))*exp(- Tmed * theta.max$wane), function(x){min(8, x)}) )
+    #storetitreCrossM = rbind(storetitreCrossM, sapply( theta.max$mu*exp(-theta.max$sigma*abs(cross_x)) + theta.max$muShort*exp(-theta.max$sigma2*abs(cross_x))*exp(- Tmed * theta.max$wane), function(x){min(8, x)}) )
     storetitreCrossL = rbind(storetitreCrossL, sapply( theta.max$mu*exp(-theta.max$sigma*abs(cross_x)) + theta.max$muShort*exp(-theta.max$sigma2*abs(cross_x))*exp(- Tlon * theta.max$wane), function(x){min(8, x)}) )
     
   }
   
   titreL = apply(storetitreL,2,function(x){c.nume(x)})
-  titreM = apply(storetitreM,2,function(x){c.nume(x)})
+  #titreM = apply(storetitreM,2,function(x){c.nume(x)})
   titreS = apply(storetitreS,2,function(x){c.nume(x)})
   titreCrossL = apply(storetitreCrossL,2,function(x){c.nume(x)})
-  titreCrossM = apply(storetitreCrossM,2,function(x){c.nume(x)})
+  #titreCrossM = apply(storetitreCrossM,2,function(x){c.nume(x)})
   titreCrossS = apply(storetitreCrossS,2,function(x){c.nume(x)})
   
-  col1P=rgb(0,0.5,0)
-  col1=rgb(0,0.5,0,0.2)
-  col2P=rgb(0,0.5,0.5)
-  col2=rgb(0,0.5,0.5,0.2)
-  col3P=rgb(0,0,1)
-  col3=rgb(0,0,1,0.2)
+  col1P=rgb(0,0,0.8) # rgb(0,0.5,0)
+  col1=rgb(0,0,0.8,0.005) # rgb(0,0.5,0,0.03)
+  col1a=rgb(0,0,0.8,0.1) # rgb(0,0.5,0,0.03)
+  col2P=rgb(0,0,1)
+  col2=rgb(0,0,1,0.2)
+  col3P=rgb(1,0,0.5)
+  col3=rgb(1,0,0.2,0.2)
   
+  pois.gen <- function(x,rep){rpois(rep,lambda = x)} # Function to generate random samples
+  
+  # - - - - - - - - - - - - - - - - - - - - - - 
   # PLOT PARAMETERS FIGURE 3
+  # 1. Plot titre waning
   
-  par(mfrow=c(1,2)); par(mar = c(5,4,1,1))
+  par(mfrow=c(1,2)); par(mar = c(3,3,1,1))
+  par(mgp=c(1.8,0.6,0))
   
-  plot(year_x,titreS[1,],ylim=c(0,8.5),type="l",ylab="log-titre",xlab="years since infection",col=NULL,xaxs="i",yaxs="i")
-  polygon(c(year_x,rev(year_x)),c(titreS[2,],rev(titreS[3,])),col=col1,lty=0)
-  polygon(c(year_x,rev(year_x)),c(titreM[2,],rev(titreM[3,])),col=col2,lty=0)
-  polygon(c(year_x,rev(year_x)),c(titreL[2,],rev(titreL[3,])),col=col3,lty=0)
-  lines(year_x,titreS[1,],col=col1P)  
-  lines(year_x,titreM[1,],col=col2P)
-  lines(year_x,titreL[1,],col=col3P)
+  plot(year_x,titreS[1,],ylim=c(-0.1,8.5),type="l",ylab="log titre",xlab="years since infection",col=NULL,xaxs="i",yaxs="i")
+  polygon(c(year_x,rev(year_x)),c(titreS[2,],rev(titreS[3,])),col=col1a,lty=0)
+  #polygon(c(year_x,rev(year_x)),c(titreM[2,],rev(titreM[3,])),col=col2,lty=0)
+  #polygon(c(year_x,rev(year_x)),c(titreL[2,],rev(titreL[3,])),col=col3,lty=0)
   
-  par(mar = c(5,2,1,1))
+  for(ii in 1:length(year_x2)){
+    titreSsim = pois.gen(storetitreS[,(ii-1)*sampleX+1],btstrap) # Simulate from Poisson - sample fewer than previous
+    tstore=data.frame(table(titreSsim),stringsAsFactors = F)
+    t.alpha=tstore$Freq/btstrap
+    points(rep(year_x2[ii],length(tstore$titreSsim)),as.numeric(levels(tstore$titreSsim))[tstore$titreSsim],col=rgb(0,0,0.8,t.alpha),pch=19,cex=0.5)
+  }
+
+  lines(year_x,titreS[1,],col=col1P ,lwd = 2)  
+  #lines(year_x,titreM[1,],col=col2P)
+  #lines(year_x,titreL[1,],col=col3P)
   
-  plot(cross_x,titreCrossL[1,],ylim=c(0,8.5),type="l",ylab="",xlab="antigenic position",col=NULL,xaxs="i",yaxs="i")
-  polygon(c(cross_x,rev(cross_x)),c(titreCrossS[2,],rev(titreCrossS[3,])),col=col1,lty=0)
-  polygon(c(cross_x,rev(cross_x)),c(titreCrossM[2,],rev(titreCrossM[3,])),col=col2,lty=0)
+  title(main=LETTERS[1],adj=0)
+  
+  # 2. Plot cross reaction
+  par(mar = c(3,2,1,1))
+  
+  plot(cross_x,titreCrossS[1,],ylim=c(-0.1,8.5),type="l",ylab="",xlab="antigenic distance",col=NULL,xaxs="i",yaxs="i")
+  polygon(c(cross_x,rev(cross_x)),c(titreCrossS[2,],rev(titreCrossS[3,])),col=col1a,lty=0)
+  #polygon(c(cross_x,rev(cross_x)),c(titreCrossM[2,],rev(titreCrossM[3,])),col=col2,lty=0)
   polygon(c(cross_x,rev(cross_x)),c(titreCrossL[2,],rev(titreCrossL[3,])),col=col3,lty=0)
-  lines(cross_x,titreCrossS[1,],col=col1P)
-  lines(cross_x,titreCrossM[1,],col=col2P)
+
+  for(ii in 1:length(cross_x2)){
+    titreSsim = pois.gen(storetitreCrossS[,(ii-1)*sampleX+1],btstrap) # Simulate from Poisson - sample fewer than previous
+    tstore=data.frame(table(titreSsim),stringsAsFactors = F) ; t.alpha=tstore$Freq/btstrap
+    points(rep(cross_x2[ii],length(tstore$titreSsim)),as.numeric(levels(tstore$titreSsim))[tstore$titreSsim],col=rgb(0,0,0.8,t.alpha),pch=19,cex=0.5)
+    
+    titreSsim = pois.gen(storetitreCrossL[,(ii-1)*sampleX+1],btstrap)
+    tstore=data.frame(table(titreSsim),stringsAsFactors = F) ; t.alpha=tstore$Freq/btstrap
+    points(rep(cross_x2[ii],length(tstore$titreSsim)),as.numeric(levels(tstore$titreSsim))[tstore$titreSsim],col=rgb(1,0,0.5,t.alpha),pch=19,cex=0.5)
+  }
+  
+  lines(cross_x,titreCrossS[1,],col=col1P,lwd = 2)
+  #lines(cross_x,titreCrossM[1,],col=col2P)
   lines(cross_x,titreCrossL[1,],col=col3P)
   
-  dev.copy(pdf,paste("plot_simulations/parameters",loadseed,".pdf",sep=""),width=7,height=3.5)
+  title(main=LETTERS[2],adj=0)
+  
+  dev.copy(pdf,paste("plot_simulations/parameters",loadseed,".pdf",sep=""),width=7,height=4)
   dev.off()
+  
   
 }
 
