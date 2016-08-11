@@ -249,7 +249,12 @@ estimatelik<-function(ii,jj,historyii,dmatrix,dmatrix2,theta_star,test.list,test
 # - - - - - - - - - - - - - - - -
 # Simulation infection history data
 
-simulate_data<-function(test_years,historytabPost=NULL,inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1,roundv=F,linD=F,antigenic.map.in=NULL,pmask=NULL){ # ii=participant | jj=test year
+simulate_data<-function(test_years,
+                        historytabPost=NULL, # This imposes a particular history
+                        inf_years,strain_years,n_part=20,thetastar=theta0,p.inf=0.2,seedi=1,
+                        roundv=F, # round expected titres to nearest integer?
+                        linD=F, # use linear cross-reaction function?
+                        antigenic.map.in=NULL,pmask=NULL){ # ii=participant | jj=test year
   
   # Variables needed: test_years,inf_years,strain_years,n_part
   #strain_years=seq(1968,2010,4)

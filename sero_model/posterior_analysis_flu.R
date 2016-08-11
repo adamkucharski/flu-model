@@ -369,6 +369,7 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
     
     # Note here that inf_years and strain_years are loads from main_model.R
     # Output expected titre - could include Poisson measurement uncertainty here?
+    print("Need to add antigenic.map.in to SIMULATION")
     simulate_data(test.yr[pickyr],historytabPost=hist.sample,
                   inf_years,
                   strain_years,
