@@ -8,7 +8,7 @@ getDoParWorkers()
 
 rm(list=ls(all=TRUE))
 
-# setwd("~/Documents/flu-model/sero_model/zika_model/")
+setwd("~/Documents/flu-model/sero_model/zika_model/")
 # setwd("~/Dropbox/git/flu-model/sero_model/zika_model/")
 source("simulation_sera_model.R")
 
@@ -35,10 +35,10 @@ seedRuns=100
 
 for(seedK in 1:seedRuns){
   
-  seedK=2
+  seedK=1
   
-  simulate_sera_data(strains=5,inf.years.sera=c(1985:2015),time.series.in=NULL,theta=theta.serology,
-                     p.inf.in=0.05*c(1,1,1,1,1),sd.val.in=1.5,seedi=seedK,roundv=F,dmatrix.in=NULL,zikv.attack=0.4,per_sample=per_sample0)
+  simulate_sera_data(strains=5,inf.years.sera=c(1985:2016),time.series.in=NULL,theta=theta.serology,
+                     p.inf.in=0.04*c(1,1,1,1,1),sd.val.in=2,seedi=seedK,roundv=F,dmatrix.in=NULL,zikv.attack=0.5,per_sample=per_sample0)
 
   # Plot results
   plot_simulated_sera_data(strains=5,seedi=seedK)

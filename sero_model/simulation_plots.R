@@ -1,6 +1,44 @@
 
 
 
+# Calculate values based on two fold rise or more in that year
+sconverttab=NULL
+
+for(kk in 2:length(test.yr) ){ # Only valid for 2008-2011 (no test strains for 2011)
+  pyear=0
+  nyear=0
+  for(ii in 1:n_part){
+    t.part1=test.list[[ii]][[kk-1]]
+    t.part2=test.list[[ii]][[kk]]
+    
+    if(length(t.part1[,1])>1 & length(t.part2[,1])>1){ # Check if year to compare
+      # Check to match test strains
+      matchd1d2 = intersect(names(t.part1),names(t.part2)[t.part2[3,]==test.yr[kk]])
+      
+      if(length(matchd1d2) > 0){
+        
+        diffT = t.part2[2,match(matchd1d2,names(t.part2))] - t.part1[2,match(matchd1d2,names(t.part1))] # Compare titres
+        nyear = nyear +1
+        if(max(diffT) >= 2){pyear = pyear + 1}
+      }
+      
+    }
+  }
+  sconverttab=rbind(sconverttab, c(pyear/nyear,nyear))
+}
+
+attackCIsero=NULL
+for(jj in 1:5){
+  if(jj == 5){attackCIsero=rbind(attackCIsero,c(-1,-1,-1))}else{ # As NA in final year
+    htest <- binom.test(round(sconverttab[jj,1]*sconverttab[jj,2]), sconverttab[jj,2], p = 1,conf.level=0.95)
+    meanA=sconverttab[jj,1]
+    conf1=htest$conf.int[1]
+    conf2=htest$conf.int[2]
+    attackCIsero=rbind(attackCIsero,c(meanA,conf1,conf2))
+  }
+}
+attackCIsero=data.frame(attackCIsero)
+names(attackCIsero)=c("mean","CI1","CI2")
 
 
 

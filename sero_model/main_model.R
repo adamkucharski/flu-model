@@ -206,11 +206,11 @@ foreach(kk1=c(2011:2012)) %dopar% {
 #load.flu.map.data() # define spline from H3 antigenic map data
 load("datasets/spline_fn.RData") # load spline function for map
 
-for(kk in 1){
-#foreach(kk=1:4) %dopar% {
+#for(kk in 1:4){
+foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   flutype0="H3"
-  if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
+  if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) } #c(2007,2009,2010,2012)
   # Fits to spline if am.spl is defined
   data.infer(year_test=dy1,mcmc.iterations=2e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k"),fit.spline=1) #,"map.fit"
   
@@ -250,11 +250,13 @@ flutype="H3"
 if(flutype=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
 plot.posterior.titres(loadseed=1,flu.type=flutype,simDat=F,year_test=dy1,btstrap=10)
 
+
 # - - - - 
 # Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG 2)
 
 plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=50,part_pick=c(31,57,25),year_pick=c(2008:2010))
 plot.antibody.changes()
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Simulation results

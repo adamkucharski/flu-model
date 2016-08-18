@@ -30,7 +30,7 @@ c.text<-function(x,sigF=2){
   }else{
     bp1=signif(x,sigF)
   }
-  paste(bp1[1]," (95\% CrI: ",bp1[2],"--",bp1[3],")",sep="")
+  paste(bp1[1]," (95% CrI: ",bp1[2],"--",bp1[3],")",sep="")
 }
 
 
@@ -414,8 +414,8 @@ inference_model<-function(seedK,strains,runsMCMC,scenario,per_sample,switch0=5){
 
 plot.performance<-function(per_sample,age_out,strains,scenarioN=4,runs){
   
-  par(mfrow=c(1,1))
-  
+  # per_sample=per_sample0; age_out=20; strains=5; scenarioN=4; runs=seedRuns
+
   store.prop = array(NA,dim=c(runs,scenarioN))
   
   for(scenario in 1:scenarioN){
@@ -470,13 +470,30 @@ plot.performance<-function(per_sample,age_out,strains,scenarioN=4,runs){
     
   } # end scenario loop
   
+  
+  par(mfrow=c(1,1))
+  par(mar = c(3,3,1,1))
+  par(mgp=c(1.8,0.6,0))
+  
   plot_table=store.prop
   dim(plot_table)=NULL
+  widX=0.15
   
-  x_axis=rep((2*runif(runs)-1)*0.15,scenarioN)+rep(1:scenarioN, each = runs) # Add scatter
+  # calculation median and IQR
+  range=t(apply(store.prop,2,function(x){quantile(x,c(0.25,0.5,0.75))}))
+  
+  x_axis=rep((2*runif(runs)-1)*widX,scenarioN)+rep(1:scenarioN, each = runs) # Add scatter
   
   plot(x_axis,plot_table,xlim=c(0.5,4.5),ylim=c(0.4,1),cex=0.5,pch=19,ylab=paste("probability ",age_out,"yo previously infected with ZIKV",sep=""), xlab="model")
-  lines(c(0,5),c(0.5,0.5),col="blue")
+  
+  # median
+  for(ii in 1:4){
+    lines(c(ii-widX*2,ii+widX*2),c(range[ii,1],range[ii,1]),col="blue",lwd=2,lty=2)
+    lines(c(ii-widX*2,ii+widX*2),c(range[ii,2],range[ii,2]),col="blue",lwd=2)
+    lines(c(ii-widX*2,ii+widX*2),c(range[ii,3],range[ii,3]),col="blue",lwd=2,lty=2)
+  }
+  
+  lines(c(0,5),c(0.5,0.5),col="red",lwd=2)
   
   dev.copy(pdf,paste("plot_simulations/performance.pdf",sep=""),width=5,height=5)
   dev.off()
