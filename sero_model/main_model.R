@@ -36,6 +36,7 @@ compile.c() # Compile c code
 simulation.infer <- function(seed_i,mcmc.iterations=1e3) {
 
   loadseed=paste("SIM_",seed_i,sep="")
+  load("R_datasets/HaNam_data.RData")
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # SIMULATION MODEL
@@ -57,7 +58,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3) {
   #write.csv(attack.yr,"datasets/sim_attack.csv")
   
   simulate_data(test_years=define.year, # this needs to be vector
-                inf_years=inf_years.in,strain_years=seq(1968,2012,1),n_part=npartM,
+                inf_years=inf_years.in,strain_years=strain_years,n_part=npartM, #leave strain years blank to use HaNam strains
                 roundv=T, # Generate integer titre data
                 thetastar=thetaSim,
                 #antigenic.map.in = sim.map.in,
@@ -147,13 +148,13 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
   
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=NA,sigma2=NA)
-  theta0[["mu"]]=3 # basic boosting
+  theta0[["mu"]]=2 + if(sum(fix.param=="wane")==0){1*runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 # suppression via AGS
   theta0[["wane"]]=-log(0.5)/0.5 + if(sum(fix.param=="wane")==0){runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
   theta0[["sigma"]]=0.3 + if(sum(fix.param=="wane")==0){0.1*runif(1,c(-1,1))}else{0} # cross-reaction
   theta0[["sigma2"]]=0.1 + if(sum(fix.param=="wane")==0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
-  theta0[["muShort"]]=6 + if(sum(fix.param=="wane")==0){2*runif(1,c(-1,1))}else{0} # short term boosting
+  theta0[["muShort"]]=8 + if(sum(fix.param=="wane")==0){4*runif(1,c(-1,1))}else{0} # short term boosting
   theta0[["error"]]=0.05 # measurement error
   theta0[["disp_k"]]=0.01 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0
@@ -197,22 +198,22 @@ foreach(kk1=c(2011:2012)) %dopar% {
   flutype0="B"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
   
-  data.infer(year_test=kk1,mcmc.iterations=1e5,loadseed=1,flutype=flutype0,fix.param=c("disp_k","wane","muShort"))
+  data.infer(year_test=kk1,mcmc.iterations=1e6,loadseed=1,flutype=flutype0,fix.param=c("disp_k","wane","muShort"))
 }
 
 # - - - - - - - - - - - - - - - - - 
 # Run longtudinal inference on H3 or B data
 
 #load.flu.map.data() # define spline from H3 antigenic map data
-load("datasets/spline_fn.RData") # load spline function for map
 
+load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before next run**
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   flutype0="H3"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) } #c(2007,2009,2010,2012)
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=2e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k"),fit.spline=1) #,"map.fit"
+  data.infer(year_test=dy1,mcmc.iterations=1e6,loadseed=kk,flutype=flutype0,fix.param=c("disp_k"),fit.spline=1) #,"map.fit"
   
 }
 
@@ -222,14 +223,15 @@ foreach(kk=1:4) %dopar% {
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Plot posteriors for longtudinal data (FIG 3)
-for(kk in 1:4){
+for(kk in 2){
   
   flutype0="H3"
   if(flutype0=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
-  
-  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=T,plotmap = T)
+  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=F,plotmap = T)
   
 }
+
+
 
 # - - - - - - - - - - - - - - - - - 
 # Plot posteriors for cross-sectional data
@@ -244,18 +246,21 @@ for(kk in c(2011:2012)){
 # plot.posteriors(simDat=T,loadseed="SIM",year_test=c(2007:2012),plotmap=T)
 
 # - - - - - - - - - - - - - - - - - 
+# SUPPLEMENTARY FIGURES
 # Plot titre vs estimates
 
-flutype="H3"
-if(flutype=="H3"){ dy1=c(2007:2012) }else{ dy1=c(2011,2012) }
-plot.posterior.titres(loadseed=1,flu.type=flutype,simDat=F,year_test=dy1,btstrap=10)
+load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before next run**
+plot.posterior.titres(loadseed=1,flu.type="H3",simDat=F,year_test=c(2007:2012),btstrap=10)
+
+# Plot convergence for MCMC chains
+plot.multi.chain.posteriors(burnCut=0.25)
 
 
 # - - - - 
 # Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG 2)
 
 plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=50,part_pick=c(31,57,25),year_pick=c(2008:2010))
-plot.antibody.changes()
+plot.antibody.changes(btstrap=200)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -264,8 +269,9 @@ foreach(kk=1:4) %dopar% {
   simulation.infer(seed_i=kk,mcmc.iterations=5e5) # Run inference
 }
 
+# Plot posteriors and attack rate comparisons
 for(kk in 1:4){
-  plot.posteriors(simDat=T,loadseed=paste("SIM_",kk,sep=""),year_test=c(2007:2012),plotmap=F,f.lim=T)
+  plot.posteriors(simDat=T,loadseed=paste("SIM_",kk,sep=""),year_test=c(2007:2012),plotmap=F,f.lim=F)
 }
 
 dy1=c(2007:2012)
