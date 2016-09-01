@@ -512,10 +512,13 @@ plot.posteriors<-function(per_sample,strains,scenario,seedK){
   load(paste("posterior_runs/outputR_f",paste(per_sample,"_",scenario,"_",seedK,sep=""),".RData",sep=""))
   
   par(mfrow=c(2,4))
+  par(mar = c(3,3,1,1))
+  par(mgp=c(1.8,0.6,0))
+  
   colA=rgb(0.8,0.8,0.8)
-  col.list=list(col1=rgb(0.9,0.6,0),col2=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
+  col.list=list(col2=rgb(0.9,0.6,0),col1=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
   alphc=0.2
-  col.listF=list(col1=rgb(0.9,0.6,0,alphc),col2=rgb(0.2,0,0.8,alphc),col3=rgb(0.1,0.6,0.2,alphc),col4=rgb(1,0.4,1,alphc),col5=rgb(0.8,0,0.2,alphc))
+  col.listF=list(col2=rgb(0.9,0.6,0,alphc),col1=rgb(0.2,0,0.8,alphc),col3=rgb(0.1,0.6,0.2,alphc),col4=rgb(1,0.4,1,alphc),col5=rgb(0.8,0,0.2,alphc))
   lw.1=1.5
   age.yr=c(0:(inf.n-1))
   label.age=seq(0,length(age.yr),2)
@@ -574,27 +577,27 @@ plot.posteriors<-function(per_sample,strains,scenario,seedK){
   #}
   
   
-  plot(age.yr,f.y(historytabSim[,1]),ylim=c(0,1.01),col=col.list$col1,xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  plot(age.yr,f.y(historytabSim[,1]),ylim=c(0,1.01),col=col.list$col1,xlab="",ylab="proportion infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
   lines(f.y(store.valCI[1,1,]),col=col.list$col1,lty=2,lwd=lw.1)
   polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,1,]),rev(f.y(store.valCI[3,1,]))),lty=0,col=col.listF$col1)
   #axis(1,at=label.age,labels=f.y(label.age))
   
-  plot(age.yr,f.y(historytabSim[,2]),ylim=c(0,1.01),col=col.list$col2,xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  plot(age.yr,f.y(historytabSim[,2]),ylim=c(0,1.01),col=col.list$col2,xlab="",ylab="proportion infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
   lines(f.y(store.valCI[1,2,]),col=col.list$col2,lty=2,lwd=lw.1)
   polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,2,]),rev(f.y(store.valCI[3,2,]))),lty=0,col=col.listF$col2)
   #axis(1,at=label.age,labels=f.y(label.age))
   
-  plot(age.yr,f.y(historytabSim[,3]),ylim=c(0,1.01),col=col.list$col3,xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  plot(age.yr,f.y(historytabSim[,3]),ylim=c(0,1.01),col=col.list$col3,xlab="",ylab="proportion infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
   lines(f.y(store.valCI[1,3,]),col=col.list$col3,lty=2,lwd=lw.1)
   polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,3,]),rev(f.y(store.valCI[3,3,]))),lty=0,col=col.listF$col3)
   #axis(1,at=label.age,labels=f.y(label.age))
   
-  plot(age.yr,f.y(historytabSim[,4]),ylim=c(0,1.01),col=col.list$col4,xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  plot(age.yr,f.y(historytabSim[,4]),ylim=c(0,1.01),col=col.list$col4,xlab="",ylab="proportion infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
   lines(f.y(store.valCI[1,4,]),col=col.list$col4,lty=2,lwd=lw.1)
   polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,4,]),rev(f.y(store.valCI[3,4,]))),lty=0,col=col.listF$col4)
   #axis(1,at=label.age,labels=f.y(label.age))
   
-  plot(age.yr,f.y(historytabSim[,5]),ylim=c(0,1.01),col=col.list$col5,xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  plot(age.yr,f.y(historytabSim[,5]),ylim=c(0,1.01),col=col.list$col5,xlab="",ylab="proportion infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
   lines(f.y(store.valCI[1,5,]),col=col.list$col5,lty=2,lwd=lw.1)
   polygon(c(c(1:inf.n),rev(c(1:inf.n))),c(f.y(store.valCI[2,5,]),rev(f.y(store.valCI[3,5,]))),lty=0,col=col.listF$col5)
   #axis(1,at=label.age,labels=f.y(label.age))
@@ -614,3 +617,182 @@ plot.posteriors<-function(per_sample,strains,scenario,seedK){
 
 }
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# RUN INFERENCE
+
+inference_model_data<-function(seedK,strains,runsMCMC,scenario,per_sample,switch0=5){
+  
+  # runsMCMC = 10000; switch0=5; seedK=1; strains =5 
+  
+  age.range= c(1:70)
+  
+  # Convert simulated samples into probabilities
+  data = read.csv("~/Dropbox/LSHTM/Dengue_fiji/2015_dengue_project/Epi_model_analysis/Serology_code/plot_data/agetitreDATA.csv")
+  
+  # Format data
+  titre.data = data[,c("DENV1B","DENV2B","DENV3B","DENV4B","ZIKVB")]/data$n
+  titre.data[is.na(titre.data)]=0
+  titre.data=t(titre.data)
+  inf.years.sera=sort(2015-age.range+1)
+  n_sample=matrix(rep(data[age.range,"n"],strains),nrow=strains,byrow = T)
+  
+  # Constrain Zika to final year
+  force_constrain=matrix(1,nrow=strains,ncol=length(inf.years.sera))
+  force_constrain[strains,4:length(inf.years.sera)]=0 # Constrain ZIKV to final 3 years only
+  
+  force_constrain # TO ADD
+  pmask0=NULL
+  
+  # Run MCMC model
+  run_mcmc(
+    titre.data, # Note that this starts present and goes back into past (i.e. ordered with age). Data as proportions
+    n_sample, # Total samples in each age group and each strain
+    inf.years.sera,
+    theta=c(error=0.05,sigma=0.05),
+    strains,
+    prob_inf=NULL, #prob_inf0, # initial conditions
+    force_constrain, # matrix to constrain circulation years - Note that this is increasing age
+    runs=runsMCMC,
+    switch1=switch0, # How often sample FOI vs theta
+    seedi=paste("DATA_",seedK,sep=""),
+    pmask=pmask0 #NULL #
+  )
+  
+}
+
+
+plot.posteriors_data<-function(per_sample,strains,scenario,seedK){
+  
+  # per_sample = 10 ; strains = 5 ;  scenario = 1 ; seedK = 1
+  
+  load(paste("posterior_runs/outputR_f",paste("DATA_",seedK,sep=""),".RData",sep=""))
+  
+  colA=rgb(0.8,0.8,0.8)
+  col.list=list(col2=rgb(0.9,0.6,0),col1=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
+  alphc=0.2
+  col.listF=list(col2=rgb(0.9,0.6,0,alphc),col1=rgb(0.2,0,0.8,alphc),col3=rgb(0.1,0.6,0.2,alphc),col4=rgb(1,0.4,1,alphc),col5=rgb(0.8,0,0.2,alphc))
+  lw.1=1.5
+  age.yr=c(1:(inf.n))
+  label.age=seq(0,length(age.yr),2)
+  
+  # Plot posteriors
+  par(mar = c(3,3,1,1))
+  par(mgp=c(1.8,0.6,0))
+  par(mfrow=c(1,3))
+  
+  maxlik=(likelihoodtab==max(likelihoodtab))
+  run2=length(likelihoodtab)
+  run1=round(0.2*run2)
+  plot(likelihoodtab[run1:run2],type="l",ylab="log likelihood",xlab="iteration")
+  theta_post=data.frame(thetatab[run1:run2,])
+  hist(1-theta_post[["sigma"]],main="",col=colA,xlab="specificity",prob=TRUE,xlim=c(0.5,1))
+  hist(1-theta_post[["error"]],main="",col=colA,xlab="sensitivity",prob=TRUE,xlim=c(0.5,1))
+  
+  dev.copy(pdf,paste("plot_simulations/posterior_param",paste("DATA_",seedK,sep=""),".pdf",sep=""),width=12,height=4)
+  dev.off()
+  
+  # - - - 
+  # Plot infection curves -  last sample from MCMC against observed data
+
+  nblock=length(forcetabCollect)/(length(inf_years)*strains) # get blocks
+  post_force=forcetabCollect[((nblock-1)*strains+1):(nblock*strains),]
+  #post_force=1-exp(-post_force) # Convert FoI to probability
+  #post_force=post_force[,c(length(inf_years):1)] # Swap arrangement to match
+  
+  store.val=array(NA,dim=c(3,strains,inf.n))
+  store.valCI=array(NA,dim=c(3,strains,inf.n))
+  
+  # Calculate median etc. - CHECK THIS
+  for(ii in 1:strains){
+    post_forceA=forcetabCollect[c(0:(nblock-1))*strains+ii,]
+    store.val[,ii,] = apply(post_forceA,2,function(x){c.nume(x)})
+  }
+  
+  lik=NULL
+  
+  # Store 95% CI
+  
+  for(kk in 1:3){
+    for(ii in 1:(inf.n)){ # Iterate across years
+      p.inf=NULL
+      for(jj in 1:strains){ # Iterate across strains
+        #p.inf=c(p.inf,1-exp(-store.val[kk,jj,ii])) # Infected in this period with strain j
+        p.inf=c(p.inf,1-exp(-sum(store.val[kk,jj,1:(ii)]))) # Infected in this period with strain j
+      }
+      # Convert to probability of infection
+      store.valCI[kk, , ii] = p.inf
+    }
+  }
+
+  # By age
+  
+  f.y<-function(x){(x)} #{rev(x)} # swap order of ages?
+  
+  par(mar = c(3,3,1,1))
+  par(mgp=c(1.8,0.6,0))
+  par(mfrow=c(1,4))
+  
+  plot(age.yr,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV1",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(age.yr,f.y(store.valCI[1,1,]),col=col.list$col1,lty=1,lwd=lw.1)
+  polygon(c(age.yr,rev(age.yr)),c(f.y(store.valCI[2,1,]),rev(f.y(store.valCI[3,1,]))),lty=0,col=col.listF$col1)
+  points(age.yr,titre.data[1,age.yr],col=col.list$col1)
+  
+  plot(age.yr,f.y(store.valCI[1,2,]),ylim=c(0,1.01),main="DENV2",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(age.yr,f.y(store.valCI[1,2,]),col=col.list$col2,lty=1,lwd=lw.1)
+  polygon(c(age.yr,rev(age.yr)),c(f.y(store.valCI[2,2,]),rev(f.y(store.valCI[3,2,]))),lty=0,col=col.listF$col2)
+  points(age.yr,titre.data[2,age.yr],col=col.list$col2)
+  
+  plot(age.yr,f.y(store.valCI[1,3,]),ylim=c(0,1.01),main="DENV3",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(age.yr,f.y(store.valCI[1,3,]),col=col.list$col3,lty=1,lwd=lw.1)
+  polygon(c(age.yr,rev(age.yr)),c(f.y(store.valCI[2,3,]),rev(f.y(store.valCI[3,3,]))),lty=0,col=col.listF$col3)
+  points(age.yr,titre.data[3,age.yr],col=col.list$col3)
+  
+  plot(age.yr,f.y(store.valCI[1,4,]),ylim=c(0,1.01),main="DENV4",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(age.yr,f.y(store.valCI[1,4,]),col=col.list$col4,lty=1,lwd=lw.1)
+  polygon(c(age.yr,rev(age.yr)),c(f.y(store.valCI[2,4,]),rev(f.y(store.valCI[3,4,]))),lty=0,col=col.listF$col4)
+  points(age.yr,titre.data[4,age.yr],col=col.list$col4)
+  
+  dev.copy(pdf,paste("plot_simulations/posterior_plot",paste("DATA_",seedK,sep=""),".pdf",sep=""),width=12,height=4)
+  dev.off()
+  
+  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV1",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(inf_years,f.y(store.valCI[1,1,]),col=col.list$col1,lty=1,lwd=lw.1)
+  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,1,]),rev(f.y(store.valCI[3,1,]))),lty=0,col=col.listF$col1)
+  #axis(1,at=label.age,labels=f.y(label.age))
+  
+  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV2",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(inf_years,f.y(store.valCI[1,2,]),col=col.list$col2,lty=1,lwd=lw.1)
+  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,2,]),rev(f.y(store.valCI[3,2,]))),lty=0,col=col.listF$col2)
+  #axis(1,at=label.age,labels=f.y(label.age))
+  
+  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV3",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(inf_years,f.y(store.valCI[1,3,]),col=col.list$col3,lty=1,lwd=lw.1)
+  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,3,]),rev(f.y(store.valCI[3,3,]))),lty=0,col=col.listF$col3)
+  #axis(1,at=label.age,labels=f.y(label.age))
+  
+  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV4",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(inf_years,f.y(store.valCI[1,4,]),col=col.list$col4,lty=1,lwd=lw.1)
+  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,4,]),rev(f.y(store.valCI[3,4,]))),lty=0,col=col.listF$col4)
+  #axis(1,at=label.age,labels=f.y(label.age))
+  
+  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="ZIKV",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+  lines(inf_years,f.y(store.valCI[1,5,]),col=col.list$col5,lty=1,lwd=lw.1)
+  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,5,]),rev(f.y(store.valCI[3,5,]))),lty=0,col=col.listF$col5)
+
+  
+  dev.copy(pdf,paste("plot_simulations/posterior_plot",paste("DATA_",seedK,sep=""),".pdf",sep=""),width=10,height=6)
+  dev.off()
+  
+  post.tab=cbind(  
+    c(c.text(1-theta_post[["error"]]),
+      c.text(1-theta_post[["sigma"]]),
+      c.text(x=c(mean(store.valCI[1,5,]),mean(store.valCI[2,5,]),mean(store.valCI[3,5,]))), # ZIKV attack rate
+      c.text(x=c(mean(store.valCI[1,5,21]),mean(store.valCI[2,5,21]),mean(store.valCI[3,5,21]))) # ZIKV attack rate
+    ))
+  
+  
+  write.csv(post.tab,paste("plot_simulations/parameter_estimates_DATA_seed",seedK,".csv",sep=""))
+  
+  
+}

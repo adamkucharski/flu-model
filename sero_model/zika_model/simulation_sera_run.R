@@ -3,6 +3,8 @@
 
 library(foreach)
 library(doMC)
+library(mvtnorm)
+library(MASS)
 registerDoMC(4)  #change the 2 to your number of CPU cores
 getDoParWorkers()
 
@@ -59,8 +61,13 @@ for(seedK in 1:seedRuns){
 # Plot output
 
 plot.posteriors(per_sample=per_sample0,strains=5,scenario=1,seedK=4)
-
-
 plot.performance(per_sample=per_sample0,age_out=20,strains=5,scenarioN=4,runs=seedRuns)
 
+
+# - - - - - - - - - - - - - - - - - 
+# Plot data output
+
+inference_model_data(seedK=1,strains = 5,runsMCMC=1e5,scenario,per_sample,switch0=5)
+  
+plot.posteriors_data(per_sample=NULL,strains=5,scenario=NULL,seedK=1)
 
