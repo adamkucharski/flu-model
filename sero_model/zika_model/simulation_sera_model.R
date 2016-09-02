@@ -19,8 +19,8 @@ generate_timeseries<-function(strains,inf_years,n_part=20,p.inf.in=0.2,sd.val.in
   time_series
 }
 
-c.nume<-function(x){
-  bp1=c(median(x),quantile(x,0.025),quantile(x,0.975))
+c.nume<-function(x,bdy=0.95){
+  bp1=c(median(x),quantile(x,0.5-bdy/2),quantile(x,0.5+bdy/2))
   as.numeric(bp1)
 }
 
@@ -212,6 +212,7 @@ ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
   min(1, calc.lik)
 }
 
+
 LikelihoodTitres<-function(titre.data,dmatrix,forcetab_star,inf.n,strains,n_sample){
   
   lik=NULL
@@ -228,8 +229,11 @@ LikelihoodTitres<-function(titre.data,dmatrix,forcetab_star,inf.n,strains,n_samp
   
   sum(lik)
   
+  #colSums(lik)
 }
 
+#LikelihoodTitres(titre.data,dmatrix,forcetab_star,inf.n,strains,n_sample) # DEBUG
+#plot(llA[,4])
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Run MCMC function
@@ -247,6 +251,9 @@ run_mcmc<-function(
   seedi=1,
   pmask=NULL
 ){
+  
+  # Check inputs same size
+  if(sum(dim(titre.data))!=sum(dim(n_sample))){return("titre.data and n_sample need to be same size")}
   
   if(sum(pmask=="sigma")>0){ theta[["sigma"]] = 0 } # Fix sigma 0 if hidden
   if(sum(pmask=="error")>0){ theta[["error"]] = 0 } # Fix error 0 if hidden
@@ -266,7 +273,7 @@ run_mcmc<-function(
     forcetab=-log(1-prob_inf)+0.001 # Add to ensure mixing if zero in simulation
   }else{
     forcetab=matrix(0.1,nrow=strains,ncol=inf.n)
-    forcetab[strains,1]=1 # Increase FOI for ZIKV
+    #forcetab[strains,1]=1 # Increase FOI for ZIKV
   }
   forcetab=force_constrain*forcetab
   forcetabCollect=forcetab
@@ -343,13 +350,13 @@ run_mcmc<-function(
       accept_rateH=sum(accepttabH)/length(accepttabH)
     }
     
-    if(m %% min(runs,20) ==0){
+    if(m %% min(runs,10) ==0){ # Save force of infection every 10 runs
       forcetabCollect=rbind(forcetabCollect,forcetab)
     }
     
     if(m %% min(runs,1000) ==0){
       print(c(m,accept_rateT,varpart_prob0,likelihoodtab[m]))
-      save(likelihoodtab,thetatab,inf_years,inf.n,strains,titre.data,forcetab,forcetabCollect,switch1,file=paste("posterior_runs/outputR_f",seedi,".RData",sep=""))
+      save(likelihoodtab,thetatab,inf_years,inf.n,strains,titre.data,forcetab,n_sample,forcetabCollect,switch1,file=paste("posterior_runs/outputR_f",seedi,".RData",sep=""))
     }
     
   } #End runs loop
@@ -410,7 +417,7 @@ inference_model<-function(seedK,strains,runsMCMC,scenario,per_sample,switch0=5){
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Plot dot distribution
+# Plot dot distribution for Figure 2
 
 plot.performance<-function(per_sample,age_out,strains,scenarioN=4,runs){
   
@@ -619,13 +626,13 @@ plot.posteriors<-function(per_sample,strains,scenario,seedK){
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# RUN INFERENCE
+# RUN INFERENCE ON DATA
 
 inference_model_data<-function(seedK,strains,runsMCMC,scenario,per_sample,switch0=5){
   
   # runsMCMC = 10000; switch0=5; seedK=1; strains =5 
   
-  age.range= c(1:70)
+  age.range= c(1:50)
   
   # Convert simulated samples into probabilities
   data = read.csv("~/Dropbox/LSHTM/Dengue_fiji/2015_dengue_project/Epi_model_analysis/Serology_code/plot_data/agetitreDATA.csv")
@@ -634,12 +641,13 @@ inference_model_data<-function(seedK,strains,runsMCMC,scenario,per_sample,switch
   titre.data = data[,c("DENV1B","DENV2B","DENV3B","DENV4B","ZIKVB")]/data$n
   titre.data[is.na(titre.data)]=0
   titre.data=t(titre.data)
+  titre.data = titre.data[,age.range]
   inf.years.sera=sort(2015-age.range+1)
   n_sample=matrix(rep(data[age.range,"n"],strains),nrow=strains,byrow = T)
   
   # Constrain Zika to final year
   force_constrain=matrix(1,nrow=strains,ncol=length(inf.years.sera))
-  force_constrain[strains,4:length(inf.years.sera)]=0 # Constrain ZIKV to final 3 years only
+  force_constrain[strains,3:length(inf.years.sera)]=0 # Constrain ZIKV to final X years only
   
   force_constrain # TO ADD
   pmask0=NULL
@@ -649,7 +657,7 @@ inference_model_data<-function(seedK,strains,runsMCMC,scenario,per_sample,switch
     titre.data, # Note that this starts present and goes back into past (i.e. ordered with age). Data as proportions
     n_sample, # Total samples in each age group and each strain
     inf.years.sera,
-    theta=c(error=0.05,sigma=0.05),
+    theta=c(error=0.2,sigma=0.2),
     strains,
     prob_inf=NULL, #prob_inf0, # initial conditions
     force_constrain, # matrix to constrain circulation years - Note that this is increasing age
@@ -669,9 +677,9 @@ plot.posteriors_data<-function(per_sample,strains,scenario,seedK){
   load(paste("posterior_runs/outputR_f",paste("DATA_",seedK,sep=""),".RData",sep=""))
   
   colA=rgb(0.8,0.8,0.8)
-  col.list=list(col2=rgb(0.9,0.6,0),col1=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
+  col.list=list(col1=rgb(0.2,0,0.8),col2=rgb(0.9,0.6,0),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
   alphc=0.2
-  col.listF=list(col2=rgb(0.9,0.6,0,alphc),col1=rgb(0.2,0,0.8,alphc),col3=rgb(0.1,0.6,0.2,alphc),col4=rgb(1,0.4,1,alphc),col5=rgb(0.8,0,0.2,alphc))
+  col.listF=list(col1=rgb(0.2,0,0.8,alphc),col2=rgb(0.9,0.6,0,alphc),col3=rgb(0.1,0.6,0.2,alphc),col4=rgb(1,0.4,1,alphc),col5=rgb(0.8,0,0.2,alphc))
   lw.1=1.5
   age.yr=c(1:(inf.n))
   label.age=seq(0,length(age.yr),2)
@@ -682,7 +690,7 @@ plot.posteriors_data<-function(per_sample,strains,scenario,seedK){
   par(mfrow=c(1,3))
   
   maxlik=(likelihoodtab==max(likelihoodtab))
-  run2=length(likelihoodtab)
+  run2=sum(!is.na(thetatab[,1]))
   run1=round(0.2*run2)
   plot(likelihoodtab[run1:run2],type="l",ylab="log likelihood",xlab="iteration")
   theta_post=data.frame(thetatab[run1:run2,])
@@ -706,12 +714,23 @@ plot.posteriors_data<-function(per_sample,strains,scenario,seedK){
   # Calculate median etc. - CHECK THIS
   for(ii in 1:strains){
     post_forceA=forcetabCollect[c(0:(nblock-1))*strains+ii,]
-    store.val[,ii,] = apply(post_forceA,2,function(x){c.nume(x)})
+    store.val[,ii,] = apply(post_forceA,2,function(x){c.nume(x,0.95)})
   }
   
-  lik=NULL
+  # Specify circulation years:
   
+  circYr=list(
+    c(1974,1954,1981,1989,1990,2001,2002,2003,2009,2011,2012),
+    c(1971:1973,1982,1983,1997,1998),
+    c(1989,1990,2014,2015),
+    c(1980,2008,2009),
+    c(2016)
+  )
+  
+  # By age
   # Store 95% CI
+  
+  store.valCI=array(NA,dim=c(3,strains,inf.n))
   
   for(kk in 1:3){
     for(ii in 1:(inf.n)){ # Iterate across years
@@ -725,63 +744,61 @@ plot.posteriors_data<-function(per_sample,strains,scenario,seedK){
     }
   }
 
-  # By age
-  
   f.y<-function(x){(x)} #{rev(x)} # swap order of ages?
   
   par(mar = c(3,3,1,1))
   par(mgp=c(1.8,0.6,0))
-  par(mfrow=c(1,4))
+  par(mfrow=c(2,5))
   
-  plot(age.yr,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV1",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
-  lines(age.yr,f.y(store.valCI[1,1,]),col=col.list$col1,lty=1,lwd=lw.1)
-  polygon(c(age.yr,rev(age.yr)),c(f.y(store.valCI[2,1,]),rev(f.y(store.valCI[3,1,]))),lty=0,col=col.listF$col1)
-  points(age.yr,titre.data[1,age.yr],col=col.list$col1)
+  xMin=0; xMax=max(age.yr); amask = (n_sample[1,age.yr]==0)
+  yLabel="proportion seropositive"
+  mLabel=c("DENV1","DENV2","DENV3","DENV4","ZIKV")
   
-  plot(age.yr,f.y(store.valCI[1,2,]),ylim=c(0,1.01),main="DENV2",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
-  lines(age.yr,f.y(store.valCI[1,2,]),col=col.list$col2,lty=1,lwd=lw.1)
-  polygon(c(age.yr,rev(age.yr)),c(f.y(store.valCI[2,2,]),rev(f.y(store.valCI[3,2,]))),lty=0,col=col.listF$col2)
-  points(age.yr,titre.data[2,age.yr],col=col.list$col2)
-  
-  plot(age.yr,f.y(store.valCI[1,3,]),ylim=c(0,1.01),main="DENV3",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
-  lines(age.yr,f.y(store.valCI[1,3,]),col=col.list$col3,lty=1,lwd=lw.1)
-  polygon(c(age.yr,rev(age.yr)),c(f.y(store.valCI[2,3,]),rev(f.y(store.valCI[3,3,]))),lty=0,col=col.listF$col3)
-  points(age.yr,titre.data[3,age.yr],col=col.list$col3)
-  
-  plot(age.yr,f.y(store.valCI[1,4,]),ylim=c(0,1.01),main="DENV4",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
-  lines(age.yr,f.y(store.valCI[1,4,]),col=col.list$col4,lty=1,lwd=lw.1)
-  polygon(c(age.yr,rev(age.yr)),c(f.y(store.valCI[2,4,]),rev(f.y(store.valCI[3,4,]))),lty=0,col=col.listF$col4)
-  points(age.yr,titre.data[4,age.yr],col=col.list$col4)
-  
-  dev.copy(pdf,paste("plot_simulations/posterior_plot",paste("DATA_",seedK,sep=""),".pdf",sep=""),width=12,height=4)
-  dev.off()
-  
-  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV1",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
-  lines(inf_years,f.y(store.valCI[1,1,]),col=col.list$col1,lty=1,lwd=lw.1)
-  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,1,]),rev(f.y(store.valCI[3,1,]))),lty=0,col=col.listF$col1)
-  #axis(1,at=label.age,labels=f.y(label.age))
-  
-  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV2",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
-  lines(inf_years,f.y(store.valCI[1,2,]),col=col.list$col2,lty=1,lwd=lw.1)
-  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,2,]),rev(f.y(store.valCI[3,2,]))),lty=0,col=col.listF$col2)
-  #axis(1,at=label.age,labels=f.y(label.age))
-  
-  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV3",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
-  lines(inf_years,f.y(store.valCI[1,3,]),col=col.list$col3,lty=1,lwd=lw.1)
-  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,3,]),rev(f.y(store.valCI[3,3,]))),lty=0,col=col.listF$col3)
-  #axis(1,at=label.age,labels=f.y(label.age))
-  
-  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="DENV4",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
-  lines(inf_years,f.y(store.valCI[1,4,]),col=col.list$col4,lty=1,lwd=lw.1)
-  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,4,]),rev(f.y(store.valCI[3,4,]))),lty=0,col=col.listF$col4)
-  #axis(1,at=label.age,labels=f.y(label.age))
-  
-  plot(inf_years,f.y(store.valCI[1,1,]),ylim=c(0,1.01),main="ZIKV",col="white",xlab="age in 2015",ylab="probability ever infected",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
-  lines(inf_years,f.y(store.valCI[1,5,]),col=col.list$col5,lty=1,lwd=lw.1)
-  polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,5,]),rev(f.y(store.valCI[3,5,]))),lty=0,col=col.listF$col5)
+  for(ii in 1:strains){
+    plot(age.yr,f.y(store.valCI[1,ii,]),xlim=c(xMin,xMax),ylim=c(0,1.01),main=mLabel[ii],col="white",xlab="age in 2015",ylab=yLabel,type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+    lines(age.yr,f.y(store.valCI[1,ii,]),col=col.list[[ii]],lty=1,lwd=lw.1)
+    polygon(c(age.yr,rev(age.yr)),c(f.y(store.valCI[2,ii,]),rev(f.y(store.valCI[3,ii,]))),lty=0,col=col.listF[[ii]])
+    points(age.yr,titre.data[ii,age.yr]-2*amask,col=col.list[[ii]])
+  }
 
   
-  dev.copy(pdf,paste("plot_simulations/posterior_plot",paste("DATA_",seedK,sep=""),".pdf",sep=""),width=10,height=6)
+  #dev.copy(pdf,paste("plot_simulations/posterior_plot",paste("DATA_",seedK,sep=""),".pdf",sep=""),width=12,height=4)
+  #dev.off()
+  
+  #par(mfrow=c(2,3))
+  
+  # Calculate and plot attack rate
+  
+  # Store 95% CI
+  
+  store.valCI=array(NA,dim=c(3,strains,inf.n))
+  
+  for(kk in 1:3){
+    for(ii in 1:(inf.n)){ # Iterate across years
+      p.inf=NULL
+      for(jj in 1:strains){ # Iterate across strains
+        p.inf=c(p.inf,1-exp(-store.val[kk,jj,ii])) # Infected in this period with strain j
+        #p.inf=c(p.inf,1-exp(-sum(store.val[kk,jj,1:(ii)]))) # Infected in this period with strain j
+      }
+      # Convert to probability of infection
+      store.valCI[kk, , ii] = p.inf
+    }
+  }
+  
+  f.y<-function(x){rev(x)} #{rev(x)} # swap order of ages?
+  
+  xMin=min(inf_years); xMax=2015
+  
+  for(ii in 1:strains){
+    plot(inf_years,f.y(store.valCI[1,ii,]),xlim=c(xMin,xMax),ylim=c(0,1.02),main="",col="white",xlab="",ylab="attack rate",type="l",bty="n",xaxs="i",yaxs="i",lwd=lw.1)
+    grid(ny = 0, nx = NULL, col = rgb(0.8,0.8,0.8), lty = "solid")
+    lines(inf_years,f.y(store.valCI[1,ii,]),col=col.list[[ii]],lty=1,lwd=lw.1)
+    polygon(c(inf_years,rev(inf_years)),c(f.y(store.valCI[2,ii,]),rev(f.y(store.valCI[3,ii,]))),lty=0,col=col.listF[[ii]])
+    #axis(1,at=label.age,labels=f.y(label.age))
+    points(circYr[[ii]],1+0*circYr[[ii]],pch=19,cex=1)
+  }
+  
+  dev.copy(pdf,paste("plot_simulations/posterior_plot",paste("DATA2_",seedK,sep=""),".pdf",sep=""),width=10,height=6)
   dev.off()
   
   post.tab=cbind(  
@@ -792,7 +809,7 @@ plot.posteriors_data<-function(per_sample,strains,scenario,seedK){
     ))
   
   
-  write.csv(post.tab,paste("plot_simulations/parameter_estimates_DATA_seed",seedK,".csv",sep=""))
+  #write.csv(post.tab,paste("plot_simulations/parameter_estimates_DATA_seed",seedK,".csv",sep=""))
   
   
 }
