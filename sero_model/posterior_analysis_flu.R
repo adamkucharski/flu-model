@@ -158,13 +158,13 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   attackCI=data.frame(attackCI)
   names(attackCI)=c("mean","CI1","CI2")
   colB=rgb(0,0,0.8)
-  plot(inf_years,attackCI$mean,pch=19,col=colA,ylim=c(0,1),xlab="year",ylab="attack rate")
+  plot(inf_years,attackCI$mean,pch=19,col=colB,ylim=c(0,1),xlab="year",ylab="attack rate")
   for(kk in 1:length(inf_years)){ # Iterate across test years
-     lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colA)
+     lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colB)
   }
   
-  #dev.copy(pdf,paste("plot_simulations/attackSimple",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
-  #dev.off()
+  dev.copy(pdf,paste("plot_simulations/attackSimple",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
+  dev.off()
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -404,15 +404,12 @@ plot.multi.chain.posteriors<-function(simDat=F,flutype="H3",loadpick=c(1:4),burn
 
 # plot.posterior.titres(loadseed="SIM",simDat=T,define.year=c(2007:2012))
 
-plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5){
+plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5,plotRes=F){
   
   if(simDat==F){
-    if(flu.type=="H3"){
-      load("R_datasets/HaNam_data.RData")
-    }else{
-      load("R_datasets/Fluscape_data_List.RData")
-      year_test=c(2011,2012)
-    }
+    if(flutype=="H3"){load("R_datasets/HaNam_data.RData")}
+    if(flutype=="B"){load("R_datasets/Fluscape_data.RData")}
+    if(flutype=="H1"){load("R_datasets/HK_data.RData")}
     loadseed=1 # DEBUG
     loadseed=paste(loadseed,"_",flutype,sep="")
   }else{
@@ -476,10 +473,15 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
   
   # - - - - - - - - - - - - - - - - - - - 
   # Plot histogram of estimated vs true titre
+  if(plotRes==T){
   compTab = NULL
   for(pickyr in 1:n.test){
-    for(ii0 in 1:n_part){
-    estT = apply(store.mcmc.test.data[,ii0,,pickyr,2],2,function(x){median(x)})
+    for(ii0 in 1:n_part){ # Check more than one strain per year
+      if(!is.null(dim(store.mcmc.test.data[,ii0,,pickyr,2]))){
+        estT = apply(store.mcmc.test.data[,ii0,,pickyr,2],2,median)
+      }else{
+        estT = sapply(store.mcmc.test.data[,ii0,,pickyr,2],median)
+      }
     truT = test.list[[ii0]][[pickyr]][2,]
     
     compTab = c(compTab, estT - truT)
@@ -493,6 +495,8 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
   dev.copy(pdf,paste("plot_simulations/titre_compare/Residuals_",loadseed,".pdf",sep=""),width=6,height=4)
   dev.off()
   
+  }
+  
   # - - - - - - - - - - - - - - - - - - - 
   # Plot figures from MCMC posteriors
   
@@ -502,8 +506,8 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       # Mask infections after test year
     
     for(ii0 in 1:n_part){
-      simtitreX=store.mcmc.test.data[,ii0,,pickyr,1]
-      simtitreY=store.mcmc.test.data[,ii0,,pickyr,2]
+      simtitreX=store.mcmc.test.data[,ii0,,pickyr,1] # pick out years
+      simtitreY=store.mcmc.test.data[,ii0,,pickyr,2] # pick out estimates
       hist.sample=store.mcmc.hist.data[,ii0,,pickyr] # for participant ii0 in year pickyr
   
       plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,9),col='white',xlab="year",ylab="titre")
@@ -516,12 +520,21 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       }
       
       # Calculate credible interval for expected titres
-      medP=apply(simtitreY,2,function(x){median(x)})
-      ciP1=apply(simtitreY,2,function(x){quantile(x,0.025)})
-      ciP2=apply(simtitreY,2,function(x){quantile(x,0.975)})
-      polygon(c(simtitreX[1,],rev(simtitreX[1,])),c(ciP1,rev(ciP2)),lty=0,col=rgb(0,0.3,1,0.2))
-      lines(simtitreX[1,],medP,pch=1,col='blue')
-      points(simtitreX[1,],medP,pch=19,cex=0.5,col='blue')
+      if(!is.null(dim(simtitreY))){ # Check more than one strain per year
+        medP=apply(simtitreY,2,function(x){median(x)})
+        ciP1=apply(simtitreY,2,function(x){quantile(x,0.025)})
+        ciP2=apply(simtitreY,2,function(x){quantile(x,0.975)})
+        polygon(c(simtitreX[1,],rev(simtitreX[1,])),c(ciP1,rev(ciP2)),lty=0,col=rgb(0,0.3,1,0.2))
+        lines(simtitreX[1,],medP,pch=1,col='blue')
+        points(simtitreX[1,],medP,pch=19,cex=0.5,col='blue')
+      }else{
+        medP=median(simtitreY)
+        ciP1=quantile(simtitreY,0.025)
+        ciP2=quantile(simtitreY,0.975)
+        #polygon(c(simtitreX,rev(simtitreX)),c(ciP1,rev(ciP2)),lty=0,col=rgb(0,0.3,1,0.2))
+        lines(c(simtitreX[1],simtitreX[1]),c(ciP1,ciP2),pch=1,col='blue')
+        points(simtitreX[1],medP,pch=19,cex=0.5,col='blue')
+      }
       
       # Plot true titres
       points(min(inf_years)-1+test.list[[ii0]][[pickyr]][4,],test.list[[ii0]][[pickyr]][2,],pch=1,col='red')
@@ -556,12 +569,9 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   # year_pick=c(2008:2010);part_pick=c(15,31,57)
   
   if(simDat==F){
-    if(flu.type=="H3"){
-      load("R_datasets/HaNam_data.RData")
-    }else{
-      load("R_datasets/Fluscape_data_List.RData")
-      year_test=c(2011,2012)
-    }
+    if(flutype=="H3"){load("R_datasets/HaNam_data.RData")}
+    if(flutype=="B"){load("R_datasets/Fluscape_data.RData")}
+    if(flutype=="H1"){load("R_datasets/HK_data.RData")}
     loadseed=1 # DEBUG
     loadseed=paste(loadseed,"_",flutype,sep="")
   }else{
@@ -753,12 +763,9 @@ plot.sim.data<-function(){
 run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010)){
   
   if(simDat==F){
-    if(flu.type=="H3"){
-      load("R_datasets/HaNam_data.RData")
-    }else{
-      load("R_datasets/Fluscape_data_List.RData")
-      year_test=c(2011,2012)
-    }
+    if(flutype=="H3"){load("R_datasets/HaNam_data.RData")}
+    if(flutype=="B"){load("R_datasets/Fluscape_data.RData")}
+    if(flutype=="H1"){load("R_datasets/HK_data.RData")}
     loadseed=paste(loadseed,"_",flu.type,sep="")
   }else{
     load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep=""))

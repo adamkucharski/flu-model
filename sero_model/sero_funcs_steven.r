@@ -138,6 +138,86 @@ make_fluscape_rdata <- function(
 }
 
 
+# Load HK data and format to same shape
+
+make_HK_rdata <- function(){
+
+  #source("~/Documents/hkiss/R/hks.R")
+  #dataHK <- hks.read.clean.study("~/Documents/hkiss/data/hkiss_main_v1.csv")
+  
+  # Load up the raw data
+  rtn <- read.csv("~/Documents/hkiss/data/hkiss_main_v1.csv",stringsAsFactors=FALSE)
+  
+  # Define all the quads
+  rtn$is.quad <- rtn$blood_1=="Yes" & rtn$blood_2=="Yes" & rtn$blood_3=="Yes" & (rtn$blood_4 %in% c("Yes","yes","YES"))
+  rtn <- rtn[!is.na(rtn$is.quad),] # Remove NA
+  rtn <- rtn[rtn$is.quad==T,] # 
+  
+  # Correct the dates of the bloods
+  rtn$blood_1_date <- as.Date(as.character(rtn$blood_1_date),"%d/%m/%Y")
+  rtn$blood_2_date <- as.Date(as.character(rtn$blood_2_date),"%d/%m/%Y")
+  rtn$blood_3_date <- as.Date(as.character(rtn$blood_3_date),"%d/%m/%Y")
+  rtn$blood_4_date <- as.Date(as.character(rtn$blood_4_date),"%d/%m/%Y")
+  
+  hist(c(rtn$blood_1_date,rtn$blood_2_date,rtn$blood_3_date,rtn$blood_4_date),breaks=as.Date(14000+(0:40)*35,origin="1970-01-01"))
+  
+  rtn$pT1 <- log((rtn$H1N1.T1 / 5),2)
+  rtn$pT2 <- log((rtn$H1N1.T2 / 5),2)
+  rtn$pT3 <- log((rtn$H1N1.T3 / 5),2)
+  rtn$pT4 <- log((rtn$H1N1.T4 / 5),2)
+  rtn$sT1 <- log((rtn$H3N2.T1 / 5),2)
+  rtn$sT2 <- log((rtn$H3N2.T2 / 5),2)
+  rtn$sT3 <- log((rtn$H3N2.T3 / 5),2)
+  rtn$sT4 <- log((rtn$H3N2.T4 / 5),2)
+  
+  rtn <- rtn[!is.na(rtn$pT2),]
+  
+  HK.data <- rtn[,c("Age_1","pT2","pT3","pT4")]
+  HK.data$Age_1 <- round(HK.data$Age_1)
+
+  # Use last 3 test years to keep gaps uniform...
+  
+  n_part <- length(rtn$sr.index)
+  
+  test_years <- c(2009:2011)
+  test.n <- length(test_years)
+  inf_years <- c(2009:2011)
+  strain_years <- c(2009)
+  nstrains <- length(strain_years)
+  
+  test.list <- list()
+  for(ii in 1:n_part){
+    
+    subjectn=ii; i.list=list()
+    
+    #   FORMAT
+    #   test.year    2010 2010 2010 2010 2010 2010
+    #   titredat        1    2    4    3    6    3
+    #   strain_years 1990 1994 1998 2002 2006 2010 # Year of isolate
+    #   sample.index    1    5    9   13   17   21 # Numerical index of strain isolate (start with first possible year of infection)
+    #   age
+    
+    for(jj in 1:test.n){
+      testyr <- test_years[jj]
+      dataI <- as.numeric(HK.data[ii,jj+1]) # EDIT THIS TO MAKE REPEATS?
+      i.list[[jj]]=rbind(test.year=rep(testyr,nstrains),
+                         titredat=dataI,
+                         strain_years,
+                         1,
+                         age=rep(as.numeric(HK.data[ii,"Age_1"]))+jj-1 # record age
+      )
+    }
+    test.list[[ii]]=i.list
+    
+  }
+  
+  # Return the list of required output
+  save(test_years, inf_years,strain_years, n_part, test.list,
+       file="R_datasets/HK_data.RData")
+
+}
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # simLocations()
 simLocations <- function(

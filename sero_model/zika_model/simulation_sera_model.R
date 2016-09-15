@@ -232,7 +232,13 @@ LikelihoodTitres<-function(titre.data,dmatrix,forcetab_star,inf.n,strains,n_samp
   #colSums(lik)
 }
 
+# DEBUGGING
+#dmatrix = diag(strains)*(1-tail(theta_post[["error"]],1))+(1-diag(strains))*tail(theta_post[["sigma"]],1) # default cross-reaction structure
+#dmatrix = diag(strains)*(1-0.000001)+(1-diag(strains))*0.000001 # default cross-reaction structure
+##post_force[5,2]=0.2
+#forcetab_star=post_force
 #LikelihoodTitres(titre.data,dmatrix,forcetab_star,inf.n,strains,n_sample) # DEBUG
+
 #plot(llA[,4])
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -273,7 +279,7 @@ run_mcmc<-function(
     forcetab=-log(1-prob_inf)+0.001 # Add to ensure mixing if zero in simulation
   }else{
     forcetab=matrix(0.1,nrow=strains,ncol=inf.n)
-    #forcetab[strains,1]=1 # Increase FOI for ZIKV
+    forcetab[strains,1]=1 # Increase FOI for ZIKV
   }
   forcetab=force_constrain*forcetab
   forcetabCollect=forcetab
@@ -630,7 +636,17 @@ plot.posteriors<-function(per_sample,strains,scenario,seedK){
 
 inference_model_data<-function(seedK,strains,runsMCMC,scenario,per_sample,switch0=5){
   
-  # runsMCMC = 10000; switch0=5; seedK=1; strains =5 
+  # runsMCMC = 100; switch0=5; seedK=1; strains =5 
+  
+  miscYr=c(1984:1986,1988,2004,2006:2007,2010)
+  
+  circYr=list( #NEED TO MAKE THIS FUNCTION
+    c(1974,1975,1981,1989,1990,2001,2002,2003,2009,2011,2012,miscYr),
+    c(1971:1973,1982,1983,1997,1998,miscYr),
+    c(1989,1990,2014,miscYr),
+    c(1980,2008,2009,miscYr),
+    c(2013:2015)
+  )
   
   age.range= c(1:50)
   
@@ -646,11 +662,14 @@ inference_model_data<-function(seedK,strains,runsMCMC,scenario,per_sample,switch
   n_sample=matrix(rep(data[age.range,"n"],strains),nrow=strains,byrow = T)
   
   # Constrain Zika to final year
-  force_constrain=matrix(1,nrow=strains,ncol=length(inf.years.sera))
-  force_constrain[strains,3:length(inf.years.sera)]=0 # Constrain ZIKV to final X years only
+  force_constrain=matrix(0,nrow=strains,ncol=length(inf.years.sera))
+  #force_constrain[strains,3:length(inf.years.sera)]=0 # Constrain ZIKV to final X years only
   
-  force_constrain # TO ADD
-  pmask0=NULL
+  for(ii in 1:strains){
+    pick <- length(inf.years.sera) - (circYr[[ii]]-min(inf.years.sera) ) # Increasing with age
+    force_constrain[ii,pick]=1 # TO ADD
+  }
+  pmask0=c("error","sigma") #pmask0=NULL
   
   # Run MCMC model
   run_mcmc(
@@ -720,7 +739,7 @@ plot.posteriors_data<-function(per_sample,strains,scenario,seedK){
   # Specify circulation years:
   
   circYr=list(
-    c(1974,1954,1981,1989,1990,2001,2002,2003,2009,2011,2012),
+    c(1974,1975,1981,1989,1990,2001,2002,2003,2009,2011,2012),
     c(1971:1973,1982,1983,1997,1998),
     c(1989,1990,2014,2015),
     c(1980,2008,2009),
@@ -739,7 +758,7 @@ plot.posteriors_data<-function(per_sample,strains,scenario,seedK){
         #p.inf=c(p.inf,1-exp(-store.val[kk,jj,ii])) # Infected in this period with strain j
         p.inf=c(p.inf,1-exp(-sum(store.val[kk,jj,1:(ii)]))) # Infected in this period with strain j
       }
-      # Convert to probability of infection
+      # Convert to probability of infection -- NEED TO ADD CROSS REACTION HERE
       store.valCI[kk, , ii] = p.inf
     }
   }
