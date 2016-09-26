@@ -256,6 +256,11 @@ simulate_data<-function(test_years,
                         linD=F, # use linear cross-reaction function?
                         antigenic.map.in=NULL,pmask=NULL){ # ii=participant | jj=test year
   
+  # test_years=test.yr[pickyr]; historytabPost=hist.sample; thetastar=theta.max; p.inf=0.1 # DEBUG
+  
+  #pmask=c("sigma2"), # For old fitted data, need to specify that sigma2 wasn't fitted
+  linD=F
+  
   # Variables needed: test_years,inf_years,strain_years,n_part
   #strain_years=seq(1968,2010,4)
   
@@ -306,7 +311,6 @@ simulate_data<-function(test_years,
   }
 
   # Simulate titres for each participant
-  # ** NEED TO INCLUDE TEST YEAR IN FUNCTION IF DECAY ADDED **
   
   test.list=list()
   
@@ -328,6 +332,11 @@ simulate_data<-function(test_years,
       testyearI=c(1:inf.n)[inf_years==testyr]
       
       expect=func1(historyii,sample.index,d_vector,d_vector2, thetastar,testyearI) # Output expectation
+      
+      #DEBUG
+      thetastar[["wane"]]=1
+      func1(historyii,titredat=1,d_vector,d_vector2, thetastar,testyear_index=1) # Output expectation
+      # END DEBUG
       
       #titredat=sapply(expect,function(x){rpois(1,x)}) # Generate titre
       if(roundv==T){titredat=round(expect)}else{titredat=expect}
@@ -521,6 +530,7 @@ run_mcmc<-function(
   if(sum(pmask=="muShort")>0){theta[["muShort"]]=1e-10} # Set short term boosting ~ 0 if waning not fitted
   #if(sum(pmask=="map.fit")>0){ theta[["sigma"]]=1; pmask=c(pmask,"sigma","sigma2")} # Set cross-reactivity = 1 and don't fit if antigenic map also fitted (to avoid overparameterisation)
   if(sum(pmask=="sigma2")>0){ theta[["sigma2"]]=theta[["sigma"]] } # Fix equal if sigma same for both 
+  if(sum(pmask=="error")>0){ theta[["error"]]=1e-10 } # Fix equal if sigma same for both 
   
   
   # Preallocate memory
@@ -815,7 +825,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3) {
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Run code on network (SR code)
+# Run code on network [SR code]
 fn.network<-function(){
   system.time(
     for(ii in 1:1){  # Use multiple seeds for simulation code

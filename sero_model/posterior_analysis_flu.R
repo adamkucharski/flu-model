@@ -37,11 +37,11 @@ scale.map<-function(map.pick){
 # Plot MCMC posterior distributions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),plotmap=F,f.lim=F){
+plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012),plotmap=F,f.lim=F){
 
-  # simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;f.lim=T;flutype="H3"
+  # simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;f.lim=T;flu.type="H3"
   
-  if(simDat==F){loadseed=paste(loadseed,"_",flutype,sep="")}
+  if(simDat==F){loadseed=paste(loadseed,"_",flu.type,sep="")}
   if(simDat==T){load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))}
 
   load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep=""))
@@ -138,7 +138,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
 
   par(mfrow=c(1,1))
   par(mar = c(5,5,1,1))
-  if(flutype=="H3" & simDat==F){
+  if(flu.type=="H3" & simDat==F){
       yob.data=data.frame(read.csv("datasets/HaNam_YOB.csv",header=FALSE)) # Import age distribution
       n.alive=sapply(inf_years,function(x){sum(yob.data<=x)})
   }else{
@@ -170,7 +170,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flutype="",year_test=c(2007:2012),
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Plot estimated attack rates against virus isolates that year
   
-  if(flutype=="H3" & length(year_test)==6){
+  if(flu.type=="H3" & length(year_test)==6){
     
     # Calculate number of isolates
     collect.list = data.frame(rbind(c(2006,"2006-12-31"),c(2007,"2007-12-31"),c(2008,"2008-12-31"),
@@ -315,9 +315,9 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-plot.multi.chain.posteriors<-function(simDat=F,flutype="H3",loadpick=c(1:4),burnCut=0.5,year_test=c(2007:2012),plotmap=F,f.lim=F){
+plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3",loadpick=c(1:4),burnCut=0.5,year_test=c(2007:2012),plotmap=F,f.lim=F){
   
-  # simDat=F;year_test=c(2007:2012);plotmap=F;f.lim=T;flutype="H3"; loadpick=c(1:4); burnCut=0.5
+  # simDat=F;year_test=c(2007:2012);plotmap=F;f.lim=T;flu.type="H3"; loadpick=c(1:4); burnCut=0.5
 
   storeMu = NULL
   storeMu2 = NULL
@@ -332,7 +332,7 @@ plot.multi.chain.posteriors<-function(simDat=F,flutype="H3",loadpick=c(1:4),burn
   
   for(loadseed in loadpick){
   
-    loadseedA=paste(loadseed,"_",flutype,sep="")
+    loadseedA=paste(loadseed,"_",flu.type,sep="")
     load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseedA,".RData",sep=""))
     
     # Define lengths and sizes of inputs
@@ -406,12 +406,14 @@ plot.multi.chain.posteriors<-function(simDat=F,flutype="H3",loadpick=c(1:4),burn
 
 plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5,plotRes=F){
   
+  # simDat=F; flu.type="H1" ; year_test= c(2009:2011); btstrap=5; 
+  
   if(simDat==F){
-    if(flutype=="H3"){load("R_datasets/HaNam_data.RData")}
-    if(flutype=="B"){load("R_datasets/Fluscape_data.RData")}
-    if(flutype=="H1"){load("R_datasets/HK_data.RData")}
+    if(flu.type=="H3"){load("R_datasets/HaNam_data.RData")}
+    if(flu.type=="B"){load("R_datasets/Fluscape_data.RData")}
+    if(flu.type=="H1"){load("R_datasets/HK_data.RData")}
     loadseed=1 # DEBUG
-    loadseed=paste(loadseed,"_",flutype,sep="")
+    loadseed=paste(loadseed,"_",flu.type,sep="")
   }else{
     load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
     test.list=test.listSim
@@ -569,11 +571,11 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   # year_pick=c(2008:2010);part_pick=c(15,31,57)
   
   if(simDat==F){
-    if(flutype=="H3"){load("R_datasets/HaNam_data.RData")}
-    if(flutype=="B"){load("R_datasets/Fluscape_data.RData")}
-    if(flutype=="H1"){load("R_datasets/HK_data.RData")}
+    if(flu.type=="H3"){load("R_datasets/HaNam_data.RData")}
+    if(flu.type=="B"){load("R_datasets/Fluscape_data.RData")}
+    if(flu.type=="H1"){load("R_datasets/HK_data.RData")}
     loadseed=1 # DEBUG
-    loadseed=paste(loadseed,"_",flutype,sep="")
+    loadseed=paste(loadseed,"_",flu.type,sep="")
   }else{
     load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))
     test.list=test.listSim
@@ -763,9 +765,9 @@ plot.sim.data<-function(){
 run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010)){
   
   if(simDat==F){
-    if(flutype=="H3"){load("R_datasets/HaNam_data.RData")}
-    if(flutype=="B"){load("R_datasets/Fluscape_data.RData")}
-    if(flutype=="H1"){load("R_datasets/HK_data.RData")}
+    if(flu.type=="H3"){load("R_datasets/HaNam_data.RData")}
+    if(flu.type=="B"){load("R_datasets/Fluscape_data.RData")}
+    if(flu.type=="H1"){load("R_datasets/HK_data.RData")}
     loadseed=paste(loadseed,"_",flu.type,sep="")
   }else{
     load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep=""))

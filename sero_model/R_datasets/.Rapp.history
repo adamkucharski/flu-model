@@ -1,0 +1,5 @@
+load("/Users/adamkucharski/Documents/flu-model/sero_model/R_datasets/HK_data.RData")
+titre.data
+test.list
+load("/Users/adamkucharski/Documents/flu-model/sero_model/R_datasets/Fluscape_data.RData")
+test.list

@@ -55,21 +55,21 @@ load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD T
 for(kk in 1:4){
 #foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e1,loadseed=kk,flutype=flutype0,fix.param=c("disp_k"),fit.spline=NULL) #,"map.fit"
+  # Fits to spline if am.spl is defined [** AK: need to tidy this up **]
+  data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,flutype=flutype0,fix.param=c("disp_k"),fit.spline=NULL) #,"map.fit"
   
 }
 
-data.infer(year_test=dy1,mcmc.iterations=1e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort"),fit.spline=NULL) #,"map.fit"
+data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","error","muShort"),fit.spline=NULL) #,"map.fit"
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # PLOT POSTERIORS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Plot posteriors for longtudinal data (FIG 3)
-for(kk in 2){
+for(kk in 1){
   
-  plot.posteriors(year_test=dy1,loadseed=kk,flutype=flutype0,f.lim=T,plotmap = F)
+  plot.posteriors(year_test=dy1,loadseed=kk,flu.type=flutype0,f.lim=T,plotmap = F)
   
 }
 
@@ -77,9 +77,9 @@ for(kk in 2){
 # Plot posteriors for cross-sectional data
 
 for(kk in c(2011:2012)){
-  flutype0="B"
+  flutype0="H1"
   dy1=kk
-  plot.posteriors(year_test=dy1,loadseed=1,flutype=flutype0,f.lim=)
+  plot.posteriors(year_test=dy1,loadseed=1,flu.type=flutype0,f.lim=)
 }
 
 # plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
