@@ -175,15 +175,15 @@ make_HK_rdata <- function(){
   HK.data <- rtn[,c("Age_1","pT2","pT3","pT4")]
   HK.data$Age_1 <- round(HK.data$Age_1)
 
-  # Use last 3 test years to keep gaps uniform...
+  # Use last 3 test years only to keep gaps uniform...
   
   n_part <- length(rtn$sr.index)
   
   test_years <- c(2009:2011)
   test.n <- length(test_years)
   inf_years <- c(2009:2011)
-  strain_years <- c(2009)
-  nstrains <- length(strain_years)
+  strain_years <- c(2009:2011)
+  nstrains <- 1 #length(strain_years)
   
   test.list <- list()
   for(ii in 1:n_part){
@@ -200,10 +200,11 @@ make_HK_rdata <- function(){
     for(jj in 1:test.n){
       testyr <- test_years[jj]
       dataI <- as.numeric(HK.data[ii,jj+1]) # EDIT THIS TO MAKE REPEATS?
+      strain_year <- strain_years[jj]
       i.list[[jj]]=rbind(test.year=rep(testyr,nstrains),
                          titredat=dataI,
-                         strain_years,
-                         1,
+                         strain_year,
+                         jj,
                          age=rep(as.numeric(HK.data[ii,"Age_1"]))+jj-1 # record age
       )
     }

@@ -25,7 +25,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	double mu = theta[0];
 	double mu2 = theta[5]; // as sigma theta[4]
 	
-	// This to be made an argument of the function -- gives test year
+	// This to be made an argument of the function -- gives test year 
 	int t_sample = inputtestyr[0]; 
   
   double yrTitre[nsamp];

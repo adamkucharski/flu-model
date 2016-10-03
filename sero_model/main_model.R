@@ -26,7 +26,6 @@ source("sero_functions.R")
 source("posterior_analysis_flu.R")
 source("sero_funcs_steven.r") # Load Flu B format
 
-
 compile.c() # Compile c code
 
 
@@ -56,7 +55,7 @@ for(kk in 1:4){
 #foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
   # Fits to spline if am.spl is defined [** AK: need to tidy this up **]
-  data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,flutype=flutype0,fix.param=c("disp_k"),fit.spline=NULL) #,"map.fit"
+  data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","error"),fit.spline=NULL) #,"map.fit"
   
 }
 
@@ -66,7 +65,7 @@ data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,flutype=flutype0,fix.pa
 # PLOT POSTERIORS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-# Plot posteriors for longtudinal data (FIG 3)
+# Plot posteriors for longtudinal data (including attack rates - FIG 3)
 for(kk in 1){
   
   plot.posteriors(year_test=dy1,loadseed=kk,flu.type=flutype0,f.lim=T,plotmap = F)
@@ -85,6 +84,12 @@ for(kk in c(2011:2012)){
 # plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
 # plot.posteriors(simDat=T,loadseed="SIM",year_test=c(2007:2012),plotmap=T)
 
+# - - - - 
+# Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG 2)
+
+plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=50,part_pick=c(31,57,25),year_pick=c(2008:2010))
+plot.antibody.changes(btstrap=200)
+
 # - - - - - - - - - - - - - - - - - 
 # SUPPLEMENTARY FIGURES
 # Plot titre vs estimates
@@ -100,11 +105,7 @@ plot.posterior.titres(loadseed=1,flu.type="H1",simDat=F,year_test=c(2009:2011),b
 plot.multi.chain.posteriors(burnCut=0.25)
 
 
-# - - - - 
-# Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG 2)
 
-plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=50,part_pick=c(31,57,25),year_pick=c(2008:2010))
-plot.antibody.changes(btstrap=200)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
