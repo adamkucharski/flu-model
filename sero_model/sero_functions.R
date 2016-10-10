@@ -136,8 +136,6 @@ outputdmatrix.fromcoord<-function(thetasigma,inf_years,anti.map.in,spl.fn=NULL){
       yy=predict(am.spl,xx)$y
       am2=cbind(xx,yy)
       
-      print(am2)
-      
       (dmatrix=apply(am2,1,function(x){exp(-thetasigma*sqrt(
         colSums(apply(am2,1,function(y){(y-x)^2}))
       ))}))
@@ -473,8 +471,8 @@ SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   #mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
   #theta_star[["muShort"]]=ifelse(mu2<0,theta_initial[["muShort"]],mu2)
   
-  # reflective boundary condition for error function
-  error2=min(2-theta_star[["error"]],theta_star[["error"]])
+  # reflective boundary condition for error function = max is 0.2 for now # DEBUG
+  error2=min(0.2-theta_star[["error"]],theta_star[["error"]])
   theta_star[["error"]]=ifelse(error2<0,theta_initial[["error"]],error2)
   
   #print(rbind(theta_initial,theta_star1,theta_star2))
@@ -511,7 +509,7 @@ run_mcmc<-function(
   ){
   
   # DEBUG set params <<<
-  # hist.true=NULL; test.yr=c(2007); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=F; pmask=NULL
+  # hist.true=NULL; test.yr=c(2009); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=F; pmask=NULL ; antigenic.map.in=NULL
   
   if(is.null(antigenic.map.in)){antigenic.map.in=inf_years} # if no input map, assume 1D
   test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
@@ -693,7 +691,8 @@ run_mcmc<-function(
 data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix.param=NULL , fit.spline=NULL) {
   # INFERENCE MODEL
   # Run MCMC for specific data set
-  if(flutype=="H3"){load("R_datasets/HaNam_data.RData")}
+  if(flutype=="H3HN"){load("R_datasets/HaNam_data.RData")}
+  if(flutype=="H3FS"){load("R_datasets/FluScapeH3_data.RData")}
     #am.spl<-load.flu.map.data() # define spline from antigenic map data
   if(flutype=="B"){load("R_datasets/Fluscape_data.RData")}
   if(flutype=="H1"){load("R_datasets/HK_data.RData")}
@@ -710,7 +709,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
   theta0[["sigma"]]=0.3 + if(sum(fix.param=="wane")==0){0.1*runif(1,c(-1,1))}else{0} # cross-reaction
   theta0[["sigma2"]]=0.1 + if(sum(fix.param=="wane")==0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
   theta0[["muShort"]]=8 + if(sum(fix.param=="wane")==0){4*runif(1,c(-1,1))}else{0} # short term boosting
-  theta0[["error"]]=0.05 # measurement error
+  theta0[["error"]]=0.01 # measurement error
   theta0[["disp_k"]]=0.01 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model

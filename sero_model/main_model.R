@@ -44,29 +44,30 @@ foreach(kk1=c(2011:2012)) %dopar% {
 # - - - - - - - - - - - - - - - - - 
 # Run longtudinal inference on H3 or B data
 
-flutype0="H1"
-if(flutype0=="H3"){ dy1=c(2007:2012) }
+flutype0="H3FS"
+if(flutype0=="H3FS"){ dy1=c(2009) }
+if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 if(flutype0=="B"){ dy1=c(2011,2012) } 
 if(flutype0=="H1"){ dy1=c(2009:2011) } 
 
 #load.flu.map.data() # define spline from H3 antigenic map data
 load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before inference run**
-for(kk in 1:4){
-#foreach(kk=1:4) %dopar% {
+#for(kk in 1:4){
+foreach(kk=1:4) %dopar% {
   #if(kk==2013){kk1=c(2007:2012)}else{kk1=kk}
-  # Fits to spline if am.spl is defined [** AK: need to tidy this up **]
-  data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","error"),fit.spline=NULL) #,"map.fit"
+  # Fits to spline if am.spl is defined [** AK: need to tidy the spline input up? **]
+  data.infer(year_test=dy1,mcmc.iterations=1e6,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort"),fit.spline=am.spl) #,"map.fit"
   
 }
 
-data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","error","muShort"),fit.spline=NULL) #,"map.fit"
+#data.infer(year_test=dy1,mcmc.iterations=1e6,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","error","muShort"),fit.spline=NULL) #,"map.fit"
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # PLOT POSTERIORS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Plot posteriors for longtudinal data (including attack rates - FIG 3)
-for(kk in 1){
+for(kk in 1:4){
   
   plot.posteriors(year_test=dy1,loadseed=kk,flu.type=flutype0,f.lim=T,plotmap = F)
   
@@ -97,8 +98,12 @@ plot.antibody.changes(btstrap=200)
 load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before next run**
 plot.posterior.titres(loadseed=1,flu.type="H3",simDat=F,year_test=c(2007:2012),btstrap=10)
 
-#H1 titres
-plot.posterior.titres(loadseed=1,flu.type="H1",simDat=F,year_test=c(2009:2011),btstrap=2)
+
+#H3 FluScape titres
+plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btstrap=2)
+
+#H1 titres -- DEPRECATED
+#plot.posterior.titres(loadseed=1,flu.type="H1",simDat=F,year_test=c(2009:2011),btstrap=2)
 
 
 # Plot convergence for MCMC chains
