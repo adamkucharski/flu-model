@@ -86,7 +86,7 @@ for(kk in 1:4){
 for(kk in c(2011:2012)){
   flutype0="H1"
   dy1=kk
-  plot.posteriors(year_test=dy1,loadseed=1,flu.type=flutype0,fr.lim=T)
+  plot.posteriors(year_test=dy1,loadseed=1,flu.type=flutype0,f.lim=F)
 }
 
 # plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
