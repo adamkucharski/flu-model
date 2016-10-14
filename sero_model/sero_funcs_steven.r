@@ -162,6 +162,7 @@ make_FluScape_rdata <- function(){
   test.n <- length(test_years)
   inf_years <- c(1968:2009)
   strain_years <- c(1968,1975,1979,1989,1995,2002,2003,2005,2008)
+  #inf_years <- strain_years
   nstrains <- 1 #length(strain_years)
   
   test.list <- list()

@@ -23,7 +23,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	double T_2 = theta[2];
 	double wane = theta[3];
 	double mu = theta[0];
-	double mu2 = theta[5]; // as sigma theta[4]
+	double mu2 = theta[5]; // as sigma = theta[4]
 	
 	// This to be made an argument of the function -- gives test year 
 	int t_sample = inputtestyr[0]; 
@@ -58,7 +58,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	  
 	  // Make an index for waning
 	  for (m=0;m<n;m++) {
-		  distanceFromTest[m]=exp(-wane * (j-m)); // Distance from test year
+		  distanceFromTest[m]=exp(-wane * (j-m)); // Distance from test year -- originally a +1 by m
 	  }
 
 	  // Make a cumulative infection history
