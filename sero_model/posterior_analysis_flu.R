@@ -146,7 +146,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   par(mfrow=c(1,1))
   par(mar = c(5,5,1,1))
   if(flu.type=="H3" & simDat==F){
-      yob.data=data.frame(read.csv("datasets/HaNam_YOB.csv",header=FALSE)) # Import age distribution
+      yob.data=data.frame(read.csv("datasets/HaNam_YOB.csv",header=FALSE)) # Import age distribution -- NEED TO DEBUG FOR H3FS
       n.alive=sapply(inf_years,function(x){sum(yob.data<=x)})
   }else{
       yob.data=cbind(rep(1,n_part),rep(1,n_part)) # Import age distribution
@@ -882,7 +882,7 @@ run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Rewind history and run with flat incidence
+# Plot different aspects of immune response for paper figures
 
 plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010)){
   
@@ -993,3 +993,134 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",
   
 }
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Rewind history and reconstruct antibody landscape
+
+run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010),d.step=1){
+  
+  # simDat=F;loadseed=1;year_test=c(2009);plotmap=F;fr.lim=T;flu.type="H3"; d.step=1; btstrap=5; n_partSim=2
+  
+  if(simDat==F){
+    if(flu.type=="H3"){load("R_datasets/HaNam_data.RData")}
+    if(flu.type=="B"){load("R_datasets/Fluscape_data.RData")}
+    if(flu.type=="H1"){load("R_datasets/HK_data.RData")}
+    loadseed=paste(loadseed,"_",flu.type,sep="")
+  }else{
+    load(paste("R_datasets/Simulated_data_",loadseed,"_1.RData",sep=""))
+  }
+  
+  # Read in antigenic map data and specify test strains
+  
+  ag.coord=read.csv("datasets/antigenic_coords.csv", as.is=T,head=T)
+  strain_names=ag.coord$viruses
+  
+  x.range <- seq(floor(min(ag.coord$AG_x))-0.5,ceiling(max(ag.coord$AG_x)),d.step)
+  y.range <- seq(floor(min(ag.coord$AG_y))-1,ceiling(max(ag.coord$AG_y)),d.step)
+  points.j <- expand.grid(x.range,y.range) # Define list of points to evaluate
+  
+  # Set up matrices to store -- need btstrap >1
+  strain_years=inf_years # look at strains from every year
+  n.strains=length(strain_years) # this loads from main_model.R
+  n.inf=length(inf_years)
+  
+  
+  # Load in posteriors
+  
+  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep="")) # Note that this includes test.listPost
+  
+  lik.tot=rowSums(likelihoodtab)
+  runsPOST=length(lik.tot[lik.tot!=-Inf])
+  runs1=ceiling(0.2*runsPOST)
+  
+  # Calculate attack rates here?
+  
+  hist.sample0=rep(c(1,rep(0,29)),100)[1:n.inf] 
+  simTest.year=sort(c(inf_years[hist.sample0==1],inf_years[hist.sample0==1]+1)) # infection year and one year after
+  n.test=length(simTest.year)
+  
+  store.mcmc.test.data=array(NA, dim=c(btstrap,n_partSim,n.strains,n.test,2)) # Store expected titres for each test year
+  store.mcmc.hist.data=array(NA, dim=c(btstrap,n_partSim,n.inf,n.test)) # Store history for each test year
+  
+  # - - - - - - - - - - - -
+  # Sample from MCMC runs to get stored matrices of expected titre and estimated infection years
+  
+  for(sampk in 1:btstrap){
+    
+    pickA=sample(c(runs1:runsPOST),1)
+    pickAhist=ceiling(pickA/20)+1 # check which history this specifies
+    hist.sample=rbind(hist.sample0,hist.sample0)
+    theta.max=as.data.frame(thetatab)[pickA,]
+    
+    for(pickyr in 1:n.test){ # ITERATE OVER TIME HERE
+      
+      # Note here that inf_years and strain_years are loads from main_model
+      #hist.sample0[ inf_years<simTest.year[pickyr] ] # only take years up to test year -- already included in simulation function!
+      simulate_data(simTest.year[pickyr],historytabPost=hist.sample,
+                    inf_years,
+                    strain_years,
+                    n_partSim,thetastar=theta.max,p.inf=0.1,
+                    #pmask=c("sigma2"), # For old fitted data, need to specify that sigma2 wasn't fitted
+                    antigenic.map.in=NULL, #impose antigenic map based on test strains
+                    linD=F)
+      
+      load("R_datasets/Simulated_dataPost_1.RData")
+      
+      # Mask infections after test year
+      for(ii0 in 1){
+        
+        sim.titre=test.listSim[[ii0]][[1]] # sort sample years - drawn from simulated data above
+        hist.sampleB=hist.sample;  hist.sampleB[,as.numeric(colnames(hist.sample))>test.yr[pickyr]]=0 # don't show infections after test year
+        store.mcmc.test.data[sampk,ii0,,pickyr,1]= min(inf_years)-1+sort(sim.titre["sample.index",]) # Sampled strain years
+        s.titre=sim.titre["titredat",order(sim.titre["sample.index",])]
+        store.mcmc.test.data[sampk,ii0,,pickyr,2]=s.titre # Sampled expected titre
+        #store.mcmc.test.data[sampk,ii0,,pickyr,2]=rpois(length(s.titre),lambda=s.titre) # Sampled expected titre - include Poisson noise
+        store.mcmc.hist.data[sampk,ii0,,pickyr]=hist.sampleB[ii0,] # Sampled history
+        
+      }  # end loop over participants
+      
+    } # end loop over test years
+  } # end bootstrap loop
+  
+  # - - - - - - - - - - - - 
+  # Plot development of titres
+  
+  par(mfrow=c(1,1)); par(mar = c(5,5,1,1))
+  
+  plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,9),col='white',xlab="year",ylab="titre")
+  
+  for(pickyr in 1:n.test){
+    
+    # Mask infections after test year
+    
+    for(ii0 in 1){
+      simtitreX=store.mcmc.test.data[,ii0,,pickyr,1]
+      simtitreY=store.mcmc.test.data[,ii0,,pickyr,2]
+      hist.sample=store.mcmc.hist.data[,ii0,,pickyr] # for participant ii0 in year pickyr
+      
+      # Sample from infection history
+      for(ksamp in 1:btstrap){
+        for(jj in 1:n.inf){
+          lines(min(inf_years)-1+c(jj,jj),c(-1,12*hist.sample[ksamp,jj]-1),col=rgb(0.8,0.8,0.8,0.01),lwd=2) # Plot estimated infections
+        }
+      }
+      
+      # Calculate credible interval for expected titres
+      medP=apply(simtitreY,2,function(x){median(x)})
+      ciP1=apply(simtitreY,2,function(x){quantile(x,0.025)})
+      ciP2=apply(simtitreY,2,function(x){quantile(x,0.975)})
+      polygon(c(simtitreX[1,],rev(simtitreX[1,])),c(ciP1,rev(ciP2)),lty=0,col=rgb(0,0.3,1,0.2))
+      lines(simtitreX[1,],medP,pch=1,col='blue')
+      points(simtitreX[1,],medP,pch=19,cex=0.5,col='blue')
+      
+      if(ii0 %% 10==0){
+        dev.copy(pdf,paste("plot_simulations/sim",ii0,"P_",pickyr,".pdf",sep=""),width=12,height=6)
+        dev.off()
+      }
+      
+    }  # end loop over participants
+    
+  } # end loop over test years
+  
+  
+}

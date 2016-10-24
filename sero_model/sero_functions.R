@@ -329,7 +329,7 @@ simulate_data<-function(test_years,
       func1(historyii,titredat=1,d_vector,d_vector2, thetastar,testyear_index=1) # Output expectation
       # END DEBUG
       
-      #titredat=sapply(expect,function(x){rpois(1,x)}) # Generate titre
+      #titredat=sapply(expect,function(x){rpois(1,x)}) # Generatteste titre
       if(roundv==T){titredat=round(expect)}else{titredat=expect}
       titredat=sapply(titredat,function(x){min(x,8)})
 
@@ -357,21 +357,22 @@ simulate_data<-function(test_years,
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Resample infection history - included ageA table in case needed later
 
-SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
-  
-  infvector=c(1:inf.n)
-  infvector2=rev(infvector)
-  
+SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years,age.mask){
+
   for(ii in pick){
+
     #ls_pick=foreach(ii=(1:length(pick))) %dopar% {  # Parallel loop - slower to farm out
     rand1=runif(1)
-    x=historyA[ii,]
+    x=historyA[ii,age.mask[ii]:inf.n]
+    
+    infvector=c(1:length(x))
+    infvector2=rev(infvector)
     
     # Remove infection
     if(rand1<1/3){
       infectID=infvector[(as.numeric(x)>0)]
       if(length(infectID)>0){
-        x[sample(c(infectID,infectID),1)]=0
+        x[sample(c(infectID),1)]=0 # Why double? DEBUG
       }
     }
     
@@ -379,7 +380,7 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
     if(rand1>1/3 & rand1<2/3){
       ninfecID=infvector[(as.numeric(x)==0)]
       if(length(ninfecID)>0){
-        x[sample(c(ninfecID,ninfecID),1)]=1
+        x[sample(c(ninfecID),1)]=1
       }
     }
     
@@ -387,9 +388,10 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
     if(rand1>2/3){
       infectID=infvector[(as.numeric(x)>0)]
       ninfecID=infvector[(as.numeric(x)==0)]
+      
       if(length(infectID)>0 & length(ninfecID)>0){
-        x[sample(c(infectID,infectID),1)]=0
-        x[sample(c(ninfecID,ninfecID),1)]=1
+        x[sample(c(infectID),1)]=0
+        x[sample(c(ninfecID),1)]=1
       }
     }
     
@@ -401,10 +403,11 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years){
     #  }
     #}
     
-    historyA[ii,]=x
+    historyA[ii,age.mask[ii]:inf.n]=x
     
   } # end loop over individuals
   historyA
+  
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -514,8 +517,9 @@ run_mcmc<-function(
   jj_year=match(test.yr,test_years); testyear_index = test.yr - min(inf_years) + 1
   sample.n=length(jj_year)
   
-  # Specific MCMC parameters
-  #browser()
+  # Extract ages and create mask
+  age.list <- array(unlist(test.list),dim=c(5,length(strain_years),n_part))[5,1,]
+  age.mask <- sapply(age.list,function(x){if(is.na(x)){1}else{match(max(min(inf_years),test_years[1]-x),inf_years)  }  })
   
   # Define antigenic map
   xx=scalemap(antigenic.map.in,inf_years)
@@ -550,9 +554,15 @@ run_mcmc<-function(
       for(kk in 1:length(jj_year)){
         histIC=rbind(histIC,setuphistIC(ii,jj_year[kk],inf.n,test.list,testyear_index,test_years, inf_years))
       }
-      historytab[ii,]=as.numeric(colSums(histIC)>0)
+      histA=as.numeric(colSums(histIC)>0)
+      histA0=histA*0
+      histA0[c(age.mask[ii]:inf.n)]=histA[c(age.mask[ii]:inf.n)]
+      historytab[ii,]=histA0
     }
   } else { historytab=hist.true }
+  
+  # Add age mask
+  
   
   colnames(historytab)=as.character(inf_years)
   
@@ -607,7 +617,7 @@ run_mcmc<-function(
       pickA=NULL
       pickA=sample(n_part, ceiling(varpart_prob0*n_part)) # check that not length zero (i.e. at least one person sampled)
       #age_star = age.tab #SampleAge(pickA,age.tab) #resample age (not for now)
-      history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years) #resample history
+      history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years,age.mask) #resample history
       theta_star =thetatab[m,]
     }
 
@@ -827,6 +837,8 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
     linD=F)
   
 }
+
+
 
 
 

@@ -64,7 +64,8 @@ dataI=data.Test[data1$Subject.number==subjectn & data1$Sample.year==testyr,]
 i.list[[jj]]=rbind(rep(testyr,nstrains),
       dataI[,!is.na(dataI)],
       strain_years[!is.na(dataI)],
-      strain_years[test.index[!is.na(dataI)]]-min(strain_years)+1
+      strain_years[test.index[!is.na(dataI)]]-min(strain_years)+1,
+      age=NA
       )
 
 }

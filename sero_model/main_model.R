@@ -59,13 +59,8 @@ load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD T
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=5e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort","wane","error","tau1","tau2","sigma2","vary.init"),fit.spline=am.spl,switch0=20) #,"map.fit"
-}
+  data.infer(year_test=dy1,mcmc.iterations=5e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort","wane","error","sigma2","vary.init"),fit.spline=am.spl,switch0=10) #,"map.fit"
 
-#for(kk in 1:4){
-foreach(kk=1:4) %dopar% {
-  # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=5e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort","wane","error","tau1","tau2","sigma2","vary.init"),fit.spline=am.spl,switch0=20) #,"map.fit"
 }
 
 
