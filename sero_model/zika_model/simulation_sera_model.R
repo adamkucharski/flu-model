@@ -442,7 +442,7 @@ plot.performance<-function(per_sample,age_out,strains,scenarioN=4,runs){
       
     }else{
       
-      # Estimate median probability for each inference runs
+      # Estimate median probability for each inference run
       
       for(seedK in 1:runs){
         load(paste("R_datasets/Sero_sim_",seedK,"_",strains,".RData",sep=""))
@@ -491,6 +491,8 @@ plot.performance<-function(per_sample,age_out,strains,scenarioN=4,runs){
   plot_table=store.prop
   dim(plot_table)=NULL
   widX=0.15
+  
+  # Plot simulated data first
   
   # calculation median and IQR
   range=t(apply(store.prop,2,function(x){quantile(x,c(0.25,0.5,0.75))}))

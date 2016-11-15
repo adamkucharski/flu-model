@@ -1,5 +1,5 @@
 
-
+# This code is deprecated
 
 # Calculate values based on two fold rise or more in that year
 sconverttab=NULL

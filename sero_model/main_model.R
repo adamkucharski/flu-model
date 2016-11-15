@@ -9,7 +9,10 @@ library(mvtnorm)
 library(MASS)
 library(coda)
 library(RColorBrewer)
-
+library(magrittr)
+library(plot3D)
+library(colorspace)
+ 
 library(foreach)
 library(doMC)
 registerDoMC(4)  #change the 2 to your number of CPU cores
@@ -54,13 +57,24 @@ load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD T
 
 #load.flu.map.data() # define spline from H3 antigenic map data
 
-# Run inference on H3 FluScape data
-
+# Run inference on H3 HaNam data
+flutype0="H3HN"
+if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=5e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort","wane","error","sigma2","vary.init"),fit.spline=am.spl,switch0=10) #,"map.fit"
+  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","error","vary.init"),fit.spline=am.spl,switch0=10) #,"map.fit"
 
+}
+
+# Run inference on H3 FluScape data
+flutype0="H3FS"
+if(flutype0=="H3FS"){ dy1=c(2009) }
+#for(kk in 1:4){
+foreach(kk=1:4) %dopar% {
+  # Fits to spline if am.spl is defined
+  data.infer(year_test=dy1,mcmc.iterations=1e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort","wane","error","sigma2","vary.init"),fit.spline=am.spl,switch0=10) #,"map.fit"
+  
 }
 
 
@@ -98,7 +112,7 @@ plot.antibody.changes(btstrap=200)
 # Plot titre vs estimates
 
 load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before next run**
-plot.posterior.titres(loadseed=1,flu.type="H3",simDat=F,year_test=c(2007:2012),btstrap=10)
+plot.posterior.titres(loadseed=1,flu.type="H3HN",simDat=F,year_test=c(2007:2012),btstrap=10)
 
 
 #H3 FluScape titres
@@ -109,7 +123,8 @@ plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btst
 
 
 # Plot convergence for MCMC chains for H3 Vietnam
-plot.multi.chain.posteriors(burnCut=0.25)
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN")
+
 
 # Plot convergence for MCMC chains for H3 FluScape
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.lim=T)

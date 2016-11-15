@@ -61,7 +61,7 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_year
   hist0=rep(0,inf.n)   
   #hist0[sample(c(1:inf.n),round(0.1*inf.n))]=1
   
-  # Check test data available
+  # Check test data available - may be issue if age column added too
   if(length(test.jj[,1])>1){
     
     # Set up test strains
@@ -501,7 +501,8 @@ run_mcmc<-function(
   pmask=NULL,
   linD=F, # toggles linear/exponential cross-reactivity function
   antigenic.map.in=NULL, # define specific map structure (or initial structure if fitting)
-  am.spline=NULL # fit antigenic map along defined spline function
+  am.spline=NULL, # fit antigenic map along defined spline function
+  flu_type = NULL
   ){
   
   # DEBUG set params <<<
@@ -518,8 +519,14 @@ run_mcmc<-function(
   sample.n=length(jj_year)
   
   # Extract ages and create mask
-  age.list <- array(unlist(test.list),dim=c(5,length(strain_years),n_part))[5,1,]
-  age.mask <- sapply(age.list,function(x){if(is.na(x)){1}else{match(max(min(inf_years),test_years[1]-x),inf_years)  }  })
+  if(flu_type=="H3FS"){
+    age.list <- array(unlist(test.list),dim=c(5,length(strain_years),n_part))[5,1,]
+    age.mask <- sapply(age.list,function(x){if(is.na(x)){1}else{match(max(min(inf_years),test_years[1]-x),inf_years)  }  })
+  }else{
+    age.mask <- rep(1,n_part)
+  }
+  
+  print(age.mask)
   
   # Define antigenic map
   xx=scalemap(antigenic.map.in,inf_years)
@@ -554,7 +561,7 @@ run_mcmc<-function(
       for(kk in 1:length(jj_year)){
         histIC=rbind(histIC,setuphistIC(ii,jj_year[kk],inf.n,test.list,testyear_index,test_years, inf_years))
       }
-      histA=as.numeric(colSums(histIC)>0)
+      histA=as.numeric(colSums(histIC)>0) # combine all histories
       histA0=histA*0
       histA0[c(age.mask[ii]:inf.n)]=histA[c(age.mask[ii]:inf.n)]
       historytab[ii,]=histA0
@@ -695,7 +702,7 @@ run_mcmc<-function(
 # Inference using cross-sectional vs longitudinal data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix.param=NULL , fit.spline=NULL, switch0=10) {
+data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3HN",fix.param=NULL , fit.spline=NULL, switch0=10) {
   # INFERENCE MODEL
   # Run MCMC for specific data set
   if(flutype=="H3HN"){load("R_datasets/HaNam_data.RData")}
@@ -743,7 +750,8 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
     seedi=paste(loadseed,"_",flutype,sep=""), # record output
     antigenic.map.in = inf_years, # define specific map structure (or initial structure if fitting)
     am.spline = fit.spline, # decide whether to fit antigenic map along "am.spl" spline function
-    linD=F)
+    linD=F,
+    flu_type= flutype)
   
 }
 
@@ -752,11 +760,11 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3",fix
 # Define simulation model
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="H3", fit.spline = NULL) {
-  #DEBUG seed_i=1; mcmc.iterations=1e2; strain.fix=T; flu.type="H3"
+simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="H3HN", fit.spline = NULL) {
+  #DEBUG seed_i=1; mcmc.iterations=1e2; strain.fix=T; flu.type="H3HN"
   
   loadseed=paste("SIM_",seed_i,sep="")
-  if(flu.type=="H3"){load("R_datasets/HaNam_data.RData"); npartM=70; define.year=c(2007:2012); pmask0=c("disp_k")}
+  if(flu.type=="H3HN"){load("R_datasets/HaNam_data.RData"); npartM=70; define.year=c(2007:2012); pmask0=c("disp_k")}
   if(flu.type=="H3FS"){load("R_datasets/FluScapeH3_data.RData"); npartM=150; define.year=c(2009); pmask0=c("muShort")}
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -834,6 +842,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
     seedi=loadseed,
     antigenic.map.in = antigenic.map0, # Define random initial map to fit
     am.spline = fit.spline, # decide whether to fit antigenic map along "am.spl" spline function
+    flu_type = NULL,
     linD=F)
   
 }
