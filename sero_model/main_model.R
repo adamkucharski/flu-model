@@ -1,7 +1,7 @@
 # Model of serological dynamics - uses PLOS Biology model (Kucharski et al. 2015)
 # Author: AJ Kucharski (2015)
 
- setwd("~/Documents/flu-model/sero_model/")
+setwd("~/Documents/flu-model/sero_model/")
 # setwd("~/Dropbox/git/flu-model/sero_model")
 
 library(reshape2)
@@ -48,7 +48,7 @@ foreach(kk1=c(2011:2012)) %dopar% {
 # - - - - - - - - - - - - - - - - - 
 # Run longtudinal inference on H3 or B data
 
-flutype0="H3FS"
+flutype0="H3HN"
 if(flutype0=="H3FS"){ dy1=c(2009) }
 if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 if(flutype0=="B"){ dy1=c(2011,2012) } 
@@ -63,7 +63,7 @@ if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","error","vary.init"),fit.spline=am.spl,switch0=10) #,"map.fit"
+  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","error","vary.init"),fit.spline=am.spl,switch0=20) #,"map.fit"
 
 }
 
@@ -73,7 +73,7 @@ if(flutype0=="H3FS"){ dy1=c(2009) }
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort","wane","error","sigma2","vary.init"),fit.spline=am.spl,switch0=10) #,"map.fit"
+  data.infer(year_test=dy1,mcmc.iterations=1e5,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort","wane","error","sigma2","vary.init"),fit.spline=am.spl,switch0=20) #,"map.fit"
   
 }
 
@@ -89,6 +89,10 @@ for(kk in 1:4){
   
 }
 
+# Plot posteriors for H3 FluScape data
+plot.posteriors(year_test=c(2009),loadseed=1,flu.type="H3FS",fr.lim=T,plotmap = F,plot.corr = T)
+
+
 # - - - - - - - - - - - - - - - - - 
 # Plot posteriors for cross-sectional data
 
@@ -103,8 +107,12 @@ for(kk in c(2011:2012)){
 
 # - - - - 
 # Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG 2) for H3 Vietnam
+plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=10,part_pick=c(31,57,25),year_pick=c(2008:2010))
 
-plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3",simDat=F,btstrap=50,part_pick=c(31,57,25),year_pick=c(2008:2010))
+# Plot specific titre vs estimates for H3 FluScape
+plot.posterior.titres.select(loadseed=1,year_test=c(2009),flu.type="H3FS",simDat=F,btstrap=10,part_pick=c(92,84,111),year_pick=c(2009))
+
+# Plot specific antibody kinetics for H3 Vietnam -- DEPRECATED
 plot.antibody.changes(btstrap=200)
 
 # - - - - - - - - - - - - - - - - - 
@@ -121,6 +129,10 @@ plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btst
 #H1 titres -- DEPRECATED
 #plot.posterior.titres(loadseed=1,flu.type="H1",simDat=F,year_test=c(2009:2011),btstrap=2)
 
+
+# Rewind and run historical landscapes
+load("datasets/spline_fn.RData") # load spline function for map
+run.historical.landscapes(loadseed=4)
 
 # Plot convergence for MCMC chains for H3 Vietnam
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN")

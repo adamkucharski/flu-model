@@ -3,3 +3,41 @@ titre.data
 test.list
 load("/Users/adamkucharski/Documents/flu-model/sero_model/R_datasets/Fluscape_data.RData")
 test.list
+load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/Fluscape_data.RData")
+test.list
+load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/Fluscape_data_List.RData")
+test.list
+load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/HaNam_data.RData")
+test.list
+load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2009_s2_H3FS.RData")
+load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2009_sSIM_1.RData")
+test.listSim
+test.listPost
+hist.tab
+historytab
+load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/FluScapeH3_data.RData")
+tes.list
+test.list
+round(4.5)
+load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2009_s4_H3FS.RData")
+thetapost
+dim(thetatab)
+is.na(thetatab)
+sum(is.na(thetatab))
+sum(is.na(thetatab))/9
+load("/Volumes/ephshare2/shared/shared/Ebola/WHO Data/who_clean_20150921.rds")
+rm(list=ls())
+load("/Volumes/ephshare2/shared/shared/Ebola/WHO Data/who_clean_20150921.rds")
+load("/Volumes/ephshare2/shared/shared/Ebola/WHO Data/who_20150921.rds")
+load("/Volumes/ephshare2/shared/shared/Ebola/WHO Data/who_20150803.rds")
+load("/Volumes/ephshare2/shared/shared/Ebola/WHO Data/who_clean_20150828.rds")
+load("/Volumes/ephshare2/shared/shared/Ebola/WHO Data/who_20150805.rds")
+load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/HaNam_data_V1.RData")
+load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/HaNam_data_V.RData")
+load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/HaNam_data_V1.RData")
+load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2007_2008_2009_2010_2011_2012_s1_H3HN.RData")
+load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2007_2008_2009_2010_2011_2012_s2_H3HN.RData")
+load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2007_2008_2009_2010_2011_2012_s4_H3HN.RData")
+load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2007_2008_2009_2010_2011_2012_s4_H3HN.RData")
+load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/FluScapeH3_data.RData")
+strain_years

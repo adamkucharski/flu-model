@@ -146,7 +146,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   par(mfrow=c(1,1))
   par(mar = c(5,5,1,1))
   if(flu.type=="H3HN" & simDat==F){
-      yob.data=data.frame(read.csv("datasets/HaNam_YOB.csv",header=FALSE)) # Import age distribution -- NEED TO DEBUG FOR H3FS
+      yob.data=data.frame(read.csv("datasets/HaNam_YOB.csv",header=FALSE)) # Import age distribution -- NEED TO DEBUG IF USE  FOR H3FS
       n.alive=sapply(inf_years,function(x){sum(yob.data<=x)})
   }else{
       yob.data=cbind(rep(1,n_part),rep(1,n_part)) # Import age distribution
@@ -199,13 +199,14 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     }
     pick_years = match(test.yr[2:6],inf_years)
     
-    # Calculate values based on two fold rise or more in that year
+    # Calculate values based on FOUR-fold rise or more in that year
     sconverttab=NULL
     
     load("R_datasets/HaNam_data.RData")
     
     for(kk in 2:length(test.yr) ){ # Only valid for 2008-2011 (no test strains for 2012)
-      pyear=0
+      pyear2=0
+      pyear4=0
       nyear=0
       for(ii in 1:n_part){
         t.part1=test.list[[ii]][[kk-1]]
@@ -219,26 +220,27 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
             
             diffT = t.part2[2,match(matchd1d2,names(t.part2))] - t.part1[2,match(matchd1d2,names(t.part1))] # Compare titres
             nyear = nyear +1
-            if(max(diffT) >= 2){pyear = pyear + 1}
+            if(max(diffT) >= 2){pyear4 = pyear4 + 1}
+            if(max(diffT) >= 1){pyear2 = pyear2 + 1}
           }
           
         }
       }
-      sconverttab=rbind(sconverttab, c(pyear/nyear,nyear))
+      sconverttab=rbind(sconverttab, c(pyear4/nyear,pyear2/nyear))
     }
     
-    attackCIsero=NULL
-    for(jj in 1:5){
-      if(jj == 5){attackCIsero=rbind(attackCIsero,c(-1,-1,-1))}else{ # As NA in final year
-        htest <- binom.test(round(sconverttab[jj,1]*sconverttab[jj,2]), sconverttab[jj,2], p = 1,conf.level=0.95)
-        meanA=sconverttab[jj,1]
-        conf1=htest$conf.int[1]
-        conf2=htest$conf.int[2]
-        attackCIsero=rbind(attackCIsero,c(meanA,conf1,conf2))
-      }
-    }
-    attackCIsero=data.frame(attackCIsero)
-    names(attackCIsero)=c("mean","CI1","CI2")
+    #attackCIsero=NULL
+    #for(jj in 1:5){
+    #  if(jj == 5){attackCIsero=rbind(attackCIsero,c(-1,-1,-1))}else{ # As NA in final year
+    #    htest <- binom.test(round(sconverttab[jj,1]*sconverttab[jj,2]), sconverttab[jj,2], p = 1,conf.level=0.95)
+    #    meanA=sconverttab[jj,1]
+    #    conf1=htest$conf.int[1]
+    #    conf2=htest$conf.int[2]
+    #    attackCIsero=rbind(attackCIsero,c(meanA,conf1,conf2))
+    #  }
+    #}
+    #attackCIsero=data.frame(attackCIsero)
+    #names(attackCIsero)=c("mean","CI1","CI2")
 
     # Replot attack rates
     
@@ -253,13 +255,13 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     }
     title(main=LETTERS[1],adj=0)
     
-    plot(isolatetab,attackCI$mean[pick_years],pch=19,cex=1.2,col="red",ylim=c(0,0.55),xlim=c(0,700),xlab="H3 isolates during sample period",ylab="estimated attack rate", xaxs="i", yaxs="i")
+    plot(isolatetab,attackCI$mean[pick_years],pch=19,cex=1.2,col="red",ylim=c(0,1),xlim=c(0,700),xlab="H3 isolates during sample period",ylab="estimated attack rate", xaxs="i", yaxs="i")
     for(kk in 1:length(pick_years)){ # Iterate across test years
       lines(c(isolatetab[kk],isolatetab[kk])+0.5,c(attackCI$CI1[pick_years[kk]],attackCI$CI2[pick_years[kk]]),col="red")
     }
 
-    
-    points(isolatetab,attackCIsero$mean,pch=19,cex=1.2,col="black")
+    points(isolatetab,sconverttab[,2],pch=1,cex=1.2,col="black")
+    points(isolatetab,sconverttab[,1],pch=19,cex=1.2,col="black")
     #for(kk in 1:length(pick_years)){ # Iterate across test years
     #  lines(c(isolatetab[kk],isolatetab[kk])+0.5,c(attackCIsero$CI1[kk],attackCIsero$CI2[kk]),col=rgb(0.5,0.5,0.5))
     #}
@@ -571,10 +573,8 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,9),col='white',xlab="year",ylab="titre")
       
       # Sample from infection history
-      for(ksamp in 1:btstrap){
-        for(jj in 1:n.inf){
-          lines(min(inf_years)-1+c(jj,jj),c(-1,12*hist.sample[ksamp,jj]-1),col=rgb(0,0,0,1/(2*btstrap)),lwd=2) # Plot estimated infections
-        }
+      for(jj in 1:n.inf){
+          lines(min(inf_years)-1+c(jj,jj),c(-1,11),col=rgb(0,0,0,sum(hist.sample[,jj])/btstrap),lwd=2) # Plot estimated infections
       }
       
       # Calculate credible interval for expected titres
@@ -626,9 +626,14 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   
   # year_pick=c(2008:2010);part_pick=c(15,31,57)
   
+  # year_pick=c(2008:2010);part_pick=c(31,57,25) ; simDat = F;  year_test=c(2007:2012); btstrap=50; loadseed = 1; flu.type="H3HN"
+  
+  # year_pick=c(2009);part_pick=c(31,57,25,1,2,3) ; simDat = F;  year_test=c(2009); btstrap=50; loadseed = 1; flu.type="H3FS"
+  
+  
   if(simDat==F){
-    if(flu.type=="H3HN"){load("R_datasets/HaNam_data.RData")}
-    if(flu.type=="B"){load("R_datasets/Fluscape_data.RData")}
+    if(flu.type=="H3HN"){load("R_datasets/HaNam_data.RData") }
+    if(flu.type=="H3FS"){load("R_datasets/FluscapeH3_data.RData") }
     if(flu.type=="H1"){load("R_datasets/HK_data.RData")}
     loadseed=1 # DEBUG
     loadseed=paste(loadseed,"_",flu.type,sep="")
@@ -659,7 +664,7 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   
   for(sampk in 1:btstrap){
     pickA=sample(c(runs1:runsPOST),1)
-    pickAhist=ceiling(pickA/20)+1 # check which history this specifies
+    pickAhist=ceiling(pickA/20)+1 # check which history this specifies -- **BASED ON 20 step resampling
     hist.sample=historytabCollect[((pickAhist-1)*n_part+1):(pickAhist*n_part),1:n.inf]
     theta.max=as.data.frame(thetatab)[pickA,]
     
@@ -695,9 +700,10 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   # - - - - - - - - - - - - 
   # Plot figures from MCMC posteriors
   
-  par(mfrow=c(3,3)); #layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
+  par(mfrow=c(4,3)); #layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
   par(mgp=c(1.8,0.6,0))
-  ymax=8.2 ; titleN = 1
+  ymax=8.2
+  titleN = ifelse(flu.type=="H3FS",1,4)
   
   for(ii0 in 1:n.ppart){
 
@@ -709,30 +715,10 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
 
       #if(ii0 ==3 & pickyr == 1 ){par(mar = c(5,5,1,1))}
       #par(mar = c(2,2,1,1)) #B L T R
-      
-      if(ii0 < 3 & pickyr > 1){
-        par(mar = c(1,0,1,1))
-        plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,ymax),col='white',xlab=ifelse(ii0==3,"",""),ylab=ifelse(pickyr==1,"",""),xaxt="n",yaxt="n",main=ifelse(ii0==1,year_pick[pickyr],""))
-        axis(side = 1, at = inf_years, labels = FALSE, tck = -0.01)
-      }
-      
-      if(ii0 == 3 & pickyr > 1){
-        par(mar = c(2,0,1,1))
-        plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,ymax),col='white',xlab=ifelse(ii0==3,"",""),ylab=ifelse(pickyr==1,"",""),yaxt="n")
-        axis(side = 1, at = inf_years, labels = FALSE, tck = -0.01)
-      }
-      
-      if(pickyr == 1 & ii0 < 3){
-        par(mar = c(1,2,1,1))
-        plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,ymax),col='white',xlab=ifelse(ii0==3,"",""),ylab=ifelse(pickyr==1,"",""),xaxt="n",main=ifelse(ii0==1,year_pick[pickyr],""))
-        axis(side = 1, at = inf_years, labels = FALSE, tck = -0.01)
-      }
-      
-      if(pickyr == 1 & ii0 ==3){
-        par(mar = c(2,2,1,1))
-        plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,ymax),col='white',xlab=ifelse(ii0==3,"",""),ylab=ifelse(pickyr==1,"",""))
-        axis(side = 1, at = inf_years, labels = FALSE, tck = -0.01)
-      }
+
+      par(mar = c(2,3,1,1))
+      plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,ymax),col='white',xlab=ifelse(ii0==3,"",""),ylab="log titre",main=year_pick[pickyr],xlim=c(1968,2011))
+      axis(side = 1, at = inf_years, labels = FALSE, tck = -0.01)
       
       # Sample from infection history
       for(jj in 1:n.inf){
@@ -754,13 +740,13 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
       # Plot true titres - check select correct values
       points(min(inf_years)-1+test.list[[ part_pick[ii0] ]][[ n.testMatch[pickyr] ]][4,],test.list[[ part_pick[ii0] ]][[ n.testMatch[pickyr] ]][2,],pch=1,col='red')
       
-      title(main=LETTERS[titleN],adj=0)
+      text(x=1967,y=8,labels=LETTERS[titleN],adj=0,font=2,cex=1.5)
       titleN=titleN+1
       
     }  # end loop over participants
   } # end loop over test years
   
-  dev.copy(pdf,paste("plot_simulations/titre_compare/FIGURE_titre_plot",loadseed,".pdf",sep=""),width=8,height=7)
+  dev.copy(pdf,paste("plot_simulations/titre_compare/FIGURE_titre_plot",loadseed,".pdf",sep=""),width=8,height=7,useDingbats=F)
   dev.off()
   
   
@@ -816,7 +802,7 @@ plot.sim.data<-function(){
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Rewind history and run with flat incidence
+# Rewind history and run with flat incidence - DEPRECATED
 
 run.titre.time<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010)){
   
@@ -1042,13 +1028,13 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Rewind history and reconstruct antibody landscape
+# Rewind history and reconstruct antibody landscape for Figure 2
 
 run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010),d.step=1){
     
-    # btstrap=50 ; n_partSim=2 ; simTest.year=c(1968:2010) ; d.step = 1 ; flu.type="H3HN"; year_test=c(2007:2012)
+    # btstrap=50 ; n_partSim=2 ; simTest.year=c(1968:2010) ; d.step = 0.5 ; flu.type="H3HN"; year_test=c(2007:2012); loadseed = 1
     load("R_datasets/HaNam_data.RData")
-    loadseed="1_H3" #paste(loadseed,"_",flu.type,sep="")
+    loadseed=paste(loadseed,"_",flu.type,sep="")
     
     load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep="")) # Note that this includes test.listPost
     
@@ -1062,7 +1048,7 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),flu.type="
     ag.coord=read.csv("datasets/antigenic_coords.csv", as.is=T,head=T)
     strain_names=ag.coord$viruses
     
-    x.range <- seq(floor(min(ag.coord$AG_x))-0.5,ceiling(max(ag.coord$AG_x)),d.step)
+    x.range <- seq(floor(min(ag.coord$AG_x))-1,ceiling(max(ag.coord$AG_x))+1,d.step)
     y.range <- seq(floor(min(ag.coord$AG_y))-2,ceiling(max(ag.coord$AG_y)),d.step)
     points.j <- expand.grid(x.range,y.range) # Define list of points to evaluate
     
@@ -1074,7 +1060,7 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),flu.type="
     n.strains=length(strain_years) # this loads from main_model.R
     n.inf=length(inf_years)
     
-    pick_years = c(1,30)
+    pick_years = c(1,31)
     hist.sample0=rep(c(rep(0,pick_years[1]-1),1,rep(0,pick_years[2]-1)),100)[1:n.inf] # CURRENTLY JUST FOR ONE PARTICIPANT
     simTest.year=sort(c(inf_years[hist.sample0==1],inf_years[hist.sample0==1]+1)) # infection year and one year after
     n.test=length(simTest.year)
@@ -1108,18 +1094,23 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),flu.type="
       storetitreL1[sampk] = ( theta.max$mu*exp(-theta.max$sigma*cross_x1) + theta.max$muShort*exp(- 1 * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) )%>% right.censor()
       
       storetitreS2[sampk] = ( (1+theta.max$tau1)*(theta.max$mu*exp(-theta.max$sigma*cross_x1) + 
-                      theta.max$muShort*exp(- year_x * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) + 
+                      theta.max$muShort*exp(- (year_x+1) * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) + 
                         exp(- theta.max$tau2)*(theta.max$mu*exp(-theta.max$sigma*cross_x1) + 
                       theta.max$muShort*exp(- 0 * theta.max$wane)*exp(-theta.max$sigma2*cross_x2) )
                       ) %>% right.censor()
       
       storetitreL2[sampk] = ( (1+theta.max$tau1)*(theta.max$mu*exp(-theta.max$sigma*cross_x1) + 
-                      theta.max$muShort*exp(- (year_x+1) * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) +
+                      theta.max$muShort*exp(- (year_x+1 + 1) * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) + # Note the year_x +1 here
                       exp(- theta.max$tau2)*(theta.max$mu*exp(-theta.max$sigma*cross_x2) + 
                       theta.max$muShort*exp(- 1 * theta.max$wane)*exp(-theta.max$sigma2*cross_x2) )
                       ) %>% right.censor()
 
     }
+    
+
+    
+    
+    # PLOT FIGURES
 
     col1P=rgb(0,0,0.8) # rgb(0,0.5,0)
     
@@ -1128,48 +1119,86 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),flu.type="
     pred_matrixS2 <- matrix(storetitreS2,byrow=F,nrow=length(x.range))
     pred_matrixL2 <- matrix(storetitreL2,byrow=F,nrow=length(x.range))
     
-    sY <- strain_years()
-    
-    par(mfrow=c(2,2))
-    par(mgp=c(1.8,0.6,0))
+    # Calculate titres along summary path
+    predOutput <- function(matrixA){apply(cbind(xx,yy),1,function(zz){ ydist=abs(y.range-zz[1]); xdist=abs(x.range-zz[2]); matrixA[xdist==min(xdist),ydist==min(ydist)] })}
 
-    par(mar = c(2,4,2,2))
+    # Define list of isolate years
+    sY <- strain_years_convert()
+    
+    # Plot panels and antigenic summary paths
+    layout(matrix(c(rep(1,3),rep(2,3),rep(1,3),rep(2,3),rep(1,3),rep(2,3),
+                    rep(3,3),rep(4,3),
+                    rep(5,3),rep(6,3),rep(5,3),rep(6,3),rep(5,3),rep(6,3),
+                    rep(7,3),rep(8,3)
+                    ), 8,6, byrow=T) )
+    
+    par(mgp=c(1.8,0.6,0))
+    tranP <- 1; sizP <- 0.9
+    
+    par(mar = c(4,4,2,2))
     image2D(z = t(pred_matrixS1), x = y.range, y = x.range, xlab="antigenic dimension 1", ylab="antigenic dimension 2", zlim = c(0, 8.1),
-            main="",col=rev(ramp.col (col = c("blue",rgb(0.4,0.6,1),"white"), n = 100, alpha = 1))) #paste("Landscape ",Data.load, ". Age ", group.names[kk],sep="")
-    points(ag.coord[sY <= (pick_years[1] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(0,0,0,0.5))
-    points(ag.coord[sY > (pick_years[1] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(1,0,0,0.5))
+            main=inf_years[pick_years[1] ],col=rev(ramp.col (col = c("blue",rgb(0.4,0.6,1),"white"), n = 100, alpha = 1))) #paste("Landscape ",Data.load, ". Age ", group.names[kk],sep="")
+    points(ag.coord[sY <= (pick_years[1] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(0,0,0,tranP))
+    points(ag.coord[sY > (pick_years[1] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(1,0,0,tranP))
+    lines(xx,yy,col="white",lty=2)
     
     points(x=xx[pick_years[1]],y=yy[pick_years[1]],cex=1.5, col=rgb(1,1,1), lwd=2)
     title(main=LETTERS[1],adj=0)
-    
-    par(mar = c(2,4,2,2))
+
+    par(mar = c(4,4,2,2))
     image2D(z = t(pred_matrixL1), x = y.range, y = x.range, xlab="antigenic dimension 1", ylab="antigenic dimension 2", zlim = c(0, 8.1),
-            main="",col=rev(ramp.col (col = c("blue",rgb(0.4,0.6,1),"white"), n = 100, alpha = 1))) #paste("Landscape ",Data.load, ". Age ", group.names[kk],sep="")
-    points(ag.coord[sY <= (pick_years[1] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(0,0,0,0.5))
-    points(ag.coord[sY > (pick_years[1] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(1,0,0,0.5))
+            main=inf_years[pick_years[1] ]+1,col=rev(ramp.col (col = c("blue",rgb(0.4,0.6,1),"white"), n = 100, alpha = 1))) #paste("Landscape ",Data.load, ". Age ", group.names[kk],sep="")
+    points(ag.coord[sY <= (pick_years[1] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(0,0,0,tranP))
+    points(ag.coord[sY > (pick_years[1] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(1,0,0,tranP))
+    lines(xx,yy,col="white",lty=2)
     
     points(x=xx[pick_years[1]],y=yy[pick_years[1]],cex=1.5, col=rgb(1,1,1), lwd=2)
-    title(main=LETTERS[2],adj=0)
-    
-    par(mar = c(3,4,2,2))
-    image2D(z = t(pred_matrixS2), x = y.range, y = x.range, xlab="antigenic dimension 1", ylab="antigenic dimension 2", zlim = c(0, 8.1),
-            main="",col=rev(ramp.col (col = c("blue",rgb(0.4,0.6,1),"white"), n = 100, alpha = 1))) #paste("Landscape ",Data.load, ". Age ", group.names[kk],sep="")
-    points(ag.coord[sY <= (pick_years[2] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(0,0,0,0.5))
-    points(ag.coord[sY > (pick_years[2] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(1,0,0,0.5))
-    
-    points(x=c(xx[pick_years[1]],xx[pick_years[2]]),y=c(yy[pick_years[1]],yy[pick_years[2]]),cex=1.5, col=rgb(1,1,1), lwd=2)
     title(main=LETTERS[3],adj=0)
     
-    par(mar = c(3,4,2,2))
-    image2D(z = t(pred_matrixL2), x = y.range, y = x.range, xlab="antigenic dimension 1", ylab="antigenic dimension 2", zlim = c(0, 8.1),
-            main="",col=rev(ramp.col (col = c("blue",rgb(0.4,0.6,1),"white"), n = 100, alpha = 1))) #paste("Landscape ",Data.load, ". Age ", group.names[kk],sep="")
-    points(ag.coord[sY <= (pick_years[2] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(0,0,0,0.5))
-    points(ag.coord[sY > (pick_years[2] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(1,0,0,0.5))
     
-    points(x=c(xx[pick_years[1]],xx[pick_years[2]]),y=c(yy[pick_years[1]],yy[pick_years[2]]),cex=1.5, col=rgb(1,1,1), lwd=2)
+    # Project along summary path
+    par(mar = c(2,4,1,2))
+    plot(inf_years,predOutput(pred_matrixS1),type="l",col="blue",ylim=c(0,8.1),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
+    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(-1,10),lwd=2)
+    title(main=LETTERS[2],adj=0)
+    
+    plot(inf_years,predOutput(pred_matrixL1),type="l",col="blue",ylim=c(0,8.1),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
+    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(-1,10),lwd=2)
     title(main=LETTERS[4],adj=0)
     
-    dev.copy(png,paste("plot_simulations/simulate_new_response/map_space",loadseed,".png",sep=""),width=1500,height=1500,res=180)
+    par(mar = c(4,4,2,2))
+    image2D(z = t(pred_matrixS2), x = y.range, y = x.range, xlab="antigenic dimension 1", ylab="antigenic dimension 2", zlim = c(0, 8.1),
+            main=inf_years[pick_years[2] ],col=rev(ramp.col (col = c("blue",rgb(0.4,0.6,1),"white"), n = 100, alpha = 1))) #paste("Landscape ",Data.load, ". Age ", group.names[kk],sep="")
+    points(ag.coord[sY <= (pick_years[2] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(0,0,0,tranP))
+    points(ag.coord[sY > (pick_years[2] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(1,0,0,tranP))
+    lines(xx,yy,col="white",lty=2)
+    
+    points(x=c(xx[pick_years[1]],xx[pick_years[2]]),y=c(yy[pick_years[1]],yy[pick_years[2]]),cex=1.5, col=rgb(1,1,1), lwd=2)
+    title(main=LETTERS[6],adj=0)
+    
+    par(mar = c(4,4,2,2))
+    image2D(z = t(pred_matrixL2), x = y.range, y = x.range, xlab="antigenic dimension 1", ylab="antigenic dimension 2", zlim = c(0, 8.1),
+            main=inf_years[pick_years[2] ]+1,col=rev(ramp.col (col = c("blue",rgb(0.4,0.6,1),"white"), n = 100, alpha = 1))) #paste("Landscape ",Data.load, ". Age ", group.names[kk],sep="")
+    points(ag.coord[sY <= (pick_years[2] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(0,0,0,tranP))
+    points(ag.coord[sY > (pick_years[2] + 1968 -1),c("AG_y","AG_x")],pch=19,col=rgb(1,0,0,tranP))
+    lines(xx,yy,col="white",lty=2)
+    
+    points(x=c(xx[pick_years[1]],xx[pick_years[2]]),y=c(yy[pick_years[1]],yy[pick_years[2]]),cex=1.5, col=rgb(1,1,1), lwd=2)
+    title(main=LETTERS[5],adj=0)
+    
+    # Project along summary path
+    par(mar = c(2,4,1,2))
+    plot(inf_years,predOutput(pred_matrixS2),type="l",col="blue",ylim=c(0,8.1),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
+    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(-1,10),lwd=2)
+    lines(c(inf_years[pick_years[2] ],inf_years[pick_years[2] ]),c(-1,10),lwd=2)
+    title(main=LETTERS[7],adj=0)
+    plot(inf_years,predOutput(pred_matrixL2),type="l",col="blue",ylim=c(0,8.1),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
+    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(-1,10),lwd=2)
+    lines(c(inf_years[pick_years[2] ],inf_years[pick_years[2] ]),c(-1,10),lwd=2)
+    title(main=LETTERS[8],adj=0)
+    
+    
+    dev.copy(pdf,paste("plot_simulations/simulate_new_response/map_space",loadseed,".pdf",sep=""),width=8,height=7,useDingbats=F)
     dev.off()
 
     
@@ -1177,7 +1206,7 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),flu.type="
 
 # Convert map ID tags to strain years
 
-strain_years <- function(){
+strain_years_convert <- function(){
   
   ag.coord=read.csv("datasets/antigenic_coords.csv", as.is=T,head=T)
   

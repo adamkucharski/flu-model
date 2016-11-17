@@ -16,9 +16,9 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	/* Calculate lambda */
 	
-	int n = nin[0];
-	int total_inf = itot[0];
-	int nsamp = nsin[0];
+	int n = nin[0]; // length of infection history
+	int total_inf = itot[0]; // total infections
+	int nsamp = nsin[0]; // number of strains tested against
 	double T_1 = theta[1];
 	double T_2 = theta[2];
 	double wane = theta[3];
@@ -50,15 +50,15 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	  j=(t_sample-1); // fix test year. Need (t-1) as index from 0
 	  for (m=0;m<n;m++) {
 	    if (m <= j) {
-	      maskedInfectionHistory[m]=x[m];
+	      maskedInfectionHistory[m] = x[m];
 	    } else {
-	      maskedInfectionHistory[m]=0;
+	      maskedInfectionHistory[m] = 0;
 	    }
 	  }
 	  
 	  // Make an index for waning
 	  for (m=0;m<n;m++) {
-		  distanceFromTest[m]=exp(-wane * (j-m)); // Distance from test year -- originally a +1 by m
+		  distanceFromTest[m]=exp(-wane * (j-m +1)); // Distance from test year -- originally a +1 by m
 	  }
 
 	  // Make a cumulative infection history
@@ -83,13 +83,13 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 			xx2 =  xx2 + x1[i];
 		}
 	
-	  yrTitre[k]=xx2;
+	  yrTitre[k] = xx2;
 	
 	
 	} // end sample loop (k)
 	
 	for (k=0;k<nsamp;k++) {
-	  titrepred[k]=yrTitre[k]; 
+	  titrepred[k] = yrTitre[k]; 
 	}
 	
 	

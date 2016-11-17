@@ -325,8 +325,8 @@ simulate_data<-function(test_years,
       expect=func1(historyii,sample.index,d_vector,d_vector2, thetastar,testyearI) # Output expectation
       
       #DEBUG
-      thetastar[["wane"]]=1
-      func1(historyii,titredat=1,d_vector,d_vector2, thetastar,testyear_index=1) # Output expectation
+      #thetastar[["wane"]]=1
+      #func1(historyii,titredat=1,d_vector,d_vector2, thetastar,testyear_index=1) # Output expectation
       # END DEBUG
       
       #titredat=sapply(expect,function(x){rpois(1,x)}) # Generatteste titre
