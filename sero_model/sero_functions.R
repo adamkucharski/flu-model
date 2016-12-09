@@ -1,5 +1,5 @@
-# Model of serological dynamics - uses PLOS Biology model (Kucharski et al. 2015)
-# Author: AJ Kucharski (2015)
+# Model of serological dynamics - uses extended PLOS Biology model (Kucharski et al. 2015)
+# Author: AJ Kucharski (2015-)
 # Functions
 
 # - - - - - - - - - - - - - - - - 
@@ -196,9 +196,9 @@ likelihood.titre<-function(expect,titredat,theta){
   # Calculate P(observe j | true titre is k) - no error
   #p_jk = sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+ sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
   
-  # Include uniform error i.e. L(j)= sum_k P(true titre is k) x P(observe j | true titre is k) - derivation is in PLOS Biol supplement
-  p_jk = sum( log(dpois(as.numeric(titredat[!largett]), expect[!largett], log = FALSE) *(1-theta[["error"]])+theta[["error"]]/9 ) )
-          + sum(log(ppois(8, lambda=expect[largett], lower=FALSE,log=FALSE)*(1-theta[["error"]])+theta[["error"]]/9  ))
+  # Option to include uniform error i.e. L(j)= sum_k P(true titre is k) x P(observe j | true titre is k) - derivation is in PLOS Biol supplement
+  p_jk = sum( log(dpois(as.numeric(titredat[!largett]), expect[!largett], log = FALSE)  ) )  # *(1-theta[["error"]])+theta[["error"]]/9
+          + sum(log(ppois(8, lambda=expect[largett], lower=FALSE,log=FALSE)  )) #*(1-theta[["error"]])+theta[["error"]]/9 
   
   # Include negative binomial function
   #p_jk = sum( log(dnbinom(as.numeric(titredat[!largett]), mu=expect[!largett], size=theta[["disp_k"]], log = FALSE) *(1-theta[["error"]])+theta[["error"]]/9 ) )
@@ -329,8 +329,8 @@ simulate_data<-function(test_years,
       #func1(historyii,titredat=1,d_vector,d_vector2, thetastar,testyear_index=1) # Output expectation
       # END DEBUG
       
-      #titredat=sapply(expect,function(x){rpois(1,x)}) # Generatteste titre
-      if(roundv==T){titredat=round(expect)}else{titredat=expect}
+      if(roundv==T){titredat=sapply(expect,function(x){rpois(1,x)})}else{titredat=expect} # Generate test titre
+      #if(roundv==T){titredat=round(expect)}else{titredat=expect}
       titredat=sapply(titredat,function(x){min(x,8)})
 
       i.list[[jj]]=rbind(test.year=rep(testyr,nstrains),
@@ -505,6 +505,10 @@ run_mcmc<-function(
   flu_type = NULL
   ){
   
+  # DEBUG SIMULATION params <<<
+   # test.yr=define.year; test.list=test.listSim; theta=theta0;runs=1e2; varpart_prob=vp1;hist.true=historytabSim;  switch1=10; pmask=pmask0;
+   # seedi=loadseed; antigenic.map.in = NULL; am.spline = am.spl;  flu_type = flu.type; linD=F
+  
   # DEBUG set params <<<
   # hist.true=NULL; test.yr=c(2009); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=F; pmask=NULL ; antigenic.map.in=NULL
   
@@ -526,9 +530,9 @@ run_mcmc<-function(
     age.mask <- rep(1,n_part)
   }
   
-  print(age.mask)
+  #print(age.mask)
   
-  # Define antigenic map
+  # Define antigenic map for fitting
   xx=scalemap(antigenic.map.in,inf_years)
   yy=predict(am.spl,xx)$y
   map.tab=cbind(xx,yy)
@@ -688,7 +692,7 @@ run_mcmc<-function(
     }
 
     if(m %% min(runs,1000) ==0){
-      print(c(m,accept_rateT,varpart_prob0,round(sum(likelihoodtab[m,]))))
+      print(c(m,accept_rateT,varpart_prob0,round(sum(likelihoodtab[m,])))) # DEBUG HERE
       save(likelihoodtab,thetatab,inf_years,n_part,test.listPost,historytab,historytabCollect,map.tabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,".RData",sep=""))
     }
     
@@ -744,7 +748,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3HN",f
     theta=theta0,
     runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
-    hist.true=NULL,
+    hist.true=hist,
     switch1=switch0, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=fix.param, #c("disp_k"), #c("wane"), #,"muShort"), # specify parameters to fix
     seedi=paste(loadseed,"_",flutype,sep=""), # record output
@@ -760,12 +764,13 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3HN",f
 # Define simulation model
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="H3HN", fit.spline = NULL) {
+simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="H3HN", fit.spline = NULL, fix.param="vary.init") {
   #DEBUG seed_i=1; mcmc.iterations=1e2; strain.fix=T; flu.type="H3HN"
   
+  # Edit for cross-sectional over fitting
   loadseed=paste("SIM_",seed_i,sep="")
-  if(flu.type=="H3HN"){load("R_datasets/HaNam_data.RData"); npartM=70; define.year=c(2007:2012); pmask0=c("disp_k")}
-  if(flu.type=="H3FS"){load("R_datasets/FluScapeH3_data.RData"); npartM=150; define.year=c(2009); pmask0=c("muShort")}
+  if(flu.type=="H3HN"){load("R_datasets/HaNam_data.RData"); npartM=69; define.year=c(2007:2012); pmask0=c("disp_k","error")}
+  if(flu.type=="H3FS"){load("R_datasets/FluScapeH3_data.RData"); npartM=151; define.year=c(2009); pmask0=c("muShort")}
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # SIMULATION MODEL
@@ -773,7 +778,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   #tau1=back-boost  / tau2=suppress / disp_k=dispersion (deprecated) 
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
-  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=1,sigma=0.3,muShort=5,error=0.05,disp_k=1,sigma2=0.1)
+  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=1,sigma=0.3,muShort=3/exp(-1),error=0.0,disp_k=1,sigma2=0.1)
   
   if(strain.fix==T){
     strain_years0 = strain_years
@@ -809,18 +814,20 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=1,sigma2=0.1)
-  theta0[["mu"]]=2 # basic boosting
-  theta0[["tau1"]]=0.1 # back-boost
-  theta0[["tau2"]]=0.1 # suppression via AGS
-  theta0[["wane"]]=1  # -log(0.5)/1 # short term waning - half life of /X years
-  theta0[["sigma"]]=0.3 # long-term cross-reaction
-  theta0[["sigma2"]]=0.1 # short-term cross-reaction
-  theta0[["muShort"]]=3 # short term boosting
-  theta0[["error"]]=0.1 # measurement error
+  theta0[["mu"]]=3+ if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # basic boosting
+  theta0[["tau1"]]=0.05+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # back-boost
+  theta0[["tau2"]]=0.05+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # suppression via AGS
+  theta0[["wane"]]=1 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
+  theta0[["sigma"]]=0.2+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # long-term cross-reaction
+  theta0[["sigma2"]]=0.2+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
+  theta0[["muShort"]]=8.15+ if(sum(fix.param=="vary.init")>0){3*runif(1,c(-1,1))}else{0} # short term boosting
+  theta0[["error"]]=0.01 # measurement error
   theta0[["disp_k"]]=0.1 # overdispersion (deprecated)
   theta=theta0
   vp1=0.02 #probability individual infection history resampled - this is adaptive in model
   
+  #lik.true=likelihood_function(theta_star=theta.sim.out,inf_years,test.yr,map_star=antigenic.map0,am.spline=am.spl,test.list=test.listSim,history_star=historytabSim,n_part)
+  #print(lik.true)
   # browser()
   #sim.map.in0 = 0.3*(cbind(inf_years,inf_years)-min(inf_years)) #generate.antigenic.map(inf_years.in) # Define uniform initial map to fit
   
@@ -836,13 +843,13 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
     theta=theta0,
     runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
-    hist.true=NULL,
-    switch1=10, # ratio of infection history resamples to theta resamples. This is fixed
+    hist.true=historytabSim, # True starting point # *** DEBUG *** historytabSim
+    switch1=20, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=pmask0, # ,"map.fit" specify parameters to fix
     seedi=loadseed,
-    antigenic.map.in = antigenic.map0, # Define random initial map to fit
+    antigenic.map.in = NULL, # Define random initial map to fit
     am.spline = fit.spline, # decide whether to fit antigenic map along "am.spl" spline function
-    flu_type = NULL,
+    flu_type = flu.type,
     linD=F)
   
 }
@@ -871,5 +878,36 @@ fn.network<-function(){
   }
 }
 
+# Just the likelihood function for DEBUGGING
+
+likelihood_function <- function(theta_star,inf_years,test.yr,map_star,am.spline,test.list,history_star,n_part){
+  
+  testyear_index = test.yr - min(inf_years) + 1
+  test_years = test.yr
+  jj_year=match(test.yr,test_years); testyear_index = test.yr - min(inf_years) + 1
+  sample.n=length(jj_year)
+  
+  dmatrix = outputdmatrix.fromcoord(theta_star[["sigma"]] ,inf_years,anti.map.in=map_star,spl.fn=am.spline) # Arrange antigenic map into cross-reaction matrix
+  dmatrix2 = outputdmatrix.fromcoord(theta_star[["sigma2"]],inf_years,anti.map.in=map_star,spl.fn=am.spline) # Arrange antigenic map into cross-reaction matrix
+  
+  # - - - - - - - - - - - - - - - -
+  # LIKELIHOOD function - Only calculate for updated history
+  
+  lik_val=NULL
+  for(ii in 1:n_part){
+    # Set history to zero after test date
+    lik.ii=rep(NA,sample.n)
+    for(kk in 1:sample.n){
+      #For DEBUG: set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
+      lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,dmatrix2,theta_star,test.list,testyear_index[kk])
+      #if(lik.ii[kk]==-Inf){print(c(ii,kk))  } For DEBUG
+    }
+    lik_val=c(lik_val,sum(lik.ii))
+    #if(is.na(lik_val[ii])){ lik_val[ii]=-Inf} For DEBUG
+  }
+  
+  sum(lik_val)
+  
+}
 
 
