@@ -37,8 +37,12 @@ flutype0="H3HN"
 if(flutype0=="H3FS"){ dy1=c(2009) }
 if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 if(flutype0=="B"){ dy1=c(2011,2012) } 
-if(flutype0=="H1"){ dy1=c(2009:2011) } 
+if(flutype0=="H1"){ dy1=c(2009:2011) }
+load.flu.map.data()
 load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before inference run**
+
+
+# >>> Run code up to here to set everything up
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -144,7 +148,7 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.li
 # Simulation results
 foreach(kk=1:4) %dopar% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=1e4, flu.type="H3HN", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+  simulation.infer(seed_i=kk,mcmc.iterations=1e2, flu.type="H3HN", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
   
 }
 
