@@ -145,7 +145,12 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.li
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Simulation results
+# Simulation study and inference
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+# Generate simulated data and infer parameters -- simulation parameters are defined in sero_functions.R
+# flu.type defines which dataset format (i.e. test strains, test years) the simulated data will produce
+
 foreach(kk=1:4) %dopar% {
   
   simulation.infer(seed_i=kk,mcmc.iterations=1e2, flu.type="H3HN", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
@@ -164,7 +169,7 @@ for(kk in 1:4){
   
 }
 
-# Plot simulation study titres
+# Plot simulation study titres against inferred model
 dy1=c(2007:2012)
 kk=1
 plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3",simDat=T,year_test=c(2007:2012),btstrap=50) #H3 Vietnam
