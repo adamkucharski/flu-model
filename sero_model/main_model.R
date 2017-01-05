@@ -37,8 +37,12 @@ flutype0="H3HN"
 if(flutype0=="H3FS"){ dy1=c(2009) }
 if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 if(flutype0=="B"){ dy1=c(2011,2012) } 
-if(flutype0=="H1"){ dy1=c(2009:2011) } 
+if(flutype0=="H1"){ dy1=c(2009:2011) }
+load.flu.map.data()
 load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before inference run**
+
+
+# >>> Run code up to here to set everything up
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -141,15 +145,16 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.li
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Full model
-foreach(kk=1:4) %dopar% {
-  simulation.infer(seed_i=kk,mcmc.iterations=2e5, flu.type="H3HN", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
-}
+# Simulation study and inference
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-# FluScape model
+# Generate simulated data and infer parameters -- simulation parameters are defined in sero_functions.R
+# flu.type defines which dataset format (i.e. test strains, test years) the simulated data will produce
+
 foreach(kk=1:4) %dopar% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=5e5, flu.type="H3FS", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+  simulation.infer(seed_i=kk,mcmc.iterations=1e2, flu.type="H3HN", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+
   
 }
 
@@ -168,7 +173,7 @@ for(kk in 1:4){
   
 }
 
-# Plot simulation study titres
+# Plot simulation study titres against inferred model
 dy1=c(2007:2012)
 kk=1
 plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3",simDat=T,year_test=c(2007:2012),btstrap=10) #H3 Vietnam
