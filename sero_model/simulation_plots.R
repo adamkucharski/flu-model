@@ -41,9 +41,6 @@ attackCIsero=data.frame(attackCIsero)
 names(attackCIsero)=c("mean","CI1","CI2")
 
 
-
-
-
 plot1<-function(){
 
   # This code is deprecated

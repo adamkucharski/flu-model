@@ -119,11 +119,11 @@ run.historical.landscapes(loadseed=1,ymax=6.05)
 # Plot titre vs estimates
 
 load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before next run**
-plot.posterior.titres(loadseed=1,flu.type="H3HN",simDat=F,year_test=c(2007:2012),btstrap=10)
+plot.posterior.titres(loadseed=1,flu.type="H3HN",simDat=F,year_test=c(2007:2012),btstrap=500,plotRes=T)
 
 
 #H3 FluScape titres
-plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btstrap=20)
+plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btstrap=500,plotRes=T)
 
 #H1 titres -- DEPRECATED
 #plot.posterior.titres(loadseed=1,flu.type="H1",simDat=F,year_test=c(2009:2011),btstrap=2)
@@ -141,15 +141,23 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.li
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Simulation results
+# Full model
+foreach(kk=1:4) %dopar% {
+  simulation.infer(seed_i=kk,mcmc.iterations=2e5, flu.type="H3HN", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+}
+
+# FluScape model
 foreach(kk=1:4) %dopar% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=1e4, flu.type="H3HN", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+  simulation.infer(seed_i=kk,mcmc.iterations=5e5, flu.type="H3FS", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
   
 }
 
 # Plot convergence for MCMC chains for H3 Vietnam simulated data
-plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",simDat=T)
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",simDat=T,year_test=c(2007:2012))
+
+# Plot convergence for MCMC chains for H3 China simulated data
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",simDat=T,year_test=2009)
 
 
 # Plot simulation study posteriors and attack rate comparisons for simulation plots
@@ -163,6 +171,6 @@ for(kk in 1:4){
 # Plot simulation study titres
 dy1=c(2007:2012)
 kk=1
-plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3",simDat=T,year_test=c(2007:2012),btstrap=50) #H3 Vietnam
+plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3",simDat=T,year_test=c(2007:2012),btstrap=10) #H3 Vietnam
 #plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3FS",simDat=T,year_test=c(2009),btstrap=10) #H3 FluScape
 

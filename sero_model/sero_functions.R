@@ -778,7 +778,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   #tau1=back-boost  / tau2=suppress / disp_k=dispersion (deprecated) 
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
-  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=1,sigma=0.3,muShort=3/exp(-1),error=0.0,disp_k=1,sigma2=0.1)
+  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=1,sigma=0.3,muShort=3/exp(-1),error=0.0,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
   
   if(strain.fix==T){
     strain_years0 = strain_years
