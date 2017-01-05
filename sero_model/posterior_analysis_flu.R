@@ -157,7 +157,10 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     c("sigma2",c.text(thin.theta[["sigma2"]]) ),
     c("tau1",c.text(thin.theta[["tau1"]]) ),
     c("tau2",c.text(thin.theta[["tau2"]]) ),
-    c("wane",c.text(thin.theta[["wane"]]) )
+    c("wane",c.text(thin.theta[["wane"]]) ),
+    c("sigmahalf",c.text(exp(-thin.theta[["sigma"]])) ),
+    c("sigma2half",c.text(exp(-thin.theta[["sigma2"]])) ),
+    c("wane_half",c.text(-log(0.5)/thin.theta[["wane"]]) )
   )
   
   write.csv(table.param,paste("plot_simulations/param_table",paste(year_test,collapse="_"),"_",loadseed,".csv",sep="") )
@@ -1344,6 +1347,58 @@ plot_h3_reports <- function(){
   collect.list$sample=as.Date(collect.list$sample)
   
   flu.isolates=data.frame(read.csv("datasets/Vietnam_H3.csv",stringsAsFactors = F)) # Data from http://www.who.int/influenza/gisrs_laboratory/flunet/en/
+  flu.isolates=flu.isolates[flu.isolates$Start_date >= as.Date(collect.list[2,2]), ]
+  flu.isolates$Start_date=as.Date(flu.isolates$Start_date)
+  flu.isolates$A_H3[is.na(flu.isolates$A_H3)]=0 # Set blank spaces to zero
+  
+  # Count samples within region
+  isolatetab=NULL
+  for(ii in 2:length(test.yr) ){ # iterate from 2 as don't know initial period of risk
+    isolatetab=c(isolatetab,
+                 sum(flu.isolates[flu.isolates$Start_date > collect.list[ii,"sample"] & flu.isolates$Start_date < collect.list[ii+1,"sample"] ,"A_H3"])
+    )
+  }
+
+  xLims=c(as.Date("2007-12-30"),as.Date("2012-06-01"))
+
+  plot(flu.isolates$Start_date,flu.isolates$total_flu_positive,type="l",xlab="Date",ylab="Total isolates detected",ylim=c(0,100),xlim=xLims);title(LETTERS[1],adj=0)
+  
+  
+  plot(flu.isolates$Start_date,flu.isolates$A_H3,type="l",xlab="Date",ylab="H3 isolates detected",ylim=c(0,100),xlim=xLims);title(LETTERS[2],adj=0)
+  for(ii in 1:length(collect.list$year)){
+    lines(c(collect.list[ii,"sample"],collect.list[ii,"sample"]),c(0,100),col="red")
+  }
+  
+  # Plot from 3 as want to line up end points
+  plot(collect.list$sample[3:7], isolatetab,ylim=c(0,800),pch=19,col="red",xlab="year",ylab="H3 isolates detected",xlim=xLims);title(LETTERS[3],adj=0)
+  
+
+  dev.copy(pdf,paste("plot_simulations/H3Data.pdf",sep=""),width=5,height=7,useDingbats=F)
+  dev.off()
+  
+}
+
+
+# Plot H3N2 China data
+
+plot_h3_china_reports <- function(){
+  
+  par(mfrow=c(2,1))
+  par(mgp=c(1.8,0.6,0))
+  par(mar = c(4,4,1,1))
+  
+  test.yr=c(2004:2009)
+  
+  #collect.list = data.frame(rbind(c(2006,"2005-12-31"),c(2007,"2007-12-31"),c(2008,"2008-12-31"),
+  #                                c(2009,"2009-06-30"),c(2010,"2010-04-30"), c(2011,"2011-07-31"),c(2012,"2012-05-31") ),stringsAsFactors = F) # Dat of isolation
+  collect.list = data.frame(rbind(c(2004,"2004-12-31"),c(2005,"2005-12-31"),c(2006,"2006-12-31"),c(2007,"2007-12-31"),c(2008,"2008-12-31"),
+                                  c(2009,"2009-12-31"),c(2010,"2010-12-31"), c(2011,"2011-12-31"),c(2012,"2012-12-31") ),stringsAsFactors = F) # Dat of isolation
+  
+  names(collect.list)=c("year","sample")
+  collect.list$year=as.numeric(collect.list$year)
+  collect.list$sample=as.Date(collect.list$sample)
+  
+  flu.isolates=data.frame(read.csv("datasets/China_H3.csv",stringsAsFactors = F)) # Data from http://www.who.int/influenza/gisrs_laboratory/flunet/en/
   flu.isolates$Start_date=as.Date(flu.isolates$Start_date)
   flu.isolates$A_H3[is.na(flu.isolates$A_H3)]=0 # Set blank spaces to zero
   
@@ -1354,24 +1409,26 @@ plot_h3_reports <- function(){
                  sum(flu.isolates[flu.isolates$Start_date > collect.list[ii,"sample"] & flu.isolates$Start_date < collect.list[ii+1,"sample"] ,"A_H3"])
     )
   }
-
-  xLims=c(as.Date("2007-11-01"),as.Date("2012-06-01"))
-
-  plot(flu.isolates$Start_date,flu.isolates$total_flu_positive,type="l",xlab="Date",ylab="Total isolates detected",ylim=c(0,100),xlim=xLims);title(LETTERS[1],adj=0)
   
   
-  plot(flu.isolates$Start_date,flu.isolates$A_H3,type="l",xlab="Date",ylab="H3 isolates detected",ylim=c(0,100),xlim=xLims);title(LETTERS[2],adj=0)
+  xLims=c(as.Date("2004-11-01"),as.Date("2009-06-01"))
+  
+ # plot(flu.isolates$Start_date,flu.isolates$total_flu_positive,type="l",xlab="Date",ylab="Total isolates detected",ylim=c(0,1000),xlim=xLims);title(LETTERS[1],adj=0)
+  
+  
+  plot(flu.isolates$Start_date,flu.isolates$A_H3,type="l",xlab="Date",ylab="H3 isolates detected",ylim=c(0,2000),xlim=xLims);title(LETTERS[2],adj=0)
   for(ii in 1:length(collect.list$year)){
-    lines(c(collect.list[ii,"sample"],collect.list[ii,"sample"]),c(0,100),col="red")
+    lines(c(collect.list[ii,"sample"],collect.list[ii,"sample"]),c(0,10000),col="red")
   }
   
-  plot(collect.list$sample[3:7], isolatetab,ylim=c(0,800),pch=19,col="red",xlab="year",ylab="H3 isolates detected",xlim=xLims);title(LETTERS[3],adj=0)
+  plot(collect.list$sample[3:7], isolatetab,ylim=c(0,20000),pch=19,col="red",xlab="year",ylab="H3 isolates detected",xlim=xLims);title(LETTERS[3],adj=0)
   
-
+  
   dev.copy(pdf,paste("plot_simulations/H3Data.pdf",sep=""),width=5,height=7,useDingbats=F)
   dev.off()
   
 }
+
 
 # Convert map ID tags to strain years
 
