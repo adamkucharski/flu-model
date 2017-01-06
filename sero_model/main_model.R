@@ -51,27 +51,34 @@ load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD T
 
 # Run cross-sectional inference on H3 HaNam data
 foreach(kk1=c(2007:2012)) %dopar% {
-  data.infer(year_test=kk1,mcmc.iterations=1e5,loadseed=1,flutype=flutype0,fix.param=c("disp_k","wane","muShort",fit.spline=am.spl,switch0=20))
+  data.infer(year_test=kk1,mcmc.iterations=20,loadseed=1,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
 }
 
+# >>> TESTING RUNS
 
-# Run inference on H3 HaNam data
+# Run longitudinal inference on H3 HaNam data
 flutype0="H3HN"
 if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","error","vary.init"),fit.spline=am.spl,switch0=20) #,"map.fit"
+  data.infer(year_test=dy1,mcmc.iterations=2e5,loadseed=kk,flutype=flutype0,fix.param=c("tau1","vary.init"),fit.spline=am.spl,switch0=20,linearFn=T) #,"map.fit"
 
 }
 
-# Run inference on H3 FluScape data
+# RUN FOR CHECKING
+foreach(kk=1:4) %dopar% {
+  simulation.infer(seed_i=kk,mcmc.iterations=2e5, flu.type="H3HN", strain.fix=T,fit.spline=am.spl,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+}
+
+
+# Run cross-sectional inference on H3 FluScape data
 flutype0="H3FS"
 if(flutype0=="H3FS"){ dy1=c(2009) }
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1.6e6,loadseed=kk,flutype=flutype0,fix.param=c("disp_k","muShort","wane","error","sigma2","vary.init"),fit.spline=am.spl,switch0=20) #,"map.fit"
+  data.infer(year_test=dy1,mcmc.iterations=1.6e6,loadseed=kk,flutype=flutype0,fix.param=c("tau1","muShort","wane","sigma2","vary.init"),fit.spline=am.spl,switch0=20,linearFn=F) #,"map.fit"
   
 }
 
@@ -83,7 +90,7 @@ foreach(kk=1:4) %dopar% {
 # Plot posteriors for longtudinal data (including attack rates - FIG 3) for H3 Vietnam
 for(kk in 1:4){
   
-  plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",fr.lim=F,plotmap = F,plot.corr = F)
+  plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",fr.lim=T,plotmap = F,plot.corr = F,linearFn=T)
   
 }
 
@@ -105,7 +112,8 @@ for(kk in c(2007:2012)){
 
 # - - - - 
 # Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG 2) for H3 Vietnam
-plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=200,part_pick=c(31,57,25),year_pick=c(2008:2010))
+plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=10,part_pick=c(31,57,25),year_pick=c(2008:2010))
+
 
 # Plot specific titre vs estimates for H3 FluScape
 plot.posterior.titres.select(loadseed=1,year_test=c(2009),flu.type="H3FS",simDat=F,btstrap=200,part_pick=c(92,84,111),year_pick=c(2009))
@@ -113,8 +121,7 @@ plot.posterior.titres.select(loadseed=1,year_test=c(2009),flu.type="H3FS",simDat
 # Plot specific antibody kinetics for H3 Vietnam -- DEPRECATED
 #plot.antibody.changes(btstrap=200)
 
-# Rewind and run historical landscapes (FIG 2)
-load("datasets/spline_fn.RData") # load spline function for map
+# Rewind and run historical landscapes (FIG 2) -- NEED TO UPDATE FOR LINEAR/EXP FUNCTIONS
 run.historical.landscapes(loadseed=1,ymax=6.05)
 
 
@@ -122,8 +129,7 @@ run.historical.landscapes(loadseed=1,ymax=6.05)
 # SUPPLEMENTARY FIGURES
 # Plot titre vs estimates
 
-load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before next run**
-plot.posterior.titres(loadseed=1,flu.type="H3HN",simDat=F,year_test=c(2007:2012),btstrap=500,plotRes=T)
+plot.posterior.titres(loadseed=1,flu.type="H3HN",simDat=F,year_test=c(2007:2012),btstrap=5,plotRes=T,linearFn=T) # Note linear function
 
 
 #H3 FluScape titres
@@ -133,9 +139,9 @@ plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btst
 #plot.posterior.titres(loadseed=1,flu.type="H1",simDat=F,year_test=c(2009:2011),btstrap=2)
 
 
-
+# >>> IMPORTANT FOR TESTING RUNS
 # Plot convergence for MCMC chains for H3 Vietnam
-plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN")
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",linearFn=T,fr.lim=T)
 
 
 # Plot convergence for MCMC chains for H3 FluScape
@@ -153,13 +159,13 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.li
 
 foreach(kk=1:4) %dopar% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=1e2, flu.type="H3HN", strain.fix=T,fit.spline=am.spl) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+  simulation.infer(seed_i=kk,mcmc.iterations=1e2, flu.type="H3HN", strain.fix=T,fit.spline=am.spl,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
 
-  
 }
 
 # Plot convergence for MCMC chains for H3 Vietnam simulated data
-plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",simDat=T,year_test=c(2007:2012))
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",simDat=T,year_test=c(2007:2012),linearFn=T)
+
 
 # Plot convergence for MCMC chains for H3 China simulated data
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",simDat=T,year_test=2009)
@@ -168,7 +174,7 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",simDat=T,year_test=2009
 # Plot simulation study posteriors and attack rate comparisons for simulation plots
 for(kk in 1:4){
   
-  plot.posteriors(simDat=T,loadseed=paste("SIM_",kk,sep=""),year_test=c(2007:2012),plotmap=F,fr.lim=F) #H3 Vietnam
+  plot.posteriors(simDat=T,loadseed=paste("SIM_",kk,sep=""),flu.type="H3HN",year_test=c(2007:2012),plotmap=F,fr.lim=T,linearFn=T) #H3 Vietnam
   #plot.posteriors(simDat=T,loadseed=paste("SIM_",kk,sep=""),year_test=c(2009),plotmap=F,fr.lim=T) #H3 FluScape
   
 }
@@ -176,6 +182,6 @@ for(kk in 1:4){
 # Plot simulation study titres against inferred model
 dy1=c(2007:2012)
 kk=1
-plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3",simDat=T,year_test=c(2007:2012),btstrap=10) #H3 Vietnam
+plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3",simDat=T,year_test=c(2007:2012),btstrap=10,linearFn=T) #H3 Vietnam
 #plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3FS",simDat=T,year_test=c(2009),btstrap=10) #H3 FluScape
 

@@ -58,7 +58,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	  
 	  // Make an index for waning
 	  for (m=0;m<n;m++) {
-		  distanceFromTest[m]=exp(-wane * (j-m + 1)); // Distance from test year -- originally a +1 by m
+		  distanceFromTest[m]=exp(-wane * (j-m )); // Distance from test year -- originally a +1 by m
 	  }
 
 	  // Make a cumulative infection history
