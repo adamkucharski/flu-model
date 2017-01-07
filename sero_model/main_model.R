@@ -62,7 +62,7 @@ if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=2e5,loadseed=kk,flutype=flutype0,fix.param=c("tau1","vary.init"),fit.spline=am.spl,switch0=20,linearFn=T) #,"map.fit"
+  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,flutype=flutype0,fix.param=c("tau1","vary.init"),fit.spline=am.spl,switch0=2,linearFn=T) #,"map.fit"
 
 }
 

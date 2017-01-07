@@ -75,7 +75,7 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 		for (i=0; i<n; i++){
 			x1[i] = maskedInfectionHistory[i] *
 			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0)) *
-			  (pow(1.0 + T_1 , (total_inf - cumInfectionHistory[i])) ) *
+			  //(pow(1.0 + T_1 , (total_inf - cumInfectionHistory[i])) ) * REMOVE Tau 1
 			  (mu * dd[k*n+i] + mu2 * dd2[k*n+i] * distanceFromTest[i] );
 		}
 	

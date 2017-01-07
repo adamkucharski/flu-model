@@ -273,11 +273,22 @@ estimatelik<-function(ii,jj,historyii,dmatrix,dmatrix2,theta_star,test.list,test
     
     d.ij2=dmatrix2[test.part,] # Define cross-immunity matrix 2 for sample strain
     d_vector2=melt(t(d.ij2))$value #melt is by column
+    
+    #time.L1=Sys.time()
 
     expect=func1(historyii,titredat,d_vector,d_vector2,theta_star,testyearI) # Output expectation
     
+    #time.L2=Sys.time() #DEBUG
+    #print(paste("L expected:",time.L2-time.L1))
+    
     #print(likelihood.titre(expect,titredat,theta_star))
-    likelihood.titre(expect,titredat,theta_star)
+    lik = likelihood.titre(expect,titredat,theta_star)
+    
+    #time.L3=Sys.time() #DEBUG
+    #print(paste("L likelihood:",time.L3-time.L2))
+    
+    lik
+    
   }
   
 }
@@ -499,7 +510,8 @@ convert_binary <- function(x){sum(2^(which(rev(unlist(strsplit(as.character(x), 
 ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
   # Flat priors on theta => symmetric update probability
   calc.lik = exp(marg_likelihood_star-marg_likelihood)
-  min(1, calc.lik)
+  calc.lik[calc.lik>1]=1
+  calc.lik
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -562,10 +574,13 @@ run_mcmc<-function(
   
   # DEBUG SIMULATION params <<<
    # test.yr=define.year; test.list=test.listSim; theta=theta0;runs=1e2; varpart_prob=vp1;hist.true=historytabSim;  switch1=10; pmask=pmask0;
+   
    # seedi=loadseed; antigenic.map.in = NULL; am.spline = am.spl;  flu_type = flu.type; linD=F
   
   # DEBUG set params <<<
   # hist.true=NULL; test.yr=c(2009); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=F; pmask=NULL ; antigenic.map.in=NULL; flu_type="H3HN"
+  
+  time.1 = Sys.time() # DEBUG TIME 1
   
   if(is.null(antigenic.map.in)){antigenic.map.in=inf_years} # if no input map, assume 1D
   test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
@@ -631,7 +646,8 @@ run_mcmc<-function(
   
   # Add age mask?
 
-
+  #time.2 = Sys.time() # DEBUG TIME 2
+  #print(paste("set up variables:",time.2-time.1))
   
   # Plausible intial ages - based on earliest strain in history
   #age.tab=sapply(
@@ -648,17 +664,19 @@ run_mcmc<-function(
   
   for (m in 1:runs){
     
+    #time.3 = Sys.time() # DEBUG Set Time 3
+    
     # Adaptive covariance matrix
     if(m==1){
       epsilon0=0.01
-      cov_matrix_theta=epsilon0*cov_matrix_thetaA
+      #cov_matrix_theta=epsilon0*cov_matrix_thetaA
       cov_matrix_basic=epsilon0*cov_matrix_theta0
       varpart_prob0=varpart_prob
     }else{
       epsilon0=max(0.00001,min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m)))
-      cov_matrix_theta=epsilon0*cov_matrix_thetaA
+      #cov_matrix_theta=epsilon0*cov_matrix_thetaA
       cov_matrix_basic=epsilon0*cov_matrix_theta0
-      varpart_prob0=max(0.02,min(0.25,exp(log(varpart_prob0)+(accept_rateH-0.234)*0.999^m))) # resample max of 25%, min of 2%
+      #varpart_prob0=max(0.02,min(0.25,exp(log(varpart_prob0)+(accept_rateH-0.234)*0.999^m))) # resample max of 25%, min of 2%
     }
     
     # - - - - - - - - - - - - - - - -
@@ -688,9 +706,15 @@ run_mcmc<-function(
       theta_star =thetatab[m,]
     }
 
+    #time.4 = Sys.time() # DEBUG Set Time 3
+    #print(paste(m,"/sample:",time.4 - time.3))
+
     #print(am.spline) # DEBUG
     dmatrix = outputdmatrix.fromcoord(theta_star[["sigma"]] ,inf_years,anti.map.in=map_star,linearD=linD) # Arrange antigenic map into cross-reaction matrix
     dmatrix2 = outputdmatrix.fromcoord(theta_star[["sigma2"]],inf_years,anti.map.in=map_star,linearD=linD) # Arrange antigenic map into cross-reaction matrix
+    
+    #time.5 = Sys.time() # DEBUG Set Time 3
+    #print(paste("dmatrix:",time.5-time.4))
     
     # - - - - - - - - - - - - - - - -
     # LIKELIHOOD function - Only calculate for updated history
@@ -707,50 +731,84 @@ run_mcmc<-function(
       lik_val[ii]=sum(lik.ii)
       #if(is.na(lik_val[ii])){ lik_val[ii]=-Inf} For DEBUG
     }
+    
+    #time.6 = Sys.time() # DEBUG Set Time 3
+    #print(paste("likelihood calc:",time.6-time.5))
 
+    #print(lik_val)
+    #print(theta_star)
+    
     # - - - - - - - - - - - - - - - -
     # Metropolis Hastings step
 
-    output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val)) 
-    
-    #if(is.na(output_prob)){print(c(m,sum(likelihoodtab[m,]),sum(lik_val),theta_star))} # Print likelihood (For DEBUG)}
-    if(is.na(output_prob) & m==1){stop(paste('check initial parameter values',theta_star[["error"]]))}
-    
-    if(runif(1) < output_prob){
-      thetatab[m+1,] = theta_star
-      if(m %% switch1!=0){historytab = history_star} # Only change if resampled
-      if(m %% switch1==0){map.tab = map_star} # Only change if resampled
-      #if(m %% switch1==0){age.tab = age_star} # Only change if resampled - not currently active
-      likelihoodtab[m+1,] = lik_val
-      if(m %% switch1==0){accepttabT=c(accepttabT,1)}
-      if(m %% switch1!=0){accepttabH=c(accepttabH,1)}
+
+    # History sample step
+    if( (m %% switch1 != 0) & m>1){
       
-    }else{
-      thetatab[m+1,] = thetatab[m,]
+      # Calculate piecewise likelihood
+      output_prob = ComputeProbability(likelihoodtab[m,pickA],lik_val[pickA]) # Only calculate for selected
+      pickCP = pickA[runif( length(pickA) ) < output_prob]
+      
+      historytab[pickCP,] = history_star[pickCP,]
       likelihoodtab[m+1,] = likelihoodtab[m,]
-      if(m %% switch1==0){accepttabT=c(accepttabT,0)}
-      if(m %% switch1!=0){accepttabH=c(accepttabH,0)}
-    }
+      likelihoodtab[m+1,pickCP] = lik_val[pickCP]
+      thetatab[m+1,] = thetatab[m,]
+      
+    } # end history step
+      
+    
+      
+    # Theta sample step
+    if( (m %% switch1==0) | m==1){
+      
+      # Estimate probability of update
+      output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val)) 
+      if(is.na(output_prob) & m==1){stop(paste('check initial parameter values',theta_star[["error"]]))}
+        
+      if(runif(1) < output_prob){
+        
+        thetatab[m+1,] = theta_star
+        #map.tab = map_star DEPRECATED
+        accepttabT=c(accepttabT,1)
+        likelihoodtab[m+1,] = lik_val
+        
+      }else{
+        thetatab[m+1,] = thetatab[m,]
+        likelihoodtab[m+1,] = likelihoodtab[m,]
+        if(m %% switch1==0){accepttabT=c(accepttabT,0)}
+      }
+    } # End theta sample step
+
+    
+    #time.7 = Sys.time() # DEBUG Set Time 3
+    #print(paste("MH step:",time.7-time.6))
+    
     
     
     if(m<max(100)){
       accept_rateT=0.234 # target acceptance rate for theta
-      accept_rateH=0.234 # target acceptance rate for infection history
+      #accept_rateH=0.234 # target acceptance rate for infection history
     }else{
       accept_rateT=sum(accepttabT)/length(accepttabT)
-      accept_rateH=sum(accepttabH)/length(accepttabH)
-      cov_matrix_thetaA=cov(thetatab[1:m,]) # Include adaptive covariance matrix for MCMC
-    }
-    
-    if(m %% min(runs,20) ==0){
-      historytabCollect=rbind(historytabCollect,historytab)
-      map.tabCollect[[round(m/20)]]=map.tab
+      #accept_rateH=sum(accepttabH)/length(accepttabH)
+      #cov_matrix_thetaA=cov(thetatab[1:m,]) # Include adaptive covariance matrix for MCMC
     }
 
-    if(m %% min(runs,100) ==0){
+    
+    # Store infection history
+    if(m %% min(runs,10) ==0){
+      historytabCollect=rbind(historytabCollect,historytab)
+      #map.tabCollect[[round(m/20)]]=map.tab DEPRECATED
+    }
+
+    if(m %% min(runs,500) ==0){
       print(c(m,accept_rateT,varpart_prob0,round(sum(likelihoodtab[m,])))) # DEBUG HERE
       save(likelihoodtab,thetatab,inf_years,n_part,test.listPost,historytab,historytabCollect,map.tabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,"_lin",linD,".RData",sep=""))
     }
+    
+    #time.8 = Sys.time() # DEBUG Set Time 3
+    #print(paste("loop time:",time.8-time.3))
+    
     
   } #End runs loop
   
@@ -762,7 +820,7 @@ run_mcmc<-function(
 # Inference using cross-sectional vs longitudinal data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3HN",fix.param=NULL , fit.spline=NULL, switch0=10,linearFn=F) {
+data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3HN",fix.param=NULL , fit.spline=NULL, switch0=2,linearFn=F) {
   
   #DEBUG  year_test=c(2007:2012); seed_i=1; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=F
   
@@ -782,14 +840,16 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3HN",f
   theta0[["mu"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.02*runif(1,c(-1,1))}else{0} # suppression via AGS
-  theta0[["wane"]]=-log(0.5)/0.5 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
+  theta0[["wane"]]=-log(0.5)/0.4 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
   theta0[["sigma"]]=0.3 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # cross-reaction
   theta0[["sigma2"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
   theta0[["muShort"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term boosting
-  theta0[["error"]]=1 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # measurement error
+  theta0[["error"]]=2 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # measurement error
   theta0[["disp_k"]]=1 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0
-  vp1=0.02 #probability individual infection history resampled - this is adaptive in model
+  vp1=0.2 #probability individual infection history resampled - this is adaptive in model
+  
+  print(theta0)
   
   define.year=year_test # years to include in inference
   
@@ -844,7 +904,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   #tau1=back-boost  / tau2=suppress / disp_k=dispersion (deprecated) 
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
-  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=1,sigma=0.3,muShort=3,error=1,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
+  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=2,sigma=0.3,muShort=3,error=1,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
   
   if(strain.fix==T){
     strain_years0 = strain_years
@@ -884,14 +944,16 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   theta0[["mu"]]=3+ if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # back-boost
   theta0[["tau2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # suppression via AGS
-  theta0[["wane"]]= 1 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
+  theta0[["wane"]]= 2 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
   theta0[["sigma"]]=0.3+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # long-term cross-reaction
   theta0[["sigma2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
   theta0[["muShort"]]=3 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term boosting
   theta0[["error"]]= 1 # measurement error
   theta0[["disp_k"]]=0.1 # overdispersion (deprecated)
   theta=theta0
-  vp1=0.02 #probability individual infection history resampled - this is adaptive in model
+  vp1=0.2 #probability individual infection history resampled - this is adaptive in model
+  
+  print(theta0)
   
   #lik.true=likelihood_function(theta_star=theta.sim.out,inf_years,test.yr,map_star=antigenic.map0,am.spline=am.spl,test.list=test.listSim,history_star=historytabSim,n_part)
   #print(lik.true)
@@ -911,7 +973,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
     runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
     hist.true=historytabSim, # True starting point # *** DEBUG *** historytabSim
-    switch1=20, # ratio of infection history resamples to theta resamples. This is fixed
+    switch1=2, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=pmask0, # ,"map.fit" specify parameters to fix
     seedi=loadseed,
     antigenic.map.in = antigenic.map0, # Define random initial map to fit

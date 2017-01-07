@@ -530,7 +530,7 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
   if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["mu"]],theta.true[["mu"]]),col=Ctrue,lwd=Wtrue) }
   
   if(!(flu.type=="H3FS")){ 
-    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="mu2",ylim=c(0,ifelse(fr.lim==F,4,max(storeMu2)))); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,]*exp(-storeWane[ii,]),type="l",col=col.list[[ii]]) }
+    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="mu2",ylim=c(0,ifelse(fr.lim==F,4,max(storeMu2)))); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,],type="l",col=col.list[[ii]]) }
     lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,100),col="gray",lty=2)
     if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["muShort"]],theta.true[["muShort"]]),col=Ctrue,lwd=Wtrue) }
   }
