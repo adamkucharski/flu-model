@@ -101,7 +101,7 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_year
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Functions to set up parameters for model
-#Calculate dmatrix by year
+# Calculate dmatrix by year
 outputdmatrix<-function(theta,inf_years,linearD=F,locmat=NULL){
   if (is.null(locmat)) {
     # Exponential decay
