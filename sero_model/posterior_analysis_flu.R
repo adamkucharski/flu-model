@@ -43,6 +43,7 @@ scale.map<-function(map.pick){
 plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012),plotmap=F,fr.lim=F,plot.corr=F,linearFn=F){
 
   # simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F
+  
   # simDat=T;loadseed="SIM_1";year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
   if(simDat==F){loadseed=paste(loadseed,"_",flu.type,sep="")}
@@ -125,12 +126,12 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   
   if(plot.corr==T){
     
-    param.names = c("mu","muShort","sigma","sigma2","tau1","tau2","wane")
+    param.names = c("mu","muShort","sigma","sigma2","error","tau2","wane")
     par(mfcol=c(length(param.names),length(param.names)))
     par(mar = c(3,3,1,1))
     par(mgp=c(1.8,0.5,0))
     
-    thinner.theta=thin.theta[sample(length(thin.theta$mu),2000),]
+    thinner.theta=thin.theta[sample(length(thin.theta$mu),1000,replace=T),]
     thinner.theta[["muShort"]] = thinner.theta[["muShort"]] # Adjust scaling
     
     for(ii in 1:length(param.names)){
@@ -530,7 +531,7 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
   if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["mu"]],theta.true[["mu"]]),col=Ctrue,lwd=Wtrue) }
   
   if(!(flu.type=="H3FS")){ 
-    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="mu2",ylim=c(0,ifelse(fr.lim==F,4,max(storeMu2)))); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,]*exp(-storeWane[ii,]),type="l",col=col.list[[ii]]) }
+    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="mu2",ylim=c(0,ifelse(fr.lim==F,4,max(storeMu2)))); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,],type="l",col=col.list[[ii]]) }
     lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,100),col="gray",lty=2)
     if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["muShort"]],theta.true[["muShort"]]),col=Ctrue,lwd=Wtrue) }
   }
