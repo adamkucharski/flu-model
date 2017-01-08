@@ -421,7 +421,9 @@ simulate_data<-function(test_years,
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
 # Resample infection history - included ageA table in case needed later
+
 
 SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years,age.mask){
 
