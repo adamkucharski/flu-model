@@ -150,7 +150,7 @@ outputdmatrix.fromcoord <- function(thetasigma,inf_years,anti.map.in,linearD=F){
         
         colSums(apply(anti.map.in,1,function(y){(y-x)^2}))
         
-      ); y[y<0]=0; y # DEBUG -- ADD baseline to avoid NA likelihood
+      ); y[y<0]=0; y #   HAVE REMOVED BASE
       }))
     }
   }
@@ -948,7 +948,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   theta0[["sigma"]]=0.3+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # long-term cross-reaction
   theta0[["sigma2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
   theta0[["muShort"]]=3 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term boosting
-  theta0[["error"]]= 1 # measurement error
+  theta0[["error"]]= 1 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # measurement error
   theta0[["disp_k"]]=0.1 # overdispersion (deprecated)
   theta=theta0
   vp1=0.2 #probability individual infection history resampled - this is adaptive in model

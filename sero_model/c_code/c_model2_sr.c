@@ -17,9 +17,9 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	/* Calculate lambda */
 	
 	int n = nin[0]; // length of infection history
-	int total_inf = itot[0]; // total infections
+	// int total_inf = itot[0]; // total infections
 	int nsamp = nsin[0]; // number of strains tested against
-	double T_1 = theta[1];
+	// double T_1 = theta[1];
 	double T_2 = theta[2];
 	double wane = theta[3];
 	double mu = theta[0];
