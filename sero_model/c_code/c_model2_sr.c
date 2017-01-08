@@ -27,11 +27,12 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	
 	// This to be made an argument of the function -- gives test year 
 	int t_sample = inputtestyr[0]; 
-  
-  double yrTitre[nsamp];
-  int maskedInfectionHistory[n];
-  double distanceFromTest[n];
-  double cumInfectionHistory[n];
+  	double yrTitre[nsamp];
+  	int maskedInfectionHistory[n];
+  	double distanceFromTest[n];
+  	double cumInfectionHistory[n];
+	
+	#define MAX(a,b) ((a) < (b) ? (b) : (a)) // define MAX function for use later
   
 	/* Add for loop over k*/
 	
@@ -58,7 +59,8 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 	  
 	  // Make an index for waning
 	  for (m=0;m<n;m++) {
-		  distanceFromTest[m]=exp(-wane * (j-m )); // Distance from test year -- originally a +1 by m
+		  // distanceFromTest[m] = exp(-wane * (j-m )); // Distance from test year -- originally a +1 by m
+		  distanceFromTest[m] = MAX(0, 1 - wane * (j-m )); // Distance from test year -- originally a +1 by m
 	  }
 
 	  // Make a cumulative infection history
@@ -74,8 +76,9 @@ void c_model2_sr(int *nin, int *itot, int *nsin, double *x, double *x1, double *
 
 		for (i=0; i<n; i++){
 			x1[i] = maskedInfectionHistory[i] *
-			  exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0)) *
-			  //(pow(1.0 + T_1 , (total_inf - cumInfectionHistory[i])) ) * REMOVE Tau 1
+			  // exp(-1.0 * T_2 * ( cumInfectionHistory[i]  - 1.0)) *
+			  MAX(0, 1.0 - T_2 * ( cumInfectionHistory[i]  - 1.0)) * // Antigenic seniority
+			  //(pow(1.0 + T_1 , (total_inf - cumInfectionHistory[i])) ) * REMOVED Tau 1
 			  (mu * dd[k*n+i] + mu2 * dd2[k*n+i] * distanceFromTest[i] );
 		}
 	

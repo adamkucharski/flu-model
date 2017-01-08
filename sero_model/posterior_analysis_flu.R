@@ -42,7 +42,7 @@ scale.map<-function(map.pick){
 
 plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012),plotmap=F,fr.lim=F,plot.corr=F,linearFn=F){
 
-  # simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F
+  # simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
   # simDat=T;loadseed="SIM_1";year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
@@ -77,7 +77,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
 
   # - - - - - - - 
   # Calculate ESS by burn-in
-  runs1=ceiling(0.25*runsPOST)
+  runs1=ceiling(0.25* )
   calculate.ESS<-function(runs1){
     thetaT=as.data.frame(thetatab)[runs1:runsPOST,]; ltheta=length(thetaT[["mu"]]); thin.theta=thetaT[seq(1,ltheta,switch1),]
     ESS.calc=effectiveSize(thin.theta); ESS.calc
@@ -87,7 +87,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
   ltheta=length(thetaT[["mu"]])
   thin.theta=thetaT[seq(1,ltheta,switch1),] # Needs to be = switch1 as this is how often theta is reasmpled
-  ESS.label<-function(x){paste("ESS=",signif(as.numeric(x),3))}
+  ESS.label2<-function(x){signif(as.numeric(x),3)}
   ESS.label<-function(x){""}
   # - - - - - - - - - - - - - - -
   # Plot results
@@ -136,7 +136,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     
     for(ii in 1:length(param.names)){
       for(jj in 1:length(param.names)){
-        if(ii==jj){
+        if(ii<=jj){
           
           plot(thinner.theta[[param.names[ii]]],thinner.theta[[param.names[jj]]],pch=19,cex=0.2, xlab="", ylab="",col="white",xaxt="n",yaxt="n",axes=F)
         }else{
@@ -154,16 +154,17 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   
   # Output table of parameters
   table.param <- rbind(
-    c("mu",c.text(thin.theta[["mu"]]) ),
-    c("muShort",c.text(thin.theta[["muShort"]]  ) ), # **Corrected for additional +1 in fitting code**
-    c("sigma",c.text(thin.theta[["sigma"]]) ),
-    c("sigma2",c.text(thin.theta[["sigma2"]]) ),
-    c("tau1",c.text(thin.theta[["tau1"]]) ),
-    c("tau2",c.text(thin.theta[["tau2"]]) ),
-    c("wane",c.text(thin.theta[["wane"]]) ),
-    c("sigmahalf",c.text(exp(-thin.theta[["sigma"]])) ),
-    c("sigma2half",c.text(exp(-thin.theta[["sigma2"]])) ),
-    c("wane_half",c.text(-log(0.5)/thin.theta[["wane"]]) )
+    c("mu",c.text(thin.theta[["mu"]]),ESS.label2(ESS.calc[["mu"]]) ),
+    c("muShort",c.text(thin.theta[["muShort"]]  ),ESS.label2(ESS.calc[["muShort"]]) ), # **Corrected for additional +1 in fitting code**
+    c("sigma",c.text(thin.theta[["sigma"]]) ,ESS.label2(ESS.calc[["sigma"]]) ),
+    c("sigma2",c.text(thin.theta[["sigma2"]]),ESS.label2(ESS.calc[["sigma2"]]) ),
+    c("error",c.text(thin.theta[["error"]]) ,ESS.label2(ESS.calc[["error"]])),
+    c("tau2",c.text(thin.theta[["tau2"]]),ESS.label2(ESS.calc[["tau2"]]) ),
+    c("wane",c.text(thin.theta[["wane"]]) ,ESS.label2(ESS.calc[["wane"]])),
+    c("sigmadrop",c.text(thin.theta[["mu"]]*(thin.theta[["sigma"]])),ESS.label2(ESS.calc[["sigma"]]) ),
+    c("sigma2drop",c.text(thin.theta[["muShort"]]*(thin.theta[["sigma2"]])) ,ESS.label2(ESS.calc[["sigma2"]])),
+    c("wane_half",c.text(-log(0.5)/thin.theta[["wane"]]),ESS.label2(ESS.calc[["wane"]]) ),
+    c("errorCorrect",c.text( pnorm(ceiling(thin.theta[["mu"]]) + 1,mean=thin.theta[["mu"]],sd=thin.theta[["error"]])-pnorm(floor(thin.theta[["mu"]]),mean=thin.theta[["mu"]],sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) )
   )
   
   write.csv(table.param,paste("plot_simulations/param_table",paste(year_test,collapse="_"),"_",loadseed,".csv",sep="") )
@@ -1172,13 +1173,13 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Rewind history and reconstruct antibody landscape for Figure 2
 
-run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010),d.step=0.2,ymax=5){
+run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F,flu.type="H3HN",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010),d.step=0.5,ymax=5){
     
-    # btstrap=50 ; n_partSim=2 ; simTest.year=c(1968:2010) ; d.step = 0.5 ; flu.type="H3HN"; year_test=c(2007:2012); loadseed = 1
+    # btstrap=50 ; n_partSim=2 ; simTest.year=c(1968:2010) ; d.step = 0.5 ; flu.type="H3HN"; year_test=c(2007:2012); loadseed = 1; linearFn=T
     load("R_datasets/HaNam_data.RData")
     loadseed=paste(loadseed,"_",flu.type,sep="")
     
-    load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep="")) # Note that this includes test.listPost
+    load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,"_lin",linearFn,".RData",sep="")) # Note that this includes test.listPost
     
     lik.tot=rowSums(likelihoodtab)
     runsPOST=length(lik.tot[lik.tot!=-Inf])
@@ -1233,22 +1234,42 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),flu.type="
       cross_x2 = sqrt( sum((as.numeric(points.j[sampk,]) - c(yy[pick_years[2]],xx[pick_years[2]]) )^2 ) ) # calculate 2D distance
       
       
-      # Have added one to the waning here **
+      # Need to edit the linear function here 
+      if(linearFn==F){
       
-      storetitreS1[sampk] = (theta.max$mu*exp(-theta.max$sigma*cross_x1) + theta.max$muShort*exp(- 0 * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) %>% right.censor()
-      storetitreL1[sampk] = ( theta.max$mu*exp(-theta.max$sigma*cross_x1) + theta.max$muShort*exp(- (1) * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) )%>% right.censor()
-      
-      storetitreS2[sampk] = ( (1+theta.max$tau1)*(theta.max$mu*exp(-theta.max$sigma*cross_x1) + 
-                      theta.max$muShort*exp(- (year_x) * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) + 
+        storetitreS1[sampk] = (theta.max$mu*exp(-theta.max$sigma*cross_x1) + theta.max$muShort*exp(- 0 * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) %>% right.censor()
+        storetitreL1[sampk] = ( theta.max$mu*exp(-theta.max$sigma*cross_x1) + theta.max$muShort*exp(- (1) * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) )%>% right.censor()
+        
+        storetitreS2[sampk] = ( (1+theta.max$tau1)*(theta.max$mu*exp(-theta.max$sigma*cross_x1) + 
+                        theta.max$muShort*exp(- (year_x) * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) + 
+                          exp(- theta.max$tau2)*(theta.max$mu*exp(-theta.max$sigma*cross_x2) + 
+                        theta.max$muShort*exp(- 0 * theta.max$wane)*exp(-theta.max$sigma2*cross_x2) )
+                        ) %>% right.censor()
+        
+        storetitreL2[sampk] = ( (1+theta.max$tau1)*(theta.max$mu*exp(-theta.max$sigma*cross_x1) + 
+                        theta.max$muShort*exp(- (year_x+1 ) * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) + # Note the year_x +1 here
                         exp(- theta.max$tau2)*(theta.max$mu*exp(-theta.max$sigma*cross_x2) + 
-                      theta.max$muShort*exp(- 0 * theta.max$wane)*exp(-theta.max$sigma2*cross_x2) )
-                      ) %>% right.censor()
+                        theta.max$muShort*exp(- (1) * theta.max$wane)*exp(-theta.max$sigma2*cross_x2) )
+                        ) %>% right.censor()
       
-      storetitreL2[sampk] = ( (1+theta.max$tau1)*(theta.max$mu*exp(-theta.max$sigma*cross_x1) + 
-                      theta.max$muShort*exp(- (year_x+1 ) * theta.max$wane)*exp(-theta.max$sigma2*cross_x1) ) + # Note the year_x +1 here
-                      exp(- theta.max$tau2)*(theta.max$mu*exp(-theta.max$sigma*cross_x2) + 
-                      theta.max$muShort*exp(- (1) * theta.max$wane)*exp(-theta.max$sigma2*cross_x2) )
-                      ) %>% right.censor()
+      }else{
+        
+        storetitreS1[sampk] = (theta.max$mu*max(0,1-theta.max$sigma*cross_x1) + theta.max$muShort*exp(- 0 * theta.max$wane)*max(0,1-theta.max$sigma2*cross_x1) ) %>% right.censor()
+        storetitreL1[sampk] = ( theta.max$mu*max(0,1-theta.max$sigma*cross_x1) + theta.max$muShort*exp(- (1) * theta.max$wane)*max(0,1-theta.max$sigma2*cross_x1) )%>% right.censor()
+        
+        storetitreS2[sampk] = ( (1+theta.max$tau1)*(theta.max$mu*max(0,1-theta.max$sigma*cross_x1) + 
+                                                      theta.max$muShort*exp(- (year_x) * theta.max$wane)*(1-theta.max$sigma2*cross_x1) ) + 
+                                  exp(- theta.max$tau2)*(theta.max$mu*max(0,1-theta.max$sigma*cross_x2) + 
+                                                           theta.max$muShort*exp(- 0 * theta.max$wane)*(1-theta.max$sigma2*cross_x2) )
+        ) %>% right.censor()
+        
+        storetitreL2[sampk] = ( (1+theta.max$tau1)*(theta.max$mu*max(0,1-theta.max$sigma*cross_x1) + 
+                                                      theta.max$muShort*exp(- (year_x+1 ) * theta.max$wane)*max(0,1-theta.max$sigma2*cross_x1) ) + # Note the year_x +1 here
+                                  exp(- theta.max$tau2)*(theta.max$mu*max(0,1-theta.max$sigma*cross_x2) + 
+                                                           theta.max$muShort*exp(- (1) * theta.max$wane)*max(0,1-theta.max$sigma2*cross_x2) )
+        ) %>% right.censor()
+        
+      }
 
     }
     

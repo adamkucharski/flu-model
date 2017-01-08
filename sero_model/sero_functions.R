@@ -842,7 +842,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3HN",f
   theta0[["mu"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.02*runif(1,c(-1,1))}else{0} # suppression via AGS
-  theta0[["wane"]]=-log(0.5)/0.4 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
+  theta0[["wane"]]=-log(0.5)/0.5 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
   theta0[["sigma"]]=0.3 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # cross-reaction
   theta0[["sigma2"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
   theta0[["muShort"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term boosting
@@ -943,14 +943,14 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=1,sigma2=0.1)
-  theta0[["mu"]]=3+ if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # basic boosting
+  theta0[["mu"]]=3+ if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # back-boost
   theta0[["tau2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # suppression via AGS
   theta0[["wane"]]= 2 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
   theta0[["sigma"]]=0.3+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # long-term cross-reaction
   theta0[["sigma2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
-  theta0[["muShort"]]=3 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term boosting
-  theta0[["error"]]= 1 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # measurement error
+  theta0[["muShort"]]=3 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # short term boosting
+  theta0[["error"]]= 1 + if(sum(fix.param=="vary.init")>0){0.25*runif(1,c(-1,1))}else{0} # measurement error
   theta0[["disp_k"]]=0.1 # overdispersion (deprecated)
   theta=theta0
   vp1=0.2 #probability individual infection history resampled - this is adaptive in model
