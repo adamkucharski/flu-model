@@ -64,9 +64,9 @@ if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 foreach(kk=1:4) %dopar% {
 
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=kk,
+  data.infer(year_test=dy1,mcmc.iterations=2e3,loadseed=kk,
              flutype=flutype0,fix.param=c("tau1","vary.init"),
-             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5) #,"map.fit"
+             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.4) #,"map.fit"
 
 }
 
@@ -87,7 +87,7 @@ foreach(kk=1:4) %dopar% {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Plot posteriors for longtudinal data (including attack rates - FIG 3) for H3 Vietnam
-for(kk in 1:2){
+for(kk in 1:4){
   
   plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",
                   fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
@@ -162,7 +162,7 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.li
 
 foreach(kk=1:3) %dopar% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=10, flu.type="H3HN", strain.fix=T,fit.spline=am.spl,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+  simulation.infer(seed_i=kk,mcmc.iterations=1e2, flu.type="H3HN", strain.fix=T,fit.spline=am.spl,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
 
 }
 
