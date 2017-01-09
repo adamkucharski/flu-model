@@ -61,7 +61,7 @@ flutype0="H3HN"
 if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 #for(kk in 1:4){
 
-foreach(kk=1:4) %dopar% {
+foreach(kk=1:3) %dopar% {
 
   # Fits to spline if am.spl is defined
   data.infer(year_test=dy1,mcmc.iterations=2e3,loadseed=kk,
@@ -162,7 +162,8 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.li
 
 foreach(kk=1:3) %dopar% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=1e2, flu.type="H3HN", strain.fix=T,fit.spline=am.spl,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+  simulation.infer(seed_i=kk,mcmc.iterations=1e4, flu.type="H3HN", strain.fix=T,
+                   fit.spline=am.spl,vp1=0.4,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
 
 }
 
@@ -185,7 +186,7 @@ for(kk in 1:3){
 
 # Plot simulation study titres against inferred model
 dy1=c(2007:2012)
-kk=1
+kk=2
 plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3",simDat=T,year_test=c(2007:2012),btstrap=10,linearFn=T) #H3 Vietnam
 #plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3FS",simDat=T,year_test=c(2009),btstrap=10) #H3 FluScape
 
