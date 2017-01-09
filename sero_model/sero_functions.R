@@ -898,7 +898,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
 # Define simulation model
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="H3HN", fit.spline = NULL, fix.param="vary.init",linearFn=F) {
+simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="H3HN", vp1=0.2,fit.spline = NULL, fix.param="vary.init",linearFn=F) {
   #DEBUG seed_i=1; mcmc.iterations=40; strain.fix=T; flu.type="H3HN"; fix.param ="vary.init"; linearFn= F
   
   # Edit for cross-sectional over fitting
@@ -959,8 +959,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   theta0[["error"]]= 1 + if(sum(fix.param=="vary.init")>0){0.25*runif(1,c(-1,1))}else{0} # measurement error
   theta0[["disp_k"]]=0.1 # overdispersion (deprecated)
   theta=theta0
-  vp1=0.2 #probability individual infection history resampled - this is adaptive in model
-  
+
   print(theta0)
   
   #lik.true=likelihood_function(theta_star=theta.sim.out,inf_years,test.yr,map_star=antigenic.map0,am.spline=am.spl,test.list=test.listSim,history_star=historytabSim,n_part)

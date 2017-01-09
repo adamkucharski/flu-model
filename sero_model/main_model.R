@@ -162,7 +162,12 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.li
 
 foreach(kk=1:3) %dopar% {
   
+<<<<<<< Updated upstream
   simulation.infer(seed_i=kk,mcmc.iterations=10, flu.type="H3HN", strain.fix=T,fit.spline=am.spl,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+=======
+  simulation.infer(seed_i=kk,mcmc.iterations=50, flu.type="H3HN", strain.fix=T,
+                   fit.spline=am.spl,vp1=0.5,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+>>>>>>> Stashed changes
 
 }
 
