@@ -898,7 +898,9 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
 # Define simulation model
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="H3HN", fit.spline = NULL, vp1=0.2,fix.param="vary.init",linearFn=F) {
+
+simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="H3HN", vp1=0.2,fit.spline = NULL, fix.param="vary.init",linearFn=F) {
+
   #DEBUG seed_i=1; mcmc.iterations=40; strain.fix=T; flu.type="H3HN"; fix.param ="vary.init"; linearFn= F
   
   # Edit for cross-sectional over fitting
