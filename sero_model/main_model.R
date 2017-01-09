@@ -60,18 +60,12 @@ foreach(kk1=c(2007:2012)) %dopar% {
 flutype0="H3HN"
 if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 #for(kk in 1:4){
-<<<<<<< HEAD
-foreach(kk=1:3) %dopar% {
-  # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,
-             flutype=flutype0,fix.param=c("tau1","vary.init"),fit.spline=am.spl,switch0=2,linearFn=F) #,"map.fit"
-=======
+
 foreach(kk=1:2) %dopar% {
   # Fits to spline if am.spl is defined
   data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,
              flutype=flutype0,fix.param=c("tau1","vary.init"),
              fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5) #,"map.fit"
->>>>>>> origin/master
 
 }
 
@@ -147,11 +141,9 @@ plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btst
 
 # >>> IMPORTANT FOR TESTING RUNS
 # Plot convergence for MCMC chains for H3 Vietnam
-<<<<<<< HEAD
-plot.multi.chain.posteriors(burnCut=0.25,loadpick=c(1:3), flu.type="H3HN",fr.lim=F,linearFn=F)
-=======
+
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:2),fr.lim=F,linearFn=T)
->>>>>>> origin/master
+
 
 
 # Plot convergence for MCMC chains for H3 FluScape
