@@ -60,10 +60,11 @@ foreach(kk1=c(2007:2012)) %dopar% {
 flutype0="H3HN"
 if(flutype0=="H3HN"){ dy1=c(2007:2012) }
 #for(kk in 1:4){
-foreach(kk=1:3) %dopar% {
+foreach(kk=1:2) %dopar% {
   # Fits to spline if am.spl is defined
   data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,
-             flutype=flutype0,fix.param=c("tau1","vary.init"),fit.spline=am.spl,switch0=2,linearFn=T) #,"map.fit"
+             flutype=flutype0,fix.param=c("tau1","vary.init"),
+             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5) #,"map.fit"
 
 }
 
@@ -84,7 +85,7 @@ foreach(kk=1:4) %dopar% {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Plot posteriors for longtudinal data (including attack rates - FIG 3) for H3 Vietnam
-for(kk in 1:3){
+for(kk in 1:2){
   
   plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",
                   fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
@@ -139,7 +140,7 @@ plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btst
 
 # >>> IMPORTANT FOR TESTING RUNS
 # Plot convergence for MCMC chains for H3 Vietnam
-plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:3),fr.lim=F,linearFn=T)
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:2),fr.lim=F,linearFn=T)
 
 
 # Plot convergence for MCMC chains for H3 FluScape
@@ -157,7 +158,7 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),fr.li
 
 foreach(kk=1:3) %dopar% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=2e3, flu.type="H3HN", strain.fix=T,fit.spline=am.spl,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+  simulation.infer(seed_i=kk,mcmc.iterations=1e3, flu.type="H3HN", strain.fix=T,fit.spline=am.spl,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
 
 }
 

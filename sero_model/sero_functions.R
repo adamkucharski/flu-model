@@ -536,9 +536,9 @@ SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   #mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
   #theta_star[["muShort"]]=ifelse(mu2<0,theta_initial[["muShort"]],mu2)
   
-  # reflective boundary condition for error function = max is 0.2 for now # DEBUG
-  #error2=min(0.2-theta_star[["error"]],theta_star[["error"]])
-  #theta_star[["error"]]=ifelse(error2<0,theta_initial[["error"]],error2)
+  # reflective boundary condition for wane function = max is 1 for now # DEBUG
+  wane2=min(2-theta_star[["wane"]],theta_star[["wane"]])
+  theta_star[["wane"]]=ifelse(wane2<0,theta_initial[["wane"]],wane2)
   
   #print(rbind(theta_initial,theta_star1,theta_star2))
   return(thetaS=theta_star)
@@ -803,7 +803,7 @@ run_mcmc<-function(
       #map.tabCollect[[round(m/20)]]=map.tab DEPRECATED
     }
 
-    if(m %% min(runs,500) ==0){
+    if(m %% min(runs,20) ==0){
       print(c(m,accept_rateT,varpart_prob0,round(sum(likelihoodtab[m,])))) # DEBUG HERE
       save(likelihoodtab,thetatab,inf_years,n_part,test.listPost,historytab,historytabCollect,map.tabCollect,age.tab,test.yr,switch1,file=paste("posterior_sero_runs/outputR_f",paste(test.yr,"_",collapse="",sep=""),"s",seedi,"_lin",linD,".RData",sep=""))
     }
@@ -822,9 +822,12 @@ run_mcmc<-function(
 # Inference using cross-sectional vs longitudinal data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3HN",fix.param=NULL , fit.spline=NULL, switch0=2,linearFn=F) {
+data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
+                       flutype="H3HN",fix.param=NULL , fit.spline=NULL, 
+                       switch0=2,linearFn=F,  vp1=0.2 # Probability resample history
+                       ) {
   
-  #DEBUG  year_test=c(2007:2012); seed_i=1; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=F
+  #DEBUG  year_test=c(2007:2012); seed_i=1; vp1=0.2; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=F
   
   # INFERENCE MODEL
   # Run MCMC for specific data set
@@ -842,15 +845,13 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,flutype="H3HN",f
   theta0[["mu"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.05 # back-boost
   theta0[["tau2"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.02*runif(1,c(-1,1))}else{0} # suppression via AGS
-  theta0[["wane"]]=-log(0.5)/0.5 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
-  theta0[["sigma"]]=0.3 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # cross-reaction
-  theta0[["sigma2"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
+  theta0[["wane"]]= 0.6 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
+  theta0[["sigma"]]=0.2 + if(sum(fix.param=="vary.init")>0){0.04*runif(1,c(-1,1))}else{0} # cross-reaction
+  theta0[["sigma2"]]=0.02 + if(sum(fix.param=="vary.init")>0){0.01*runif(1,c(-1,1))}else{0} # short-term cross-reaction
   theta0[["muShort"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term boosting
   theta0[["error"]]=2 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # measurement error
   theta0[["disp_k"]]=1 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0
-  vp1=0.2 #probability individual infection history resampled - this is adaptive in model
-  
   print(theta0)
   
   define.year=year_test # years to include in inference
@@ -906,7 +907,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   #tau1=back-boost  / tau2=suppress / disp_k=dispersion (deprecated) 
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
-  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=2,sigma=0.3,muShort=3,error=1,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
+  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=0.7,sigma=0.3,muShort=3,error=1,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
   
   if(strain.fix==T){
     strain_years0 = strain_years
@@ -946,7 +947,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   theta0[["mu"]]=3+ if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # back-boost
   theta0[["tau2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # suppression via AGS
-  theta0[["wane"]]= 2 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
+  theta0[["wane"]]= 0.6 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
   theta0[["sigma"]]=0.3+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # long-term cross-reaction
   theta0[["sigma2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short-term cross-reaction
   theta0[["muShort"]]=3 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # short term boosting
@@ -974,7 +975,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
     theta=theta0,
     runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
-    hist.true=historytabSim, # True starting point # *** DEBUG *** historytabSim
+    hist.true= NULL, # True starting point # *** DEBUG *** historytabSim
     switch1=2, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=pmask0, # ,"map.fit" specify parameters to fix
     seedi=loadseed,
