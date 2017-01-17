@@ -127,6 +127,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   if(plot.corr==T){
     
     param.names = c("mu","muShort","sigma","sigma2","error","tau2","wane")
+    param.labels= c(expression(mu[1]),expression(mu[2]),expression(sigma[1]),expression(sigma[2]),expression(epsilon),expression(tau),expression(omega))
     par(mfcol=c(length(param.names),length(param.names)))
     par(mar = c(3,3,1,1))
     par(mgp=c(1.8,0.5,0))
@@ -141,7 +142,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
           plot(thinner.theta[[param.names[ii]]],thinner.theta[[param.names[jj]]],pch=19,cex=0.2, xlab="", ylab="",col="white",xaxt="n",yaxt="n",axes=F)
         }else{
           
-          plot(thinner.theta[[param.names[ii]]],thinner.theta[[param.names[jj]]],pch=19,cex=0.3, xlab=param.names[ii], ylab=param.names[jj])
+          plot(thinner.theta[[param.names[ii]]],thinner.theta[[param.names[jj]]],pch=19,cex=0.3, xlab=param.labels[ii], ylab=param.labels[jj])
         }
         
         
@@ -357,7 +358,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   
       ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
       hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col =rgb(0.8,0.8,0.8),xlab="number of infections",prob=TRUE,xlim=c(0,50),ylim=c(0,0.1),xaxs="i",yaxs="i", main=NULL,ylab="density")
-      abline(v=median(ind.infN),col="red",lty=2,lwd=1.5); abline(v=mean(ind.infN),col="red",lwd=1.5)
+      #abline(v=median(ind.infN),col="red",lty=2,lwd=1.5); abline(v=mean(ind.infN),col="red",lwd=1.5)
       title(main=letters[3+letN],adj=0)
     
     }
@@ -375,30 +376,27 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     ag.coord=read.csv("datasets/antigenic_coords.csv", as.is=T,head=T)
     
     par(mfrow=c(1,1))
-    par(mar = c(5,5,1,1))
+    par(mar = c(4,4,1,1))
     
-    vals1=predict(am.spl,scalemap(inf_years))
+    vals1=predict(am.spl,scalemap(inf_years,inf_years))
     map.sample=length(map.tabCollect)
 
     MTx=c(332,372)
-    MTy=c(245,262)
-    plot(vals1,type="l",xlim=MTx,ylim=MTy,col="white",lwd=2,xlab="strain dimension 1", xaxs="i", yaxs="i",ylab="strain dimension 2")
+    MTy=c(245,261)
+    plot(vals1,type="l",xlim=MTx,ylim=MTy,col="white",lwd=2,xlab="strain dimension 1", xaxs="i", yaxs="i",
+         ylab="strain dimension 2")
     
-    #lines(inf_years,inf_years-min(inf_years),col="lightgray",lty=2)
-    #plot(map.tabCollect[1,],0*map.tabCollect[1,],type="l",ylim=c(0,1),col="white",yaxt="n",ylab="",yaxs="i",xlab="strain position")
-    for(ii in 1:100){
-      #pick=sample(c(round(0.15*map.sample):map.sample),1)
-      pick=sample(c(1:map.sample),1)
-      vals1=predict(am.spl,scalemap(map.tabCollect[[pick]]))
-      #sigma.scale=as.numeric(as.data.frame(thetatab)[pick*20,]["sigma"]) # scale to one antigenic unit
-      #map.pick = map.tabCollect[[pick]]
-      points(vals1,col=rgb(0.5,0.5,0.9,0.1),pch=19,cex=1)
-    }
+    points(ag.coord$AG_y,ag.coord$AG_x,col='grey',pch=19,cex=0.8)
+    lines(vals1,col="blue")
+    points(vals1$x,vals1$y,col="blue",pch=19,cex=0.5)
+    points(vals1$x[1],vals1$y[1],col="blue",pch=19)
+    points(vals1$x[45],vals1$y[45],col="blue",pch=19)
+    text(x=335.9,y=255.2,labels="1968",col="blue")
+    text(x=370.2,y=248.4,labels="2012",col="blue")
     
-    points(ag.coord$AG_y,ag.coord$AG_x)
-
-    #dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=6)
-    #dev.off()
+    dev.copy(pdf,paste("plot_simulations/antigenic_map",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=6,height=4)
+    dev.off()
+    
   }
 
 }
@@ -460,10 +458,10 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),burnCut=0.25,year_test=c(2007:2012),plotmap=F,fr.lim=F,linearFn=F){
+plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),burnCut=0.25,year_test=c(2007:2012),plotmap=F,fr.lim=F,linearFn=F,runsPOST=NULL){
   
   # simDat=F;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; linearFn=T
-  # simDat=T;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; loadseed=1; linearFn=T
+  # simDat=T;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; loadseed=1; linearFn=T; runsPOST=NULL
   
   storeMu = NULL
   storeMu2 = NULL
@@ -479,6 +477,7 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
   }
   
   col.list=list(col1=rgb(0.9,0.6,0),col2=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
+  # Orange, blue, green, pink
   
   for(loadseed in loadpick){
   
@@ -488,7 +487,9 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
 
     # Define lengths and sizes of inputs
     lik.tot=rowSums(likelihoodtab)
-    runsPOST=min(8e5, length(lik.tot[lik.tot!=-Inf]) )
+    if(is.null(runsPOST)){
+      runsPOST = min(8e5, length(lik.tot[lik.tot!=-Inf]) )
+    }
     maxlik=max(lik.tot[1:runsPOST])
     #plot(as.data.frame(thetatab)$mu[runs1:runsPOST],type="l",ylab="mu")
     
@@ -513,52 +514,53 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
   }
   
   # Plot MCMC chains
-  if(flu.type=="H3FS" ){ par(mfrow=c(3,2)) }else{ par(mfrow=c(4,2)) }
+  if(flu.type=="H3FS" ){ par(mfrow=c(2,3)) }else{ par(mfrow=c(2,4)) }
   
-  
-  par(mar = c(4,4,1,1))
+  par(xpd=F)
+  par(mar = c(3.5,3.5,1,1))
   par(mgp=c(1.8,0.6,0))
   colA=rgb(0.8,0.8,0.8)
   Ctrue="black";Wtrue=2
   
   maxlik=max(storeLik)
-  plot(storeLik[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="likelihood",ylim=c(maxlik-ifelse(simDat==F,1000,500),maxlik+100)); for(ii in 2:length(loadpick)){ lines(storeLik[ii,],type="l",col=col.list[[ii]]) }
-  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(-100000,100),col="gray",lty=2)
+  plot(1:length(storeLik[1,]),storeLik[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="likelihood",ylim=c(maxlik-ifelse(simDat==F,1000,500),maxlik+100) ); 
+  for(ii in 2:length(loadpick)){ lines(storeLik[ii,],type="l",col=col.list[[ii]] , ylim=c(maxlik-ifelse(simDat==F,1000,500),maxlik+100)) }
+  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(maxlik-ifelse(simDat==F,1000,500),maxlik+100),col="gray",lty=2)
 
   if(!(flu.type=="H3FS" )){ 
-    plot(storeWane[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="wane",ylim=c(0,ifelse(fr.lim==F,2.5,max(storeWane[1,])))); for(ii in 2:length(loadpick)){ lines(storeWane[ii,],type="l",col=col.list[[ii]]) }
-    lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,100),col="gray",lty=2)
-    if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["wane"]],theta.true[["wane"]]),col=Ctrue,lwd=Wtrue) }
+    plot(storeWane[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(omega),ylim=c(0,1.2)); for(ii in 2:length(loadpick)){ lines(storeWane[ii,],type="l",col=col.list[[ii]]) }
+    lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,1.2),col="gray",lty=2)
+    if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["wane"]],theta.true[["wane"]]),col=Ctrue,lwd=Wtrue) }
   }
-  plot(storeMu[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="mu",ylim=c(0,ifelse(fr.lim==F,4,max(storeMu)))); for(ii in 2:length(loadpick)){ lines(storeMu[ii,],type="l",col=col.list[[ii]]) }
-  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,100),col="gray",lty=2)
+  plot(storeMu[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[1]),ylim=c(0,4)); for(ii in 2:length(loadpick)){ lines(storeMu[ii,],type="l",col=col.list[[ii]]) }
+  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,4),col="gray",lty=2)
   if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["mu"]],theta.true[["mu"]]),col=Ctrue,lwd=Wtrue) }
   
   if(!(flu.type=="H3FS")){ 
-    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="mu2",ylim=c(0,ifelse(fr.lim==F,4,max(storeMu2)))); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,],type="l",col=col.list[[ii]]) }
-    lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,100),col="gray",lty=2)
-    if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["muShort"]],theta.true[["muShort"]]),col=Ctrue,lwd=Wtrue) }
+    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[2]),ylim=c(0,4)); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,],type="l",col=col.list[[ii]]) }
+    lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,4),col="gray",lty=2)
+    if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["muShort"]],theta.true[["muShort"]]),col=Ctrue,lwd=Wtrue) }
   }
   
-  plot(storeSigma[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="sigma",ylim=c(0,ifelse(fr.lim==F,0.6,max(storeSigma)))); for(ii in 2:length(loadpick)){ lines(storeSigma[ii,],type="l",col=col.list[[ii]]) }
-  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,100),col="gray",lty=2)
-  if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["sigma"]],theta.true[["sigma"]]),col=Ctrue,lwd=Wtrue) }
+  plot(storeSigma[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[1]),ylim=c(0,0.4)); for(ii in 2:length(loadpick)){ lines(storeSigma[ii,],type="l",col=col.list[[ii]]) }
+  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,0.4),col="gray",lty=2)
+  if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["sigma"]],theta.true[["sigma"]]),col=Ctrue,lwd=Wtrue) }
   
   if(!(flu.type=="H3FS" )){ 
-    plot(storeSigma2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="sigma2",ylim=c(0,0.6)); for(ii in 2:length(loadpick)){ lines(storeSigma2[ii,],type="l",col=col.list[[ii]]) }
-    lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,100),col="gray",lty=2)
-    if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["sigma2"]],theta.true[["sigma2"]]),col=Ctrue,lwd=Wtrue) }
+    plot(storeSigma2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[2]),ylim=c(0,0.4)); for(ii in 2:length(loadpick)){ lines(storeSigma2[ii,],type="l",col=col.list[[ii]]) }
+    lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,0.4),col="gray",lty=2)
+    if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["sigma2"]],theta.true[["sigma2"]]),col=Ctrue,lwd=Wtrue) }
   }
   
-  plot(storeError[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="error",ylim=c(0,ifelse(fr.lim==F,2,max(storeError)))); for(ii in 2:length(loadpick)){ lines(storeError[ii,],type="l",col=col.list[[ii]]) }
-  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,100),col="gray",lty=2)
-  if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["error"]],theta.true[["error"]]),col=Ctrue,lwd=Wtrue) }
+  plot(storeError[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(epsilon),ylim=c(0,2.5)); for(ii in 2:length(loadpick)){ lines(storeError[ii,],type="l",col=col.list[[ii]]) }
+  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,2.5),col="gray",lty=2)
+  if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["error"]],theta.true[["error"]]),col=Ctrue,lwd=Wtrue) }
   
-  plot(storeTau2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="tau2",ylim=c(0,ifelse(fr.lim==F,0.2,max(storeTau2)))); for(ii in 2:length(loadpick)){ lines(storeTau2[ii,],type="l",col=col.list[[ii]]) }
-  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,100),col="gray",lty=2)
-  if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["tau2"]],theta.true[["tau2"]]),col=Ctrue,lwd=Wtrue) }
+  plot(storeTau2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(tau),ylim=c(0,0.15)); for(ii in 2:length(loadpick)){ lines(storeTau2[ii,],type="l",col=col.list[[ii]]) }
+  lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,0.15),col="gray",lty=2)
+  if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["tau2"]],theta.true[["tau2"]]),col=Ctrue,lwd=Wtrue) }
   
-  dev.copy(png,paste("plot_simulations/MCMC_chains",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,"_lin",linearFn,".png",sep=""),units="cm",width=15,height=20,res=300)
+  dev.copy(png,paste("plot_simulations/MCMC_chains",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,"_lin",linearFn,".png",sep=""),units="cm",width=20,height=10,res=300)
   dev.off()
   
   
@@ -707,6 +709,8 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
     par(mgp=c(2,0.5,0))
     # Mask infections after test year
     
+    yrange1=c(-0.2,9)
+    
   for(ii0 in 1:n_part){
       
     for(pickyr in 1:n.test){
@@ -715,11 +719,11 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       simtitreY=store.mcmc.test.data[,ii0,,pickyr,2] # pick out estimates
       hist.sample=store.mcmc.hist.data[,ii0,,pickyr] # for participant ii0 in year pickyr
   
-      plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,9),col='white',xlab="",ylab="",main=paste("Participant ",ii0,", ",year_test[pickyr],sep=""))
+      plot(inf_years,8*hist.sample[1,],type="l",ylim=yrange1,yaxs='i',col='white',xlab="",ylab="",main=paste("Participant ",ii0,", ",year_test[pickyr],sep=""))
       
       # Sample from infection history
       for(jj in 1:n.inf){
-          lines(min(inf_years)-1+c(jj,jj),c(-1,11),col=rgb(0,0,0,sum(hist.sample[,jj])/btstrap),lwd=2) # Plot estimated infections
+          lines(min(inf_years)-1+c(jj,jj),c(yrange1[1]+0.05,yrange1[2]-0.05),col=rgb(0,0,0,sum(hist.sample[,jj])/btstrap),lwd=2) # Plot estimated infections
       }
       
       # Calculate credible interval for expected titres
@@ -748,12 +752,13 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
         histSim1[inf_years>year_test[pickyr]]=0 # don't show infections after test year
         lenhis=rep(0,length(histSim1))
         for(jj in 1:length(lenhis)){
-          lines(min(inf_years)-1+c(jj,jj),c(10*histSim1[jj]-1.5,12*histSim1[jj]-2),col=rgb(0,0.6,0),lwd=3)
+          lines(min(inf_years)-1+c(jj,jj),c(20*histSim1[jj]-11.5,20*histSim1[jj]-11),col=rgb(0,0.6,0),lwd=3)
         }
       }
       
       if(ii0 %% loopN==0 | ii0==n_part){
-        dev.copy(pdf,paste("plot_simulations/titre_compare/sim",loadseed,"_",ii0,"P.pdf",sep=""),width=10,height=8)
+        #dev.copy(pdf,paste("plot_simulations/titre_compare/sim",loadseed,"_",ii0,"P.pdf",sep=""),width=10,height=8)
+        dev.copy(png,paste("plot_simulations/titre_compare/sim",loadseed,"_",ii0,"P.png",sep=""),units="cm",width=25,height=15,res=150)
         dev.off()
       }
     
@@ -767,13 +772,13 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # FIGURE PLOT Plot expected titres using sampled posterior estimates against true titres 
 
-plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5,part_pick=c(31,57,25),year_pick=c(2008:2010)){
+plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5,part_pick=c(31,57,25),year_pick=c(2008:2010),linearFn=T){
   
   # year_pick=c(2008:2010);part_pick=c(15,31,57)
   
-  # year_pick=c(2008:2010);part_pick=c(31,57,25) ; simDat = F;  year_test=c(2007:2012); btstrap=50; loadseed = 1; flu.type="H3HN"
+  # year_pick=c(2008:2010);part_pick=c(31,57,25) ; simDat = F;  year_test=c(2007:2012); btstrap=50; loadseed = 1; flu.type="H3HN"; linearFn=T
   
-  # year_pick=c(2009);part_pick=c(31,57,25,1,2,3) ; simDat = F;  year_test=c(2009); btstrap=50; loadseed = 1; flu.type="H3FS"
+  # year_pick=c(2009);part_pick=c(31,57,25,1,2,3) ; simDat = F;  year_test=c(2009); btstrap=50; loadseed = 1; flu.type="H3FS"; linearFn=T
   
   
   if(simDat==F){
@@ -788,7 +793,7 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
     hist.true=historytabSim
   }
   
-  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,".RData",sep="")) # Note that this includes test.listPost
+  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,"_lin",linearFn,".RData",sep="")) # Note that this includes test.listPost
   
   lik.tot=rowSums(likelihoodtab)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
@@ -823,7 +828,7 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
                     strain_years,
                     n_part,thetastar=theta.max,p.inf=0.1,
                     #pmask=c("sigma2"), # For old fitted data, need to specify that sigma2 wasn't fitted
-                    linD=F)
+                    linD=linearFn)
       
       load("R_datasets/Simulated_dataPost_1.RData")
       
@@ -846,10 +851,12 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   # - - - - - - - - - - - - 
   # Plot figures from MCMC posteriors
   
-  if(flu.type=="H3FS"){par(mfcol=c(4,3))}else{par(mfrow=c(4,3))} #layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
+  if(flu.type=="H3FS"){par(mfrow=c(4,3))}else{par(mfrow=c(4,3))} #layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
   par(mgp=c(1.8,0.6,0))
   ymax=8.2
-  titleN = ifelse(flu.type=="H3FS",1,4)
+  titleN = ifelse(flu.type=="H3FS",10,1)
+  
+  yrange1=c(-0.2,9)
   
   for(ii0 in 1:n.ppart){
 
@@ -863,12 +870,12 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
       #par(mar = c(2,2,1,1)) #B L T R
 
       par(mar = c(2,3,1,1))
-      plot(inf_years,8*hist.sample[1,],type="l",ylim=c(0,ymax),col='white',xlab=ifelse(ii0==3,"",""),ylab="log titre",main=year_pick[pickyr],xlim=c(1966,2011))
+      plot(inf_years,8*hist.sample[1,],type="l",yaxs="i",ylim=yrange1,col='white',xlab=ifelse(ii0==3,"",""),ylab="log titre",main=year_pick[pickyr],xlim=c(1966,2011))
       axis(side = 1, at = inf_years, labels = FALSE, tck = -0.01)
       
       # Sample from infection history
       for(jj in 1:n.inf){
-        lines(min(inf_years)-1+c(jj,jj),c(-1,11-1),col=rgb(0,0,0,sum(hist.sample[,jj])/btstrap),lwd=2) # Plot estimated infections
+        lines(min(inf_years)-1+c(jj,jj),c(yrange1[1]+0.05,yrange1[2]-0.05),col=rgb(0,0,0,sum(hist.sample[,jj])/btstrap),lwd=2) # Plot estimated infections
       }
 
       # Calculate credible interval for expected titres
@@ -1324,15 +1331,16 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     points(x=xx[pick_years[1]],y=yy[pick_years[1]],cex=1.5, col="red", lwd=2)
     title(main=letters[3],adj=0)
     
+    infcol="red"
     
     # Project along summary path
     par(mar = c(2,4,1,2))
     plot(inf_years,predOutput(pred_matrixS1),type="l",col="blue",ylim=c(0,ymax),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
-    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(-1,10),lwd=2)
+    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(0,ymax),lwd=2,col=infcol)
     title(main=letters[2],adj=0)
     
     plot(inf_years,predOutput(pred_matrixL1),type="l",col="blue",ylim=c(0,ymax),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
-    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(-1,10),lwd=2)
+    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(0,ymax),lwd=2,col=infcol)
     title(main=letters[4],adj=0)
     
     par(mar = c(4,4,2,2))
@@ -1358,12 +1366,12 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     # Project along summary path
     par(mar = c(2,4,1,2))
     plot(inf_years,predOutput(pred_matrixS2),type="l",col="blue",ylim=c(0,ymax),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
-    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(-1,10),lwd=2)
-    lines(c(inf_years[pick_years[2] ],inf_years[pick_years[2] ]),c(-1,10),lwd=2)
+    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(0,ymax),lwd=2,col=infcol)
+    lines(c(inf_years[pick_years[2] ],inf_years[pick_years[2] ]),c(0,ymax),lwd=2,col=infcol)
     title(main=letters[6],adj=0)
     plot(inf_years,predOutput(pred_matrixL2),type="l",col="blue",ylim=c(0,ymax),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
-    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(-1,10),lwd=2)
-    lines(c(inf_years[pick_years[2] ],inf_years[pick_years[2] ]),c(-1,10),lwd=2)
+    lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(0,ymax),lwd=2,col=infcol)
+    lines(c(inf_years[pick_years[2] ],inf_years[pick_years[2] ]),c(0,ymax),lwd=2,col=infcol)
     title(main=letters[8],adj=0)
     
     
@@ -1379,7 +1387,7 @@ plot_h3_reports <- function(){
   
   par(mfrow=c(3,1))
   par(mgp=c(1.8,0.6,0))
-  par(mar = c(4,4,1,1))
+  par(mar = c(3,3,1,1))
   
   test.yr=c(2007:2012)
   
@@ -1404,10 +1412,10 @@ plot_h3_reports <- function(){
 
   xLims=c(as.Date("2007-12-30"),as.Date("2012-06-01"))
 
-  plot(flu.isolates$Start_date,flu.isolates$total_flu_positive,type="l",xlab="Date",ylab="Total isolates detected",ylim=c(0,100),xlim=xLims);title(letters[1],adj=0)
+  plot(flu.isolates$Start_date,flu.isolates$total_flu_positive,type="l",xlab="year",ylab="Total isolates detected",ylim=c(0,100),xlim=xLims);title(letters[1],adj=0)
   
   
-  plot(flu.isolates$Start_date,flu.isolates$A_H3,type="l",xlab="Date",ylab="H3 isolates detected",ylim=c(0,100),xlim=xLims);title(letters[2],adj=0)
+  plot(flu.isolates$Start_date,flu.isolates$A_H3,type="l",xlab="year",ylab="H3 isolates detected",ylim=c(0,100),xlim=xLims);title(letters[2],adj=0)
   for(ii in 1:length(collect.list$year)){
     lines(c(collect.list[ii,"sample"],collect.list[ii,"sample"]),c(0,100),col="red")
   }
@@ -1416,7 +1424,7 @@ plot_h3_reports <- function(){
   plot(collect.list$sample[3:7], isolatetab,ylim=c(0,800),pch=19,col="red",xlab="year",ylab="H3 isolates detected",xlim=xLims);title(letters[3],adj=0)
   
 
-  dev.copy(pdf,paste("plot_simulations/H3Data.pdf",sep=""),width=5,height=7,useDingbats=F)
+  dev.copy(pdf,paste("plot_simulations/H3Data.pdf",sep=""),width=6,height=6,useDingbats=F)
   dev.off()
   
 }

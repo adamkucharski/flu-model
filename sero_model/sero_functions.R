@@ -675,7 +675,7 @@ run_mcmc<-function(
     
     # Adaptive covariance matrix
     if(m==1){
-      epsilon0=0.1
+      epsilon0=0.01
       #cov_matrix_theta=epsilon0*cov_matrix_thetaA
       cov_matrix_basic=epsilon0*cov_matrix_theta0
       varpart_prob0=varpart_prob
@@ -914,7 +914,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   #tau1=back-boost  / tau2=suppress / disp_k=dispersion (deprecated) 
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
-  thetaSim = c(mu=3,tau1=0.02,tau2=0.1,wane=0.7,sigma=0.3,muShort=3,error=1,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
+  thetaSim = c(mu=2,tau1=0.02,tau2=0.05,wane=1,sigma=0.3,muShort=2,error=1,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
   
   if(strain.fix==T){
     strain_years0 = strain_years
@@ -951,14 +951,14 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=1,sigma2=0.1)
-  theta0[["mu"]]=3+ if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # basic boosting
+  theta0[["mu"]]=2+ if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # back-boost
-  theta0[["tau2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # suppression via AGS
-  theta0[["wane"]]= 0.5 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
+  theta0[["tau2"]]=0.05+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # suppression via AGS
+  theta0[["wane"]]= 1 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
   theta0[["sigma"]]=0.3+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # long-term cross-reaction
   theta0[["sigma2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.05*runif(1,c(-1,1))}else{0} # short-term cross-reaction
-  theta0[["muShort"]]=3 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # short term boosting
-  theta0[["error"]]= 1 + if(sum(fix.param=="vary.init")>0){0.25*runif(1,c(-1,1))}else{0} # measurement error
+  theta0[["muShort"]]=2 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # short term boosting
+  theta0[["error"]]= 1 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # measurement error
   theta0[["disp_k"]]=0.1 # overdispersion (deprecated)
   theta=theta0
 
