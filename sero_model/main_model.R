@@ -119,7 +119,7 @@ plot.posterior.titres.select(loadseed=1,year_test=c(2009),flu.type="H3FS",simDat
 #plot.antibody.changes(btstrap=200)
 
 # Rewind and run historical landscapes (FIG 2) -- NEED TO UPDATE FOR LINEAR/EXP FUNCTIONS
-run.historical.landscapes(loadseed=1,ymax=6.05,linearFn=T,d.step=0.25)
+run.historical.landscapes(loadseed=1,ymax=6.05,linearFn=T,d.step=0.2)
 
 
 # - - - - - - - - - - - - - - - - - 
@@ -171,7 +171,7 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",simDat=T,year_test=c(20
 
 
 # Plot convergence for MCMC chains for H3 China simulated data
-plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",simDat=T,year_test=2009)
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",simDat=T,year_test=2009,linearFn=T)
 
 
 # Plot simulation study posteriors and attack rate comparisons for simulation plots

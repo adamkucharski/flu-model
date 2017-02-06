@@ -111,7 +111,9 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   }
   # Plot distribution of infections
   hist.sample=length(historytabCollect[,1])/n_part # need this sample value because table is stacked
-  ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
+  
+  ind.infN=rowSums(historytabCollect[((round(0.2*hist.sample)*n_part)+1):(hist.sample*n_part),])
+  
   #hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col=colA,xlab="infections",prob=TRUE,main="",xlim=c(0,44)) #paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep="")
 
   # Adjust for age - TO ADD?
@@ -166,8 +168,8 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     c("sigma2drop",c.text(thin.theta[["muShort"]]*(thin.theta[["sigma2"]])) ,ESS.label2(ESS.calc[["sigma2"]])),
     c("wane_yr",c.text(thin.theta[["muShort"]]*(thin.theta[["wane"]])),ESS.label2(ESS.calc[["wane"]]) ),
     #c("errorCorrect",c.text( pnorm(ceiling(thin.theta[["mu"]]) + 1,mean=thin.theta[["mu"]],sd=thin.theta[["error"]])-pnorm(floor(thin.theta[["mu"]]),mean=thin.theta[["mu"]],sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) )
-    c("errorCorrect1",c.text( pnorm( 3,mean=2.5,sd=thin.theta[["error"]])-pnorm(2,mean=2.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) ),
-    c("errorCorrect2",c.text( pnorm( 4,mean=2.5,sd=thin.theta[["error"]])-pnorm(1,mean=2.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) )
+    c("errorCorrect1",c.text( pnorm( 3,mean=1.5,sd=thin.theta[["error"]])-pnorm(2,mean=2.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) ),
+    c("errorCorrect2",c.text( pnorm( 4,mean=1.5,sd=thin.theta[["error"]])-pnorm(1,mean=2.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) )
     
     )
   
@@ -321,7 +323,22 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     #}
     #attackCIsero=data.frame(attackCIsero)
     #names(attackCIsero)=c("mean","CI1","CI2")
-
+    
+    # fit distribution to infection data ***
+    
+    #Poisson.distn = fitdistr(ind.infN,densfun="Poisson")
+    #NBin.distn = fitdistr(ind.infN,densfun="negative binomial")
+    
+    inf.individuals = matrix(ind.infN,ncol=69,byrow=T)
+    inf.samples = length(inf.individuals[,1])
+    
+    inf.individuals.sorted = inf.individuals[,order(colSums(inf.individuals))]
+    age.list.censored = 2012 - sapply(yob.data[,1],function(x){max(x,1968)})
+    
+    per.year=apply(inf.individuals.sorted,2,function(x){c.nume(x)})
+    #plot(per.year[1,]/age.list.censored)
+    
+    # Plot data
     # Replot attack rates
     
     par(mfrow=c(1,3))
@@ -343,7 +360,8 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     
     #if(flu.type=="H3HN"){
     
-      plot(isolatetab,attackCI$mean[pick_years],pch=19,cex=1.2,col="red",ylim=c(0,1),xlim=c(0,700),xlab="H3 isolates during sample period",ylab="estimated attack rate", xaxs="i", yaxs="i")
+    
+     plot(isolatetab,attackCI$mean[pick_years],pch=19,cex=1.2,col="red",ylim=c(0,1),xlim=c(0,700),xlab="H3 isolates during sample period",ylab="estimated attack rate", xaxs="i", yaxs="i")
       for(kk in 1:length(pick_years)){ # Iterate across test years
         lines(c(isolatetab[kk],isolatetab[kk])+0.5,c(attackCI$CI1[pick_years[kk]],attackCI$CI2[pick_years[kk]]),col="red")
       }
@@ -356,8 +374,16 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
       
       title(main=letters[2+letN],adj=0)
   
+      # PLOT INFECTIONS
+      
+      
+      plot(per.year[1,],pch=19,cex=0.9,col=rgb(0.25,0.25,0.25),ylim=c(0,45),xlim=c(0,n_part+1),xlab="participant",ylab="estimated number of infections", xaxs="i", yaxs="i")
+      for(kk in 1:n_part){ # Iterate across test years
+        lines(c(kk,kk),c(per.year[2,kk],per.year[3,kk]),col=rgb(0.25,0.25,0.25))
+      }
+      
       ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
-      hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col =rgb(0.8,0.8,0.8),xlab="number of infections",prob=TRUE,xlim=c(0,50),ylim=c(0,0.1),xaxs="i",yaxs="i", main=NULL,ylab="density")
+      #hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col =rgb(0.8,0.8,0.8),xlab="number of infections",prob=TRUE,xlim=c(0,50),ylim=c(0,0.1),xaxs="i",yaxs="i", main=NULL,ylab="density")
       #abline(v=median(ind.infN),col="red",lty=2,lwd=1.5); abline(v=mean(ind.infN),col="red",lwd=1.5)
       title(main=letters[3+letN],adj=0)
     
@@ -1213,7 +1239,7 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     n.strains=length(strain_years) # this loads from main_model.R
     n.inf=length(inf_years)
     
-    pick_years = c(1,31)
+    pick_years = c(1,21) #c(1,31)
     hist.sample0=rep(c(rep(0,pick_years[1]-1),1,rep(0,pick_years[2]-1)),100)[1:n.inf] # CURRENTLY JUST FOR ONE PARTICIPANT
     simTest.year=sort(c(inf_years[hist.sample0==1],inf_years[hist.sample0==1]+1)) # infection year and one year after
     n.test=length(simTest.year)
@@ -1229,6 +1255,8 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     storetitreL1 <- rep(NA,length(points.j[,1]))
     storetitreS2 <- rep(NA,length(points.j[,1]))
     storetitreL2 <- rep(NA,length(points.j[,1]))
+    storetitreS3 <- rep(NA,length(points.j[,1]))
+    #storetitreL3 <- rep(NA,length(points.j[,1]))
     
     right.censor <- function(x){min(8, x)}
     pickA <- (lik.tot==max(lik.tot)) # pick MAP estimate #sample(c(runs1:runsPOST),1)
