@@ -42,7 +42,7 @@ scale.map<-function(map.pick){
 
 plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012),plotmap=F,fr.lim=F,plot.corr=F,linearFn=F){
 
-  # simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
+  # simDat=F;loadseed=2;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
   # simDat=T;loadseed="SIM_1";year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
@@ -93,8 +93,8 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   # Plot results
   #if(simDat==T){ plot(c(1:runsPOST),lik.tot[1:runsPOST],type="l",ylab="likelihood",xlab="iteration") }
   
-  plot(c(runs1:runsPOST),lik.tot[runs1:runsPOST],type="l",ylab="likelihood",xlab="iteration")
-  
+  #plot(c(runs1:runsPOST),lik.tot[runs1:runsPOST],type="l",ylab="likelihood",xlab="iteration")
+  plot(c(1,2,3))
   
   # Plot histograms of parameters
   #hist(thin.theta[["error"]],main=ESS.label(ESS.calc[["error"]]),col=colA,xlab="error",prob=TRUE,xlim=c(0,ifelse(fr.lim==F,0.1,1.1*max(thin.theta[["error"]])))); if(simDat==T){abline(v=theta.sim.out[["error"]],col="red")}
@@ -223,6 +223,53 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     
     dev.copy(pdf,paste("plot_simulations/postCompare",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
     dev.off()
+    
+    # - - - - - - - - - - - - - - - - - - 
+    # Calculate and plot four fold rise in data
+    sconverttab = NULL
+    
+    for(kk in 2:(length(test.yr)-1) ){ # Only valid for 2008-2011 (no test strains for 2012)
+      pyear2=0
+      pyear4=0
+      nyear=0
+      for(ii in 1:n_part){
+        t.part1=test.listSim[[ii]][[kk-1]]
+        t.part2=test.listSim[[ii]][[kk]]
+
+          # Check to match test strains
+          matchd1d2 = t.part2[3,]==test.yr[kk]
+          
+          if(length(matchd1d2) > 0){
+            
+            diffT = t.part2[2,matchd1d2] - t.part1[2,matchd1d2] # Compare titres
+            nyear = nyear +1
+            if(median(diffT) >= 2){pyear4 = pyear4 + 1}
+            if(median(diffT) >= 1){pyear2 = pyear2 + 1}
+          }
+          
+      }
+      sconverttab=rbind(sconverttab, c(pyear4/nyear,pyear2/nyear))
+    }
+    
+    pick_r=match(test_years[2:(length(test.yr)-1)],inf_years)
+    
+    par(mfrow=c(1,1),mar = c(4,4,1,1),mgp=c(1.8,0.6,0))
+    
+    plot(attack.yr[pick_r],attackCI[pick_r,"mean"],pch=19,col=colG,xlim=c(0,0.6),ylim=c(0,1),xlab="true attack rate",ylab="estimated attack rate", xaxs="i", yaxs="i")
+    lines(c(0,1),c(0,1),col='grey')
+    for(kk in pick_r){ # Iterate across test years
+      if(sum(kk==match(year_test,inf_years))>0){colComp="red"}else{colComp=colG}
+      points(attack.yr[kk],attackCI$mean[kk],pch=19,col=colComp,cex=1)
+      lines(c(attack.yr[kk],attack.yr[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colComp)
+    }
+    
+    points(attack.yr[pick_r], sconverttab[,2],pch=1,cex=1.2,col="black")
+    points(attack.yr[pick_r], sconverttab[,1],pch=19,cex=1.2,col="black")
+
+    
+    dev.copy(pdf,paste("plot_simulations/True_vs_rise",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
+    dev.off()
+    
   }
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -298,10 +345,10 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
           
           if(length(matchd1d2) > 0){
             
-            diffT = t.part2[2,match(matchd1d2,names(t.part2))] - t.part1[2,match(matchd1d2,names(t.part1))] # Compare titres
+            diffT = (t.part2[2,match(matchd1d2,names(t.part2))] - t.part1[2,match(matchd1d2,names(t.part1))] ) %>% as.numeric() # Compare titres
             nyear = nyear +1
-            if(max(diffT) >= 2){pyear4 = pyear4 + 1}
-            if(max(diffT) >= 1){pyear2 = pyear2 + 1}
+            #if(max(diffT) >= 2){pyear4 = pyear4 + 1}; if(max(diffT) >= 1){pyear2 = pyear2 + 1}
+            if(median(diffT) >= 2){pyear4 = pyear4 + 1}; if(median(diffT) >= 1){pyear2 = pyear2 + 1}
           }
           
         }
@@ -372,6 +419,10 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
       #  lines(c(isolatetab[kk],isolatetab[kk])+0.5,c(attackCIsero$CI1[kk],attackCIsero$CI2[kk]),col=rgb(0.5,0.5,0.5))
       #}
       
+      print(cor.test(isolatetab,attackCI$mean[pick_years]))
+      print(cor.test(isolatetab,sconverttab[,2]))
+      print(cor.test(isolatetab,sconverttab[,1]))
+      
       title(main=letters[2+letN],adj=0)
   
       # PLOT INFECTIONS
@@ -387,7 +438,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
       #abline(v=median(ind.infN),col="red",lty=2,lwd=1.5); abline(v=mean(ind.infN),col="red",lwd=1.5)
       title(main=letters[3+letN],adj=0)
     
-    }
+    } # END OF LOOP
     
    dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=3)
     #dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=6,useDingbats = F)
@@ -1507,6 +1558,99 @@ plot_h3_china_reports <- function(){
   dev.off()
   
 }
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Run multi-chain diagnostics
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),burnCut=0.25,year_test=c(2007:2012),plotmap=F,fr.lim=F,linearFn=F,runsPOST=NULL){
+  
+  # simDat=T;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; loadseed=1; linearFn=T; runsPOST=NULL
+
+  
+  col.list=list(col1=rgb(0.9,0.6,0),col2=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
+  # Orange, blue, green, pink
+  par(mfrow=c(1,1),mar = c(3,3,1,1),mgp=c(1.8,0.6,0))
+  plot(0.1,0.1,pch=19,col="white",xlim=c(0,0.3),ylim=c(0,0.3),xlab="true attack rate",ylab="estimated attack rate", xaxs="i", yaxs="i")
+  lines(c(0,1),c(0,1),col='grey')
+  
+  for(loadseed in loadpick){
+    
+    if(simDat==F){loadseedA=paste(loadseed,"_",flu.type,sep="")}else{loadseedA=paste("SIM_",loadseed,sep="")}
+    load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseedA,"_lin",linearFn,".RData",sep=""))
+    
+    hist.sample=length(historytabCollect[,1])/n_part # need this sample value because table is stacked
+    
+    ind.infN=rowSums(historytabCollect[((round(0.2*hist.sample)*n_part)+1):(hist.sample*n_part),])
+    
+    
+    yob.data=cbind(rep(1,n_part),rep(1,n_part)) # Import age distribution
+    n.alive=n_part+0*inf_years
+    
+    attack=colSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])/(length(ind.infN)*(n.alive/length(yob.data[,1]))) #scale by proportion alive
+    attackCI=NULL
+    for(jj in 1:length(inf_years)){
+      htest <- binom.test(round(n.alive*attack)[jj], n.alive[jj], p = 1,conf.level=0.95)
+      meanA=attack[jj]
+      conf1=htest$conf.int[1]
+      conf2=htest$conf.int[2]
+      attackCI=rbind(attackCI,c(meanA,conf1,conf2))
+    }
+    attackCI=data.frame(attackCI)
+    names(attackCI)=c("mean","CI1","CI2")
+    load(paste("R_datasets/Simulated_data_",loadseedA,".RData",sep=""))
+    attack.yr=colSums(historytabSim)/n_part
+
+    # - - - - - - - - - - - - - - - - - - 
+    # Calculate and plot four fold rise in data
+    sconverttab = NULL
+    
+    for(kk in 2:(length(test.yr)-1) ){ # Only valid for 2008-2011 (no test strains for 2012)
+      pyear2=0
+      pyear4=0
+      nyear=0
+      for(ii in 1:n_part){
+        t.part1=test.listSim[[ii]][[kk-1]]
+        t.part2=test.listSim[[ii]][[kk]]
+        
+        # Check to match test strains
+        matchd1d2 = t.part2[3,]==test.yr[kk]
+        
+        if(length(matchd1d2) > 0){
+          
+          diffT = t.part2[2,matchd1d2] - t.part1[2,matchd1d2] # Compare titres
+          nyear = nyear +1
+          if(median(diffT) >= 2){pyear4 = pyear4 + 1}
+          if(median(diffT) >= 1){pyear2 = pyear2 + 1}
+        }
+        
+      }
+      sconverttab=rbind(sconverttab, c(pyear4/nyear,pyear2/nyear))
+    }
+    
+    pick_r=match(test_years[2:(length(test.yr)-1)],inf_years)
+
+    for(kk in pick_r){ # Iterate across test years
+      points(attack.yr[kk],attackCI$mean[kk],pch=19,col=rgb(1,0,0),cex=0.5)
+      lines(c(attack.yr[kk],attack.yr[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=rgb(1,0,0))
+    }
+    
+    points(attack.yr[pick_r], sconverttab[,2],pch=1,cex=1.2,col=rgb(0,0,0))
+    points(attack.yr[pick_r], sconverttab[,1],pch=19,cex=1.2,col=rgb(0,0,0))
+    
+    
+  }
+  
+  dev.copy(pdf,paste("plot_simulations/True_vs_rise",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=5,height=4)
+  dev.off()
+
+  
+  
+}
+
+
+
 
 
 # Convert map ID tags to strain years
