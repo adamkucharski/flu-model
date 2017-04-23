@@ -358,7 +358,7 @@ simulate_data<-function(test_years,
     historytabSim=matrix(0,ncol=inf.n,nrow=n_part)
     for(ii in 1:inf.n){
       #hist0=(runif(inf.n)<attack.yr)+0
-      #alive=((max(test_years)-age.yr[ii])<=inf_years) - ignore age structure for the moment
+      #alive=((max(test_years)-age.yr[ii])<=inf_years) - ignore age structure in simulations
       historytabSim[sample(n_part,round(n_part*attack.yr[ii])),ii]=1
     }
   }else{
@@ -928,11 +928,13 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   yy=predict(am.spl,xx)$y
   antigenic.map0=cbind(xx,yy)
   
-  attack.yr=read.csv("datasets/sim_attack.csv")[1:length(inf_years),1]
+  #attack.yr=read.csv("datasets/sim_attack.csv")[1:length(inf_years),1]
+  # Simulate multiple
+  sd.param=0.5
+  attack.yr=rlnorm(inf_years.in,meanlog=log(0.15)-sd.param^2/2,sdlog=sd.param)
+  attack.yr[1]=rlnorm(1,meanlog=log(0.5)-(sd.param/2)^2/2,sdlog=(sd.param/2))
   
-  #attack.yr=rlnorm(inf_years.in,meanlog=log(0.15)-1^2/2,sdlog=0.5)
-  #write.csv(attack.yr,"datasets/sim_attack.csv")
-
+  write.csv(attack.yr,paste("datasets/sim_attackS",seed_i,".csv",sep=""))
   
   simulate_data(test_years=define.year, # this needs to be vector
                 inf_years=inf_years.in,strain_years=strain_years0,n_part=npartM, #leave strain years blank to use HaNam strains
