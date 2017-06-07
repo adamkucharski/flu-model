@@ -158,9 +158,9 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),loadp
 # Generate simulated data and infer parameters -- simulation parameters are defined in sero_functions.R
 # flu.type defines which dataset format (i.e. test strains, test years) the simulated data will produce
 
-foreach(kk=1:4) %dopar% {
+foreach(kk=1:10) %dopar% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=1e5, flu.type="H3HN", strain.fix=T,
+  simulation.infer(seed_i=kk,mcmc.iterations=5e4, flu.type="H3HN", strain.fix=T,
                    fit.spline=am.spl,vp1=0.4,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
 
 }
@@ -187,4 +187,8 @@ dy1=c(2007:2012)
 kk=1
 plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3",simDat=T,year_test=c(2007:2012),btstrap=10,linearFn=T) #H3 Vietnam
 #plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3FS",simDat=T,year_test=c(2009),btstrap=10) #H3 FluScape
+
+# Plot estimated vs true attack rates from simulated data (Fig 3B)
+
+plot.multi.true.vs.estimated(burnCut=0.25,flu.type="H3HN",simDat=T,loadpick=c(1:10))
 

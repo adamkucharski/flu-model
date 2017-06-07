@@ -1564,9 +1564,9 @@ plot_h3_china_reports <- function(){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),burnCut=0.25,year_test=c(2007:2012),plotmap=F,fr.lim=F,linearFn=F,runsPOST=NULL){
+plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),burnCut=0.25,year_test=c(2007:2012),plotmap=F,fr.lim=F,linearFn=T,runsPOST=NULL){
   
-  # simDat=T;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; loadseed=1; linearFn=T; runsPOST=NULL
+  # simDat=T;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:10); burnCut=0.25; loadseed=1; linearFn=T; runsPOST=NULL
 
   
   col.list=list(col1=rgb(0.9,0.6,0),col2=rgb(0.2,0,0.8),col3=rgb(0.1,0.6,0.2),col4=rgb(1,0.4,1),col5=rgb(0.8,0,0.2))
@@ -1574,6 +1574,8 @@ plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),
   par(mfrow=c(1,1),mar = c(3,3,1,1),mgp=c(1.8,0.6,0))
   plot(0.1,0.1,pch=19,col="white",xlim=c(0,0.3),ylim=c(0,0.3),xlab="true attack rate",ylab="estimated attack rate", xaxs="i", yaxs="i")
   lines(c(0,1),c(0,1),col='grey')
+  
+  vals.blank=NULL
   
   for(loadseed in loadpick){
     
@@ -1601,6 +1603,7 @@ plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),
     names(attackCI)=c("mean","CI1","CI2")
     load(paste("R_datasets/Simulated_data_",loadseedA,".RData",sep=""))
     attack.yr=colSums(historytabSim)/n_part
+    #attack.yr = read.csv(paste("datasets/sim_attackS",loadseed,".csv",sep=""))[,2] # TRUE VALUES
 
     # - - - - - - - - - - - - - - - - - - 
     # Calculate and plot four fold rise in data
@@ -1639,12 +1642,35 @@ plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),
     points(attack.yr[pick_r], sconverttab[,2],pch=1,cex=1.2,col=rgb(0,0,0))
     points(attack.yr[pick_r], sconverttab[,1],pch=19,cex=1.2,col=rgb(0,0,0))
     
+    vals.blank = rbind(vals.blank, cbind(attack.yr[pick_r],attackCI$mean[pick_r],sconverttab) )
     
   }
   
   dev.copy(pdf,paste("plot_simulations/True_vs_rise",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=5,height=4)
   dev.off()
-
+  
+  vals.blank0 = vals.blank %>% data.frame()
+  names(vals.blank0)=c("true","est","rise4","rise2")
+  
+  # Plot residuals
+  
+  breaksN=seq(-0.31,0.31,0.02)
+  hist(vals.blank0$est-vals.blank0$true,breaks = breaksN,col=rgb(1,0,0,0.5),border="grey")
+  hist(vals.blank0$rise4-vals.blank0$true, breaks = breaksN,add=T,col=rgb(0,0,0,0.2),border=NULL)
+  hist(vals.blank0$rise2-vals.blank0$true, breaks = breaksN,add=T,col=rgb(0,1,0,0.2),border=NULL)
+  
+  par(mar=c(3,3,1,1),mgp=c(2,0.7,0))
+  
+  plot(density(vals.blank0$est-vals.blank0$true),col="white",frame=T,xaxs="i",yaxs="i",ylab="density",xlab="simulation residual",main="",xlim=c(-0.2,0.2),ylim=c(0,100))
+  lines(c(0,0),c(0,100),col="grey")
+  lines(density(vals.blank0$est-vals.blank0$true,adjust=20),col="red",lwd=2)
+  lines(density(vals.blank0$rise4-vals.blank0$true,adjust=1),col="black",lty=1,lwd=2)
+  lines(density(vals.blank0$rise2-vals.blank0$true,adjust=1),col="black",lty=2,lwd=2)
+  
+  
+  dev.copy(pdf,paste("plot_simulations/TrueDens",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""), width=3,height=2)
+  dev.off()
+  
   
   
 }
