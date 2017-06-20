@@ -107,7 +107,7 @@ for(kk in c(2007:2012)){
 # plot.posteriors(simDat=T,loadseed="SIM",year_test=c(2007:2012),plotmap=T)
 
 # - - - - 
-# Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG 2) for H3 Vietnam
+# Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG SUPP) for H3 Vietnam
 plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=200,part_pick=c(57,31,25),year_pick=c(2008:2010),linearFn=T)
 
 
@@ -118,7 +118,7 @@ plot.posterior.titres.select(loadseed=1,year_test=c(2009),flu.type="H3FS",simDat
 # Plot specific antibody kinetics for H3 Vietnam -- DEPRECATED
 #plot.antibody.changes(btstrap=200)
 
-# Rewind and run historical landscapes (FIG 2) -- NEED TO UPDATE FOR LINEAR/EXP FUNCTIONS
+# Rewind and run historical landscapes (FIG 2) 
 run.historical.landscapes(loadseed=1,ymax=6.05,linearFn=T,d.step=0.2)
 
 

@@ -403,7 +403,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     for(kk in 1:length(inf_years)){ # Iterate across test years
       lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colA0[kk])
     }
-    title(main=letters[1+letN],adj=0)
+    title(main=LETTERS[1+letN],adj=0)
     
     #if(flu.type=="H3HN"){
     
@@ -423,7 +423,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
       print(cor.test(isolatetab,sconverttab[,2]))
       print(cor.test(isolatetab,sconverttab[,1]))
       
-      title(main=letters[2+letN],adj=0)
+      title(main=LETTERS[2+letN],adj=0)
   
       # PLOT INFECTIONS
       
@@ -436,7 +436,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
       ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
       #hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col =rgb(0.8,0.8,0.8),xlab="number of infections",prob=TRUE,xlim=c(0,50),ylim=c(0,0.1),xaxs="i",yaxs="i", main=NULL,ylab="density")
       #abline(v=median(ind.infN),col="red",lty=2,lwd=1.5); abline(v=mean(ind.infN),col="red",lwd=1.5)
-      title(main=letters[3+letN],adj=0)
+      title(main=LETTERS[3+letN],adj=0)
     
     } # END OF LOOP
     
@@ -756,8 +756,8 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
   par(mfrow=c(1,1))
   par(mar = c(5,5,1,1))
   breaks0=seq(round(min(c(compTab,compTabNULL)))-0.5,round(max(c(compTab,compTabNULL)))+1.5,1)
-  hist(compTab , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - observed titre"); #title(letters[1],adj=0)
-  #hist(compTabNULL , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - Pois(expected titre)"); #title(letters[2],adj=0)
+  hist(compTab , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - observed titre"); #title(LETTERS[1],adj=0)
+  #hist(compTabNULL , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - Pois(expected titre)"); #title(LETTERS[2],adj=0)
   
   stats.store = rbind( c(sum( abs(compTab)<=1 )/length(compTab), sum( abs(compTab)<=2 )/length(compTab), sum( abs(compTab)<=3 )/length(compTab) ), 
                        c(sum( abs(compTabNULL)<=1 )/length(compTabNULL), sum( abs(compTabNULL)<=2 )/length(compTabNULL), sum( abs(compTabNULL)<=3 )/length(compTabNULL)  )
@@ -970,7 +970,7 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
       # Plot true titres - check select correct values
       points(min(inf_years)-1+test.list[[ part_pick[ii0] ]][[ n.testMatch[pickyr] ]][4,],test.list[[ part_pick[ii0] ]][[ n.testMatch[pickyr] ]][2,],pch=1,col='red')
       
-      text(x=1965,y=8,labels=letters[titleN],adj=0,font=2,cex=1.5)
+      text(x=1965,y=8,labels=LETTERS[titleN],adj=0,font=2,cex=1.5)
       titleN=titleN+1
       
     }  # end loop over participants
@@ -1224,7 +1224,7 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN
   #lines(year_x,titreM[1,],col=col2P)
   #lines(year_x,titreL[1,],col=col3P)
   
-  title(main=letters[1],adj=0)
+  title(main=LETTERS[1],adj=0)
   
   # 2. Plot cross reaction
   par(mar = c(3,2,1,1))
@@ -1248,7 +1248,7 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN
   #lines(cross_x,titreCrossM[1,],col=col2P)
   lines(cross_x,titreCrossL[1,],col=col3P)
   
-  title(main=letters[2],adj=0)
+  title(main=LETTERS[2],adj=0)
   
   dev.copy(pdf,paste("plot_simulations/parameters",loadseed,".pdf",sep=""),width=7,height=4)
   dev.off()
@@ -1398,7 +1398,7 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     lines(xx,yy,col="black",lty=2)
     
     points(x=xx[pick_years[1]],y=yy[pick_years[1]],cex=1.5, col="red", lwd=2)
-    title(main=letters[1],adj=0)
+    title(main=LETTERS[1],adj=0)
 
     par(mar = c(4,4,2,2))
     image2D(z = t(pred_matrixL1), x = y.range, y = x.range, xlab="antigenic dimension 1", ylab="antigenic dimension 2", zlim = c(0, ymax),
@@ -1408,7 +1408,7 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     lines(xx,yy,col="black",lty=2)
     
     points(x=xx[pick_years[1]],y=yy[pick_years[1]],cex=1.5, col="red", lwd=2)
-    title(main=letters[3],adj=0)
+    title(main=LETTERS[3],adj=0)
     
     infcol="red"
     
@@ -1416,11 +1416,11 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     par(mar = c(2,4,1,2))
     plot(inf_years,predOutput(pred_matrixS1),type="l",col="blue",ylim=c(0,ymax),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
     lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(0,ymax),lwd=2,col=infcol)
-    title(main=letters[2],adj=0)
+    title(main=LETTERS[2],adj=0)
     
     plot(inf_years,predOutput(pred_matrixL1),type="l",col="blue",ylim=c(0,ymax),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
     lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(0,ymax),lwd=2,col=infcol)
-    title(main=letters[4],adj=0)
+    title(main=LETTERS[4],adj=0)
     
     par(mar = c(4,4,2,2))
     image2D(z = t(pred_matrixS2), x = y.range, y = x.range, xlab="antigenic dimension 1", ylab="antigenic dimension 2", zlim = c(0, ymax),
@@ -1430,7 +1430,7 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     lines(xx,yy,col="black",lty=2)
     
     points(x=c(xx[pick_years[1]],xx[pick_years[2]]),y=c(yy[pick_years[1]],yy[pick_years[2]]),cex=1.5, col="red", lwd=2)
-    title(main=letters[5],adj=0)
+    title(main=LETTERS[5],adj=0)
     
     par(mar = c(4,4,2,2))
     image2D(z = t(pred_matrixL2), x = y.range, y = x.range, xlab="antigenic dimension 1", ylab="antigenic dimension 2", zlim = c(0, ymax),
@@ -1440,18 +1440,18 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     lines(xx,yy,col="black",lty=2)
     
     points(x=c(xx[pick_years[1]],xx[pick_years[2]]),y=c(yy[pick_years[1]],yy[pick_years[2]]),cex=1.5, col="red", lwd=2)
-    title(main=letters[7],adj=0)
+    title(main=LETTERS[7],adj=0)
     
     # Project along summary path
     par(mar = c(2,4,1,2))
     plot(inf_years,predOutput(pred_matrixS2),type="l",col="blue",ylim=c(0,ymax),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
     lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(0,ymax),lwd=2,col=infcol)
     lines(c(inf_years[pick_years[2] ],inf_years[pick_years[2] ]),c(0,ymax),lwd=2,col=infcol)
-    title(main=letters[6],adj=0)
+    title(main=LETTERS[6],adj=0)
     plot(inf_years,predOutput(pred_matrixL2),type="l",col="blue",ylim=c(0,ymax),ylab="log titre",xlab="",yaxs="i", lwd=2) # Need to include uncertainty?
     lines(c(inf_years[pick_years[1] ],inf_years[pick_years[1] ]),c(0,ymax),lwd=2,col=infcol)
     lines(c(inf_years[pick_years[2] ],inf_years[pick_years[2] ]),c(0,ymax),lwd=2,col=infcol)
-    title(main=letters[8],adj=0)
+    title(main=LETTERS[8],adj=0)
     
     
     dev.copy(pdf,paste("plot_simulations/simulate_new_response/map_space",loadseed,".pdf",sep=""),width=8,height=7,useDingbats=F)
@@ -1491,16 +1491,16 @@ plot_h3_reports <- function(){
 
   xLims=c(as.Date("2007-12-30"),as.Date("2012-06-01"))
 
-  plot(flu.isolates$Start_date,flu.isolates$total_flu_positive,type="l",xlab="year",ylab="Total isolates detected",ylim=c(0,100),xlim=xLims);title(letters[1],adj=0)
+  plot(flu.isolates$Start_date,flu.isolates$total_flu_positive,type="l",xlab="year",ylab="Total isolates detected",ylim=c(0,100),xlim=xLims);title(LETTERS[1],adj=0)
   
   
-  plot(flu.isolates$Start_date,flu.isolates$A_H3,type="l",xlab="year",ylab="H3 isolates detected",ylim=c(0,100),xlim=xLims);title(letters[2],adj=0)
+  plot(flu.isolates$Start_date,flu.isolates$A_H3,type="l",xlab="year",ylab="H3 isolates detected",ylim=c(0,100),xlim=xLims);title(LETTERS[2],adj=0)
   for(ii in 1:length(collect.list$year)){
     lines(c(collect.list[ii,"sample"],collect.list[ii,"sample"]),c(0,100),col="red")
   }
   
   # Plot from 3 as want to line up end points
-  plot(collect.list$sample[3:7], isolatetab,ylim=c(0,800),pch=19,col="red",xlab="year",ylab="H3 isolates detected",xlim=xLims);title(letters[3],adj=0)
+  plot(collect.list$sample[3:7], isolatetab,ylim=c(0,800),pch=19,col="red",xlab="year",ylab="H3 isolates detected",xlim=xLims);title(LETTERS[3],adj=0)
   
 
   dev.copy(pdf,paste("plot_simulations/H3Data.pdf",sep=""),width=6,height=6,useDingbats=F)
@@ -1543,15 +1543,15 @@ plot_h3_china_reports <- function(){
   
   xLims=c(as.Date("2004-11-01"),as.Date("2009-06-01"))
   
- # plot(flu.isolates$Start_date,flu.isolates$total_flu_positive,type="l",xlab="Date",ylab="Total isolates detected",ylim=c(0,1000),xlim=xLims);title(letters[1],adj=0)
+ # plot(flu.isolates$Start_date,flu.isolates$total_flu_positive,type="l",xlab="Date",ylab="Total isolates detected",ylim=c(0,1000),xlim=xLims);title(LETTERS[1],adj=0)
   
   
-  plot(flu.isolates$Start_date,flu.isolates$A_H3,type="l",xlab="Date",ylab="H3 isolates detected",ylim=c(0,2000),xlim=xLims);title(letters[2],adj=0)
+  plot(flu.isolates$Start_date,flu.isolates$A_H3,type="l",xlab="Date",ylab="H3 isolates detected",ylim=c(0,2000),xlim=xLims);title(LETTERS[2],adj=0)
   for(ii in 1:length(collect.list$year)){
     lines(c(collect.list[ii,"sample"],collect.list[ii,"sample"]),c(0,10000),col="red")
   }
   
-  plot(collect.list$sample[3:7], isolatetab,ylim=c(0,20000),pch=19,col="red",xlab="year",ylab="H3 isolates detected",xlim=xLims);title(letters[3],adj=0)
+  plot(collect.list$sample[3:7], isolatetab,ylim=c(0,20000),pch=19,col="red",xlab="year",ylab="H3 isolates detected",xlim=xLims);title(LETTERS[3],adj=0)
   
   
   dev.copy(pdf,paste("plot_simulations/H3Data.pdf",sep=""),width=5,height=7,useDingbats=F)
