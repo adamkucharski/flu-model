@@ -24,12 +24,11 @@ rm(list=ls(all=TRUE))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Load data and functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#source("load_data.R") # Reformat HaNam data and save to file
-# make_fluscape_rdata(pathfssvn="~/fluscape/trunk/") # Reformat Flu B data and save to file
+# source("load_data_Vietnam.R") # Reformat HaNam data and save to file
+# source("load_data_China.R") # Reformat FluScape and save to file
 
 source("sero_functions.R")
 source("posterior_analysis_flu.R")
-source("sero_funcs_steven.r") # Load Flu B format
 
 compile.c() # Compile c code
 
