@@ -1262,7 +1262,7 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN
 
 run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F,flu.type="H3HN",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010),d.step=0.5,ymax=5){
     
-    # btstrap=50 ; n_partSim=2 ; simTest.year=c(1968:2010) ; d.step = 0.5 ; flu.type="H3HN"; year_test=c(2007:2012); loadseed = 1; linearFn=T
+    # btstrap=50 ; n_partSim=2 ; simTest.year=c(1968:2010) ; d.step = 0.5 ; flu.type="H3HN"; year_test=c(2007:2012); loadseed = 1; linearFn=T; ymax=5
     load("R_datasets/HaNam_data.RData")
     loadseed=paste(loadseed,"_",flu.type,sep="")
     
@@ -1456,8 +1456,50 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     
     dev.copy(pdf,paste("plot_simulations/simulate_new_response/map_space",loadseed,".pdf",sep=""),width=8,height=7,useDingbats=F)
     dev.off()
-
     
+    # 3D Plot
+    
+    par(mfrow=c(2,2))
+    par(mar = c(1,0,0.7,2))
+    par(mgp=c(1.8,0.6,0))
+    thetaPick=-45
+    ExpX=0.5
+    maxLoc = 0
+    alphaA = 0.3
+    sizeA = 20
+    
+    persp3D(z = t(pred_matrixS1),x = y.range, y = x.range,ticktype = "detailed",clim=c(0,5),zlim=c(0,5),theta = thetaPick,expand = ExpX,alpha=alphaA,xlab="",ylab="",zlab="titre") 
+    
+    straincoord1 = ag.coord[sY <= (pick_years[1] + 1968 ),c("AG_y","AG_x")]
+    straincoord2 = ag.coord[sY > (pick_years[1] + 1968 ),c("AG_y","AG_x")]
+    points3D(straincoord1[,"AG_y"],straincoord1[,"AG_x"],rep(maxLoc,length(straincoord1$AG_y)), col = "black", size = sizeA, add=T,pch=19)
+    points3D(straincoord2[,"AG_y"],straincoord2[,"AG_x"],rep(maxLoc,length(straincoord2$AG_y)),  size = sizeA, add=T,pch=19,col=rgb(grY,grY,grY,tranP))
+    points3D(x=c(xx[pick_years[1]]),y=c(yy[pick_years[1]]),z=c(0),size = 1.5*sizeA, add=T, col="red", lwd=2)
+    title(main=LETTERS[1],adj=0)
+    
+    persp3D(z = t(pred_matrixL1),x = y.range, y = x.range,ticktype = "detailed",clim=c(0,5),zlim=c(0,5),theta = thetaPick,expand = ExpX,alpha=alphaA,xlab="",ylab="",zlab="titre") 
+    points3D(straincoord1[,"AG_y"],straincoord1[,"AG_x"],rep(maxLoc,length(straincoord1$AG_y)), col = "black", size = sizeA, add=T,pch=19)
+    points3D(straincoord2[,"AG_y"],straincoord2[,"AG_x"],rep(maxLoc,length(straincoord2$AG_y)),  size = sizeA, add=T,pch=19,col=rgb(grY,grY,grY,tranP))
+    points3D(x=c(xx[pick_years[1]]),y=c(yy[pick_years[1]]),z=c(0),size = 1.5*sizeA, add=T, col="red", lwd=2)
+    title(main=LETTERS[2],adj=0)
+    
+    persp3D(z = t(pred_matrixS2),x = y.range, y = x.range,ticktype = "detailed",clim=c(0,5),zlim=c(0,5),theta = thetaPick,expand = ExpX,alpha=alphaA,xlab="",ylab="",zlab="titre") 
+    straincoord1 = ag.coord[sY <= (pick_years[2] + 1968 ),c("AG_y","AG_x")]
+    straincoord2 = ag.coord[sY > (pick_years[2] + 1968 ),c("AG_y","AG_x")]
+    points3D(straincoord1[,"AG_y"],straincoord1[,"AG_x"],rep(maxLoc,length(straincoord1$AG_y)), col = "black", size = sizeA, add=T,pch=19)
+    points3D(straincoord2[,"AG_y"],straincoord2[,"AG_x"],rep(maxLoc,length(straincoord2$AG_y)),  size = sizeA, add=T,pch=19,col=rgb(grY,grY,grY,tranP))
+    points3D(x=c(xx[pick_years[1]],xx[pick_years[2]]),y=c(yy[pick_years[1]],yy[pick_years[2]]),z=c(0,0),size = 1.5*sizeA, add=T, col="red", lwd=2)
+    title(main=LETTERS[3],adj=0)
+    
+    persp3D(z = t(pred_matrixL2),x = y.range, y = x.range,ticktype = "detailed",clim=c(0,5),zlim=c(0,5),theta = thetaPick,expand = ExpX,alpha=alphaA,xlab="",ylab="",zlab="titre") 
+    points3D(straincoord1[,"AG_y"],straincoord1[,"AG_x"],rep(maxLoc,length(straincoord1$AG_y)), col = "black", size = sizeA, add=T,pch=19)
+    points3D(straincoord2[,"AG_y"],straincoord2[,"AG_x"],rep(maxLoc,length(straincoord2$AG_y)),  size = sizeA, add=T,pch=19,col=rgb(grY,grY,grY,tranP))
+    points3D(x=c(xx[pick_years[1]],xx[pick_years[2]]),y=c(yy[pick_years[1]],yy[pick_years[2]]),z=c(0,0),size = 1.5*sizeA, add=T, col="red", lwd=2)
+    title(main=LETTERS[4],adj=0)
+    
+    dev.copy(png,paste("plot_simulations/simulate_new_response/map_space2.png",sep=""),units="cm",width=25,height=15,res=150)
+    dev.off()
+
 }
 
 # Plot H3N2 Vietnam data
