@@ -38,12 +38,9 @@ load.flu.map.data<-function(){
   ag.coord=ag.coord[ag.coord$viruses!="NL/823/92",] # remove BE 89 dead end (Fonville method)
   am.spl=smooth.spline(ag.coord$AG_y,ag.coord$AG_x)
   plot(ag.coord$AG_y,ag.coord$AG_x)
-  #lines(ag.coord1$AG_y,-ag.coord1$AG_x,type="l",col='blue')
   xx=c(330:370)
   prd1=predict(am.spl,xx)
   lines(prd1, col = "blue")
-  #lines(am.spl, col = "blue")
-  #save(ag.coord,ag.coord1,am.spl,file=paste("R_datasets/",Data.load,"_V.RData",sep=""))
   save(am.spl,file="datasets/spline_fn.RData")
 }
 
@@ -68,22 +65,13 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_year
     titredat=as.numeric(test.jj[2,]) # Define titre data
     maxt=(titredat==max(titredat))
     
-    # set max titre strain to infection=1 in history
-    #if(sum(maxt)>1){
-    #  hist0[inf_years==spyear[sample(c(1:length(maxt))[maxt],1)]]=1
-    #}else{
-    #  
-    #  hist0[(inf_years==spyear[titredat==max(titredat)])]=1
-    #}
-    
     # Use simple cutoff for titres -- set high titres = 1 in history
     for(i in 1:length(spyear)){
       if(max(titredat[(as.numeric(test.jj[3,])==spyear[i])])>=4 & runif(1)>0.2 ){
         hist0[(inf_years==spyear[i])]=1
       }
     }
-    
-    #hist0=sample(c(0,1),inf.n,replace=T,prob=c(0.9,0.1)) # Constrain max number of infections to 10% attack rate?
+
     
   }
 
@@ -143,7 +131,7 @@ outputdmatrix.fromcoord <- function(thetasigma,inf_years,anti.map.in,linearD=F){
   }else{
     # Linear decay function
     if(is.null(dim(anti.map.in))){ # check if input map is one or 2 dimensions
-      (dmatrix=sapply(anti.map.in,function(x){y=abs(anti.map.in-x); y   })) # DEBUG 1-1*thetasigma* // y[y<0]=0; 
+      (dmatrix=sapply(anti.map.in,function(x){y=abs(anti.map.in-x); y   })) 
       
     }else{ # If spline function defined, calculate directly from input
       (dmatrix=apply(anti.map.in,1,function(x){y=sqrt(
@@ -161,7 +149,7 @@ generate.antigenic.map <- function(inf_years){
   
   map=matrix(0,ncol=2,nrow=length(inf_years))
   for(ii in 2:length(inf_years)){
-    map[ii,]=map[ii-1,]+ (1 - 1.5*runif(2)) # Biased random walk of mean size one unit per year # Unbiased walk: (1-2*runif(2)) 
+    map[ii,]=map[ii-1,]+ (1 - 1.5*runif(2)) 
   }
   map
 }
@@ -213,21 +201,6 @@ likelihood.titre<-function(expect,titredat,theta){
   largett=(titredat > 8)  # Identify censored titres in data (>=8)
   smalltt=(titredat <= 0)  # Identify censored titres in data (>=8)
   
-  # Calculate P(observe j | true titre is k) - no error
-  #p_jk = sum(dpois(as.numeric(titredat[!largett]), expect[!largett], log = TRUE))+ sum(ppois(8, lambda=expect[largett], lower=FALSE,log=TRUE))
-  
-  # Option to include uniform error i.e. L(j)= sum_k P(true titre is k) x P(observe j | true titre is k) - derivation is in PLOS Biol supplement
-  #p_jk = sum( log(dpois(as.numeric(titredat[!largett]), expect[!largett], log = FALSE)  ) )  # *(1-theta[["error"]])+theta[["error"]]/9
-  #        + sum(log(ppois(8, lambda = expect[largett], lower=FALSE,log=FALSE)  )) #*(1-theta[["error"]])+theta[["error"]]/9 
-  
-  # DEBUG ADD ONE TO AVOID ZERO
-  #p_jk = (sum( log(dpois(1+as.numeric(titredat[!largett]), 1+expect[!largett], log = FALSE)  ) )  # *(1-theta[["error"]])+theta[["error"]]/9
-  # + sum(log(ppois(1+8, lambda = 1+expect[largett], lower=FALSE,log=FALSE)  )) ) #*(1-theta[["error"]])+theta[["error"]]/9 
-  
-  # USE NORMAL DISTRIBUTION
-  
-  # plot(as.numeric(titredat),expect)
-  #print(expect)
   
   # First sum up titres 0 < . < 8
   p_jkMID =  ( sum( log(  pnorm(as.numeric(titredat[!largett & !smalltt])+1, mean = expect[!largett & !smalltt], sd=theta[["error"]], log = FALSE) 
@@ -241,12 +214,6 @@ likelihood.titre<-function(expect,titredat,theta){
   
   p_jk = p_jkSML + p_jkMID + p_jkLRG
 
-  #print(p_jk)
-  
-  # Include negative binomial function
-  #p_jk = sum( log(dnbinom(as.numeric(titredat[!largett]), mu=expect[!largett], size=theta[["disp_k"]], log = FALSE) *(1-theta[["error"]])+theta[["error"]]/9 ) )
-  #        + sum(log(pnbinom(8, mu=expect[largett], size=theta[["disp_k"]], lower.tail=FALSE,log=FALSE)*(1-theta[["error"]])+theta[["error"]]/9  ))
-  
   p_jk
 
 }
@@ -273,19 +240,11 @@ estimatelik<-function(ii,jj,historyii,dmatrix,dmatrix2,theta_star,test.list,test
     
     d.ij2=dmatrix2[test.part,] # Define cross-immunity matrix 2 for sample strain
     d_vector2=melt(t(d.ij2))$value #melt is by column
-    
-    #time.L1=Sys.time()
 
     expect=func1(historyii,titredat,d_vector,d_vector2,theta_star,testyearI) # Output expectation
-    
-    #time.L2=Sys.time() #DEBUG
-    #print(paste("L expected:",time.L2-time.L1))
-    
-    #print(likelihood.titre(expect,titredat,theta_star))
+
     lik = likelihood.titre(expect,titredat,theta_star)
     
-    #time.L3=Sys.time() #DEBUG
-    #print(paste("L likelihood:",time.L3-time.L2))
     
     lik
     
@@ -305,8 +264,6 @@ simulate_data<-function(test_years,
                         antigenic.map.in=NULL,pmask=NULL,am.spline=NULL){ # ii=participant | jj=test year
   
   # DEBUG pickyr=1; test_years=test.yr[pickyr]; historytabPost=hist.sample; thetastar=theta.max; p.inf=0.1; antigenic.map.in=NULL ; linD=T; pmask=NULL
-  
-  #, # For old fitted data, need to specify that sigma2 wasn't fitted
   
   # Variables needed: test_years,inf_years,strain_years,n_part
   #strain_years=seq(1968,2010,4)
@@ -388,18 +345,11 @@ simulate_data<-function(test_years,
       
       expect=func1(historyii,sample.index,d_vector,d_vector2, thetastar,testyearI) # Output expectation
       
-      #DEBUG
-      #thetastar[["wane"]]=1
-      #func1(historyii,titredat=1,d_vector,d_vector2, thetastar,testyear_index=1) # Output expectation
-      # END DEBUG
-      
       if(roundv==T){
-        #titredat=sapply(expect,function(x){rpois(1,x)})
         titredat=sapply(expect,function(x){ floor( rnorm(1,mean=x,sd=thetastar[["error"]]) ) })
         titredat[titredat<0]=0
       }else{
         titredat=expect} # Generate test titre
-      #if(roundv==T){titredat=round(expect)}else{titredat=expect}
       titredat=sapply(titredat,function(x){min(x,8)})
 
       i.list[[jj]]=rbind(test.year=rep(testyr,nstrains),
@@ -465,14 +415,7 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years,age.mask){
         x[sample(c(ninfecID),1)]=1
       }
     }
-    
-    # Add prior on birth year - exponentially less likely to update if infections outside
-    #if(inf.n>ageA[ii]){
-    #  a1=0.01*exp(1)*exp(-sum(x[1:(inf.n-ageA[ii])])) # EDIT infvector2 tweak this parameter to penalise more/less
-    #  if( a1 > runif(1) ){
-    #    historyA[ii,]=x
-    #  }
-    #}
+
     
     historyA[ii,age.mask[ii]:inf.n]=x
     
@@ -526,10 +469,6 @@ SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   # sample from multivariate normal distribution - no adaptive sampling
   theta_star = as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=covarbasic)))
   
-  # sample from multivariate normal distribution - include adaptive samples (Roberts & Rosenthal, 2009)
-  #theta_star = 0.05*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covarbasic))) +
-  #              0.95*as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=(2.38^2/nparam)*covartheta)))
-  
   names(theta_star)=names(theta_initial)
   
   # reflective boundary condition for max boost=10
@@ -547,12 +486,6 @@ SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   return(thetaS=theta_star)
 }
 
-# DEBUG CHECK
-#theta01=theta
-#while(max(theta01)>0){
-#  theta01=SampleTheta(theta01,1,covartheta=cov_matrix_basic,covarbasic=10*cov_matrix_basic,length(theta))
-#  
-#}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Metropolis-Hastings algorithm
@@ -993,9 +926,6 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
     linD=linearFn)
   
 }
-
-
-
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
