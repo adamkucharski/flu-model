@@ -1677,7 +1677,18 @@ plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),
 
 
 
+plot_hist_strains <- function(){
+  
+  load("R_datasets/HaNam_data.RData")
+  
+  hist(strain_years,breaks = seq(1968,2012),col=rgb(0.7,0.7,0.7),
+       xaxs="i",yaxs="i",border=NULL,main=NULL,xlab="year",ylab="frequency")
+  
+  
+  dev.copy(pdf,paste("plot_simulations/Sample_years.pdf",sep=""), width=4,height=3)
+  dev.off()
 
+ }
 
 # Convert map ID tags to strain years
 
