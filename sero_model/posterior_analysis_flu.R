@@ -1262,7 +1262,7 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN
 
 run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F,flu.type="H3HN",simDat=F,btstrap=5,n_partSim=2,simTest.year=c(1968:2010),d.step=0.5,ymax=5){
     
-    # btstrap=50 ; n_partSim=2 ; simTest.year=c(1968:2010) ; d.step = 0.5 ; flu.type="H3HN"; year_test=c(2007:2012); loadseed = 1; linearFn=T
+    # btstrap=50 ; n_partSim=2 ; simTest.year=c(1968:2010) ; d.step = 0.5 ; flu.type="H3HN"; year_test=c(2007:2012); loadseed = 1; linearFn=T; ymax=5
     load("R_datasets/HaNam_data.RData")
     loadseed=paste(loadseed,"_",flu.type,sep="")
     
@@ -1456,8 +1456,61 @@ run.historical.landscapes<-function(loadseed=1,year_test=c(2007:2012),linearFn=F
     
     dev.copy(pdf,paste("plot_simulations/simulate_new_response/map_space",loadseed,".pdf",sep=""),width=8,height=7,useDingbats=F)
     dev.off()
+    
+    # 3D Plot
+    
+    par(mfrow=c(2,2))
+    par(mar = c(1,0,0.7,2))
+    par(mgp=c(1.8,0.6,0))
+    thetaPick=-45
+    ExpX = 0.6
+    maxLoc = 0
+    alphaA = 0.6
+    sizeA = 0.8
+    viewPoint = 40
+    yRange = c(min(x.range),max(x.range)) # Note reverse to make plots neater
+    xRange = c(min(y.range),max(y.range))
+
+    for(kk in 1:4){
+      if(kk<=2){
+        straincoord1 = ag.coord[sY <= (pick_years[1] + 1968 ),c("AG_y","AG_x")]
+        straincoord2 = ag.coord[sY > (pick_years[1] + 1968 ),c("AG_y","AG_x")]
+        p_year = pick_years[1]
+      }else{
+        straincoord1 = ag.coord[sY <= (pick_years[2] + 1968 ),c("AG_y","AG_x")]
+        straincoord2 = ag.coord[sY > (pick_years[2] + 1968 ),c("AG_y","AG_x")]
+        p_year = c(pick_years[1],pick_years[2])
+      }
+      if(kk==1){pm_plot = pred_matrixS1}
+      if(kk==2){pm_plot = pred_matrixL1}
+      if(kk==3){pm_plot = pred_matrixS2}
+      if(kk==4){pm_plot = pred_matrixL2}
+  
+      # Plot strains
+      points3D(straincoord1[,"AG_y"],straincoord1[,"AG_x"],rep(maxLoc,length(straincoord1$AG_y)),zlim=c(0,5),ticktype = "detailed",xlim=xRange,ylim=yRange,xlab="",ylab="",zlab="titre",col = "black", cex = sizeA,pch=19,phi=viewPoint, theta = thetaPick,expand = ExpX)
+      points3D(straincoord2[,"AG_y"],straincoord2[,"AG_x"],rep(maxLoc,length(straincoord2$AG_y)),  cex = sizeA, add=T,pch=19,col=rgb(grY,grY,grY,tranP))
+      
+      # Plot summary
+      lines3D(x=xx,y=yy,rep(maxLoc,length(xx)),col="black",lty=2, add=T)
+      
+      # Plot infection
+      scatter3D(x=c(xx[p_year]),y=c(yy[p_year]),z=rep(5,length(p_year)),type="h",lty=2,cex = sizeA, add=T, col="red", lwd=1,pch=19)
+
+      # Plot perspective
+      persp3D(z = t(pm_plot),x = y.range, y = x.range,clim=c(0,5),ticktype = "detailed",add=T,alpha=alphaA) 
+      
+      
+      title(main=LETTERS[kk],adj=0)
+    
+    }
 
     
+    dev.copy(pdf,paste("plot_simulations/simulate_new_response/map_space2.pdf",sep=""),width=8,height=6)
+    dev.off()
+    #dev.copy(png,paste("plot_simulations/simulate_new_response/map_space2e.png",sep=""),units="cm",width=25,height=15,res=150)
+    #dev.off()
+
+
 }
 
 # Plot H3N2 Vietnam data

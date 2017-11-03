@@ -38,6 +38,11 @@ load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/HaNam_data_V1
 load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2007_2008_2009_2010_2011_2012_s1_H3HN.RData")
 load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2007_2008_2009_2010_2011_2012_s2_H3HN.RData")
 load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2007_2008_2009_2010_2011_2012_s4_H3HN.RData")
-load("/Users/adamkuchars/Documents/flu-model/sero_model/posterior_sero_runs/outputR_f2007_2008_2009_2010_2011_2012_s4_H3HN.RData")
 load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/FluScapeH3_data.RData")
 strain_years
+load("/Users/adamkuchars/Documents/flu-model/sero_model/R_datasets/Simulated_data_SIM_1.RData")
+test.list
+test.data
+list()
+ls()
+test.listSim
