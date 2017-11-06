@@ -44,7 +44,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
 
   # simDat=F;loadseed=2;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
-  # simDat=T;loadseed="SIM_1";year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
+  # simDat=T;loadseed="SIM_2";year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
   if(simDat==F){loadseed=paste(loadseed,"_",flu.type,sep="")}
   if(simDat==T){load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))}
@@ -116,7 +116,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   
   #hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col=colA,xlab="infections",prob=TRUE,main="",xlim=c(0,44)) #paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep="")
 
-  # Adjust for age - TO ADD?
+  # Adjust for age - DEPRECATED
   
   #age.data=sort(max(test_years)-yob.data[,1])
   #years.at.risk=(max(test_years)-min(inf_years))
@@ -173,12 +173,19 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     
     )
   
+  # output posterior
+  write.csv(thin.theta[["mu"]]*thin.theta[["sigma"]],paste("plot_simulations/param_post",loadseed,".csv",sep=""))
+  
   write.csv(table.param,paste("plot_simulations/param_table",paste(year_test,collapse="_"),"_",loadseed,".csv",sep="") )
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Plot attack rates, scaled by proportion alive for SIMULATED DATA
   
   if(simDat==T){ #Add simulated attack rates and compare distribution
+    
+    
+    par(mfrow=c(1,2),mar = c(3,3,1,1),mgp=c(1.8,0.6,0)) # Output for Fig 3
+    
     yob.data=cbind(rep(1,n_part),rep(1,n_part)) # Import age distribution
     n.alive=n_part+0*inf_years
   
@@ -206,23 +213,24 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   attack.yr=colSums(historytabSim)/n_part
   
   points(inf_years,attack.yr,col="black",lwd=2)
+  title(main=LETTERS[1],adj=0)
   
-  dev.copy(pdf,paste("plot_simulations/postPlots",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
-  dev.off()
+  #dev.copy(pdf,paste("plot_simulations/postPlots",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
+  #dev.off()
   
   #par(mfrow=c(1,1))
 
   # Plot comparison
-    plot(attack.yr,attackCI$mean,pch=19,col=colG,xlim=c(0,0.6),ylim=c(0,0.6),xlab="true attack rate",ylab="estimated attack rate", xaxs="i", yaxs="i")
-    lines(c(0,1),c(0,1),col='grey')
-    for(kk in 1:length(inf_years)){ # Iterate across test years
-      if(sum(kk==match(year_test,inf_years))>0){colComp="red"}else{colComp=colG}
-      points(attack.yr[kk],attackCI$mean[kk],pch=19,col=colComp)
-      lines(c(attack.yr[kk],attack.yr[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colComp)
-    }
-    
-    dev.copy(pdf,paste("plot_simulations/postCompare",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
-    dev.off()
+    # plot(attack.yr,attackCI$mean,pch=19,col=colG,xlim=c(0,0.6),ylim=c(0,0.6),xlab="true attack rate",ylab="estimated attack rate", xaxs="i", yaxs="i")
+    # lines(c(0,1),c(0,1),col='grey')
+    # for(kk in 1:length(inf_years)){ # Iterate across test years
+    #   if(sum(kk==match(year_test,inf_years))>0){colComp="red"}else{colComp=colG}
+    #   points(attack.yr[kk],attackCI$mean[kk],pch=19,col=colComp)
+    #   lines(c(attack.yr[kk],attack.yr[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colComp)
+    # }
+    # 
+    # dev.copy(pdf,paste("plot_simulations/postCompare",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
+    # dev.off()
     
     # - - - - - - - - - - - - - - - - - - 
     # Calculate and plot four fold rise in data
@@ -252,12 +260,13 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     }
     
     pick_r=match(test_years[2:(length(test.yr)-1)],inf_years)
+    pick_r2=match(2007:2012,inf_years)
     
-    par(mfrow=c(1,1),mar = c(4,4,1,1),mgp=c(1.8,0.6,0))
+    #par(mfrow=c(1,1),mar = c(4,4,1,1),mgp=c(1.8,0.6,0))
     
     plot(attack.yr[pick_r],attackCI[pick_r,"mean"],pch=19,col=colG,xlim=c(0,0.6),ylim=c(0,1),xlab="true attack rate",ylab="estimated attack rate", xaxs="i", yaxs="i")
     lines(c(0,1),c(0,1),col='grey')
-    for(kk in pick_r){ # Iterate across test years
+    for(kk in pick_r2){ # Iterate across test years
       if(sum(kk==match(year_test,inf_years))>0){colComp="red"}else{colComp=colG}
       points(attack.yr[kk],attackCI$mean[kk],pch=19,col=colComp,cex=1)
       lines(c(attack.yr[kk],attack.yr[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colComp)
@@ -265,9 +274,10 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     
     points(attack.yr[pick_r], sconverttab[,2],pch=1,cex=1.2,col="black")
     points(attack.yr[pick_r], sconverttab[,1],pch=19,cex=1.2,col="black")
+    title(main=LETTERS[2],adj=0)
 
     
-    dev.copy(pdf,paste("plot_simulations/True_vs_rise",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
+    dev.copy(pdf,paste("plot_simulations/True_vs_rise",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=7,height=4)
     dev.off()
     
   }
@@ -388,7 +398,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     # Plot data
     # Replot attack rates
     
-    par(mfrow=c(1,3))
+    par(mfrow=c(1,2))
     par(mar = c(3,3,1,1))
     par(mgp=c(1.8,0.6,0))
     if(flu.type=="H3HN"){colA0=c(rep(colB,length(inf_years)-5),rep("red",5))}else{colA0=rep(colB,length(inf_years))}
@@ -403,7 +413,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     for(kk in 1:length(inf_years)){ # Iterate across test years
       lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colA0[kk])
     }
-    title(main=LETTERS[1+letN],adj=0)
+    title(main=LETTERS[3],adj=0)
     
     #if(flu.type=="H3HN"){
     
@@ -423,7 +433,11 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
       print(cor.test(isolatetab,sconverttab[,2]))
       print(cor.test(isolatetab,sconverttab[,1]))
       
-      title(main=LETTERS[2+letN],adj=0)
+      title(main=LETTERS[4],adj=0)
+      
+      dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=7,height=4)
+      #dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=6,useDingbats = F)
+      dev.off()
   
       # PLOT INFECTIONS
       
@@ -1728,22 +1742,27 @@ plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),
   
 }
 
-
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Histogram of sample strains
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 plot_hist_strains <- function(){
-  
+
+  par(mfrow=c(1,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
   load("R_datasets/HaNam_data.RData")
   
-  hist(strain_years,breaks = seq(1968,2012),col=rgb(0.7,0.7,0.7),
+  hist(strain_years,breaks = seq(1967.5,2011.5,1),col=rgb(0.7,0.7,0.7),
        xaxs="i",yaxs="i",border=NULL,main=NULL,xlab="year",ylab="frequency")
   
   
-  dev.copy(pdf,paste("plot_simulations/Sample_years.pdf",sep=""), width=4,height=3)
+  dev.copy(pdf,paste("plot_simulations/Sample_years.pdf",sep=""), width=4,height=2)
   dev.off()
 
- }
+}
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Convert map ID tags to strain years
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 strain_years_convert <- function(){
   
@@ -1762,5 +1781,21 @@ strain_years_convert <- function(){
     year
   }
   ))
+  
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Convert map ID tags to strain years
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+compare_titre_changes <- function(){
+  
+  postFS = read.csv("plot_simulations/param_post1_H3FS.csv")$x
+  postHN = read.csv("plot_simulations/param_post1_H3HN.csv")$x
+  
+  pick = min(length(postFS),length(postHN))
+  
+  print(c.text(postHN[1:pick]-postFS[1:pick]))
   
 }

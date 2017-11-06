@@ -81,7 +81,7 @@ foreach(kk=1:4) %dopar% {
 # PLOT POSTERIORS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-# Plot posteriors for longtudinal data (including attack rates - FIG 3) for H3 Vietnam
+# Plot posteriors for longtudinal data (including attack rates - FIG 3C-D) for H3 Vietnam
 for(kk in 1:3){
   
   plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",
@@ -102,8 +102,6 @@ for(kk in c(2007:2012)){
   plot.posteriors(year_test=dy1,loadseed=1,flu.type=flutype0,fr.lim=F)
 }
 
-# plot.compare(define.year.vec=c(2007:2012) ) #c(c(2007:2012),"2007_2008_2009_2010_2011_2012"))
-# plot.posteriors(simDat=T,loadseed="SIM",year_test=c(2007:2012),plotmap=T)
 
 # - - - - 
 # Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG SUPP) for H3 Vietnam
@@ -112,10 +110,6 @@ plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",s
 
 # Plot specific titre vs estimates for H3 FluScape
 plot.posterior.titres.select(loadseed=1,year_test=c(2009),flu.type="H3FS",simDat=F,btstrap=200,part_pick=c(92,84,111),year_pick=c(2009),linearFn=T)
-
-
-# Plot specific antibody kinetics for H3 Vietnam -- DEPRECATED
-#plot.antibody.changes(btstrap=200)
 
 # Rewind and run historical landscapes (FIG 2) 
 run.historical.landscapes(loadseed=1,ymax=6.05,linearFn=T,d.step=0.2)
@@ -132,22 +126,15 @@ plot.posterior.titres(loadseed=1,flu.type="H3HN",simDat=F,
 #H3 FluScape titres
 plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btstrap=50,plotRes=T,linearFn=T)
 
-
-#H1 titres -- DEPRECATED
-#plot.posterior.titres(loadseed=1,flu.type="H1",simDat=F,year_test=c(2009:2011),btstrap=2)
-
-
-# >>> IMPORTANT FOR TESTING RUNS
 # Plot convergence for MCMC chains for H3 Vietnam
-
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:3),fr.lim=F,linearFn=T,runsPOST=3e5)
-
 
 
 # Plot convergence for MCMC chains for H3 FluScape
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),loadpick=c(1:4),fr.lim=T,linearFn=T)
 
-
+# Check if titre drop significantly different between FluScape and Vietnam data
+compare_titre_changes()
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -173,7 +160,7 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",simDat=T,year_test=c(20
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",simDat=T,year_test=2009,linearFn=T)
 
 
-# Plot simulation study posteriors and attack rate comparisons for simulation plots
+# Plot simulation study posteriors and attack rate comparisons for simulation plots (Fig 3A-B)
 for(kk in 1:3){
   
   plot.posteriors(simDat=T,loadseed=paste("SIM_",kk,sep=""),flu.type="H3HN",year_test=c(2007:2012),plotmap=F,fr.lim=T,linearFn=T) #H3 Vietnam
@@ -187,7 +174,12 @@ kk=1
 plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3",simDat=T,year_test=c(2007:2012),btstrap=10,linearFn=T) #H3 Vietnam
 #plot.posterior.titres(loadseed=paste("SIM_",kk,sep=""),flu.type="H3FS",simDat=T,year_test=c(2009),btstrap=10) #H3 FluScape
 
-# Plot estimated vs true attack rates from simulated data (Fig 3B)
 
+# Plot test strains (Fig 3A inset)
+plot_hist_strains()
+
+# Plot estimated vs true attack rates from simulated data (Fig 3B inset)
 plot.multi.true.vs.estimated(burnCut=0.25,flu.type="H3HN",simDat=T,loadpick=c(1:10))
+
+
 
