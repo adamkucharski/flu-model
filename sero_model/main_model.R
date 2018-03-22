@@ -65,9 +65,20 @@ foreach(kk=1:4) %dopar% {
 
 }
 
-# Run cross-sectional inference on H3 FluScape data
+# Run cross-sectional inference on H3 FluScape Neut data
 flutype0="H3FS"
 if(flutype0=="H3FS"){ dy1=c(2009) }
+#for(kk in 1:4){
+foreach(kk=1:4) %dopar% {
+  # Fits to spline if am.spl is defined
+  data.infer(year_test=dy1,mcmc.iterations=3e5,loadseed=kk,flutype=flutype0,
+             fix.param=c("tau1","muShort","wane","sigma2","vary.init"),fit.spline=am.spl,switch0=2,linearFn=T) #,"map.fit"
+  
+}
+
+# Run cross-sectional inference on H3 FluScape HI data
+flutype0="H3FS_HI"
+if(flutype0=="H3FS_HI"){ dy1=c(2009) }
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   # Fits to spline if am.spl is defined
@@ -82,15 +93,18 @@ foreach(kk=1:4) %dopar% {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Plot posteriors for longtudinal data (including attack rates - FIG 3C-D) for H3 Vietnam
-for(kk in 1:3){
+for(kk in 1){
   
   plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",
                   fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
   
 }
 
-# Plot posteriors for H3 FluScape data
-plot.posteriors(year_test=c(2009),loadseed=1,flu.type="H3FS",fr.lim=T,plotmap = F,plot.corr = F,linearFn=T)
+# Plot posteriors for H3 FluScape Neut data
+plot.posteriors(year_test=c(2009),loadseed=1,flu.type="H3FS",fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
+
+# Plot posteriors for H3 FluScape HI data
+plot.posteriors(year_test=c(2009),loadseed=2,flu.type="H3FS_HI",fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
 
 
 # - - - - - - - - - - - - - - - - - 
@@ -108,8 +122,12 @@ for(kk in c(2007:2012)){
 plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=200,part_pick=c(57,31,25),year_pick=c(2008:2010),linearFn=T)
 
 
-# Plot specific titre vs estimates for H3 FluScape
+# Plot specific titre vs estimates for H3 FluScape Neuts
 plot.posterior.titres.select(loadseed=1,year_test=c(2009),flu.type="H3FS",simDat=F,btstrap=200,part_pick=c(92,84,111),year_pick=c(2009),linearFn=T)
+
+# Plot specific titre vs estimates for H3 FluScape HI
+plot.posterior.titres.select(loadseed=1,year_test=c(2009),flu.type="H3FS_HI",simDat=F,btstrap=200,part_pick=c(27,14,111),year_pick=c(2009),linearFn=T)
+
 
 # Rewind and run historical landscapes (FIG 2) 
 run.historical.landscapes(loadseed=1,ymax=6.05,linearFn=T,d.step=0.2)
@@ -117,21 +135,29 @@ run.historical.landscapes(loadseed=1,ymax=6.05,linearFn=T,d.step=0.2)
 
 # - - - - - - - - - - - - - - - - - 
 # SUPPLEMENTARY FIGURES
-# Plot titre vs estimates
+# Plot Vietnam titre vs estimates
 
 plot.posterior.titres(loadseed=1,flu.type="H3HN",simDat=F,
                       year_test=c(2007:2012),btstrap=5,plotRes=T,linearFn=T) # Note linear function
 
 
-#H3 FluScape titres
+#H3 FluScape Neut titres
 plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btstrap=50,plotRes=T,linearFn=T)
+
+#H3 FluScape HI titres
+plot.posterior.titres(loadseed=1,flu.type="H3FS_HI",simDat=F,year_test=c(2009),btstrap=50,plotRes=T,linearFn=T)
+
 
 # Plot convergence for MCMC chains for H3 Vietnam
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:3),fr.lim=F,linearFn=T,runsPOST=3e5)
 
 
-# Plot convergence for MCMC chains for H3 FluScape
+# Plot convergence for MCMC chains for H3 Neut FluScape
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),loadpick=c(1:4),fr.lim=T,linearFn=T)
+
+# Plot convergence for MCMC chains for H3 HI FluScape
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS_HI",year_test=c(2009),loadpick=c(1:4),fr.lim=T,linearFn=T)
+
 
 # Check if titre drop significantly different between FluScape and Vietnam data
 compare_titre_changes()

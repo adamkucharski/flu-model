@@ -531,7 +531,7 @@ run_mcmc<-function(
   sample.n=length(jj_year)
   
   # Extract ages and create mask for FluScape data
-  if(flu_type=="H3FS"){
+  if(flu_type=="H3FS" | flu_type=="H3FS_HI"){
     age.list <- array(unlist(test.list),dim=c(5,length(strain_years),n_part))[5,1,]
     age.mask <- sapply(age.list,function(x){if(is.na(x)){1}else{match(max(min(inf_years),test_years[1]-x),inf_years)  }  })
   }else{
@@ -771,6 +771,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
   # Run MCMC for specific data set
   if(flutype=="H3HN"){load("R_datasets/HaNam_data.RData")}
   if(flutype=="H3FS"){load("R_datasets/FluScapeH3_data.RData")}
+  if(flutype=="H3FS_HI"){load("R_datasets/FluScapeH3_HI_data.RData")}
     #am.spl<-load.flu.map.data() # define spline from antigenic map data
   if(flutype=="B"){load("R_datasets/Fluscape_data.RData")}
   if(flutype=="H1"){load("R_datasets/HK_data.RData")}
