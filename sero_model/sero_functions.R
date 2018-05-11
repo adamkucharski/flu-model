@@ -44,7 +44,6 @@ load.flu.map.data<-function(){
   save(am.spl,file="datasets/spline_fn.RData")
 }
 
-
 # - - - - - - - - - - - - - - - -
 # Set initial condition (for infection history) as infection if titre >=X
 
@@ -71,11 +70,50 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_year
         hist0[(inf_years==spyear[i])]=1
       }
     }
-
+    
     
   }
-
+  
   min.range = max(1,testyear_index[1]-10) # Add infection within past 10 years
+  inf_index = inf_years-min(inf_years)+1
+  inf_pick = sample(c(1:inf.n)[inf_index>=min.range & inf_index<= testyear_index[1]],1)  # pick strain within plausible region to add
+  if(sum(hist0[inf_years < min(test_years)])==0){hist0[inf_pick]=1} # Make sure at least one infection previous to test year
+  hist0
+  
+}
+
+
+# - - - - - - - - - - - - - - - -
+# Set initial conditions - sensitivity analysis
+
+setuphistIC_SA<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_years){ # ii=participant | jj=test year
+  
+  test.II=test.list[[ii]]
+  test.jj=test.II[[jj]]
+  
+  spyear=unique(as.numeric(test.jj[3,])) # year of samples taken
+  
+  hist0=rep(0,inf.n)   
+  #hist0[sample(c(1:inf.n),round(0.1*inf.n))]=1
+  
+  # Check test data available - may be issue if age column added too
+  if(length(test.jj[,1])>1){
+    
+    # Set up test strains
+    titredat=as.numeric(test.jj[2,]) # Define titre data
+    maxt=(titredat==max(titredat))
+    
+    # Use simple cutoff for titres -- set high titres = 1 in history
+    for(i in 1:length(spyear)){
+      if(max(titredat[(as.numeric(test.jj[3,])==spyear[i])])>=4 & runif(1)>0.1 ){
+        hist0[(inf_years==spyear[i])]=1
+      }
+    }
+  }
+
+  # - - 
+
+  min.range = max(1,testyear_index[1]-5) # Add infection within past 5 years
   inf_index = inf_years-min(inf_years)+1
   inf_pick = sample(c(1:inf.n)[inf_index>=min.range & inf_index<= testyear_index[1]],1)  # pick strain within plausible region to add
   if(sum(hist0[inf_years < min(test_years)])==0){hist0[inf_pick]=1} # Make sure at least one infection previous to test year
@@ -535,14 +573,13 @@ run_mcmc<-function(
     age.list <- array(unlist(test.list),dim=c(5,length(strain_years),n_part))[5,1,]
     age.mask <- sapply(age.list,function(x){if(is.na(x)){1}else{match(max(min(inf_years),test_years[1]-x),inf_years)  }  })
   }else{
-    age.mask <- rep(1,n_part)
+    age.mask <- rep(1,n_part) # No mask if ages unknown
   }
   
   #print(age.mask)
   
   # Make adjustments depending on what is fitted and not
   if(sum(pmask=="muShort")>0){theta[["muShort"]]=1e-10} # Set short term boosting ~ 0 if waning not fitted
-  #if(sum(pmask=="map.fit")>0){ theta[["sigma"]]=1; pmask=c(pmask,"sigma","sigma2")} # Set cross-reactivity = 1 and don't fit if antigenic map also fitted (to avoid overparameterisation)
   if(sum(pmask=="sigma2")>0){ theta[["sigma2"]]=theta[["sigma"]] } # Fix equal if sigma same for both 
   if(sum(pmask=="error")>0){ theta[["error"]]=1e-10 } # Fix equal if sigma same for both 
   if(sum(pmask=="tau1")>0){ theta[["tau1"]]=1e-10 } # Fix equal if sigma same for both 
@@ -570,11 +607,14 @@ run_mcmc<-function(
     for(ii in 1:n_part){
       histIC=NULL
       for(kk in 1:length(jj_year)){
-        histIC=rbind(histIC,setuphistIC(ii,jj_year[kk],inf.n,test.list,testyear_index,test_years, inf_years))
+        histIC=rbind(histIC,setuphistIC_SA(ii,jj_year[kk],inf.n,test.list,testyear_index,test_years, inf_years))
       }
       histA=as.numeric(colSums(histIC)>0) # combine all histories
       histA0=histA*0
-      histA0[c(age.mask[ii]:inf.n)]=histA[c(age.mask[ii]:inf.n)]
+      histA0[c(age.mask[ii]:inf.n)]=histA[c(age.mask[ii]:inf.n)] # make sure no infections outside lifetime
+      
+      # Constrain to max of five infections in IC
+      if( sum(histA0) > 5 ){ hist0_0 = histA0; pick_subset = sample(which(hist0_0==1),5); histA0[-pick_subset]=0}
       
       historytab[ii,]=histA0
     }
@@ -782,7 +822,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=NA,sigma2=NA)
   theta0[["mu"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # basic boosting
-  theta0[["tau1"]]=0.05 # back-boost
+  theta0[["tau1"]]=0.05 # - NOT CURRENTLY USED
   theta0[["tau2"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.02*runif(1,c(-1,1))}else{0} # suppression via AGS
   theta0[["wane"]]= 0.5 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
   theta0[["sigma"]]=0.2 + if(sum(fix.param=="vary.init")>0){0.04*runif(1,c(-1,1))}else{0} # cross-reaction

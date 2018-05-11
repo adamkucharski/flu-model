@@ -72,7 +72,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   # Define lengths and sizes of inputs
   lik.tot=rowSums(likelihoodtab)
   runsPOST=length(lik.tot[lik.tot!=-Inf])
-  maxlik=max(lik.tot[1:runsPOST])
+  x=max(lik.tot[1:runsPOST])
   #plot(as.data.frame(thetatab)$sigma[1:runsPOST],type="l",ylab="parameter")
 
   # - - - - - - - 
@@ -679,6 +679,7 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
   
   # simDat=F; flu.type="H3FS_HI" ; year_test= c(2009); btstrap=5; 
   # simDat=T;loadseed=1;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T;btstrap=5
+  # simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; plotRes=F; linearFn=T;btstrap=50
   
   if(simDat==F){
     if(flu.type=="H3HN"){load("R_datasets/HaNam_data.RData")}
@@ -805,12 +806,15 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
   # - - - - - - - - - - - - - - - - - - - 
   # Plot figures from MCMC posteriors
 
-    colN=if(n.test>1){n.test}else{5}
+    colN=if(n.test>1){n.test+1}else{5}
     loopN=if(n.test>1){5}else{25}
     par(mfrow=c(5,colN)); 
     par(mar = c(2,2,1.5,0.2));
     par(mgp=c(2,0.5,0))
-    # Mask infections after test year
+    
+    # Initial history
+    initial.hist = historytabCollect[((2-1)*n_part+1):(2*n_part),1:n.inf]
+    
     
     yrange1=c(-0.2,9)
     
@@ -821,7 +825,8 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       simtitreX=store.mcmc.test.data[,ii0,,pickyr,1] # pick out years
       simtitreY=store.mcmc.test.data[,ii0,,pickyr,2] # pick out estimates
       hist.sample=store.mcmc.hist.data[,ii0,,pickyr] # for participant ii0 in year pickyr
-  
+      
+
       plot(inf_years,8*hist.sample[1,],type="l",ylim=yrange1,yaxs='i',col='white',xlab="",ylab="",main=paste("Participant ",ii0,", ",year_test[pickyr],sep=""))
       
       # Sample from infection history
@@ -858,6 +863,14 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
           lines(min(inf_years)-1+c(jj,jj),c(20*histSim1[jj]-11.5,20*histSim1[jj]-11),col=rgb(0,0.6,0),lwd=3)
         }
       }
+      
+      # PLot histogram of infections
+      if(pickyr==n.test){
+        hist(rowSums(store.mcmc.hist.data[,ii0,,n.test]),breaks=seq(-0.5,inf.n,1),col="light grey",main=paste("Participant ",ii0,", |X|",sep=""))
+        lines(c(sum(initial.hist[ii0,]),sum(initial.hist[ii0,])),c(-1,100),col="black",lty=1,lwd=2)
+      }
+      
+      
       
       if(ii0 %% loopN==0 | ii0==n_part){
         #dev.copy(pdf,paste("plot_simulations/titre_compare/sim",loadseed,"_",ii0,"P.pdf",sep=""),width=10,height=8)
@@ -1798,11 +1811,11 @@ strain_years_convert <- function(){
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Convert map ID tags to strain years
+# Compare posterior infection histories
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-compare_titre_changes <- function(){
+plot_posterior_infection_number <- function(){
   
   postFS = read.csv("plot_simulations/param_post1_H3FS.csv")$x
   postFS_HI = read.csv("plot_simulations/param_post2_H3FS_HI.csv")$x
@@ -1820,9 +1833,7 @@ compare_titre_changes <- function(){
   
   postFS = read.csv("plot_simulations/infection_hist1_H3FS.csv")$x
   postFS_HI = read.csv("plot_simulations/infection_hist2_H3FS_HI.csv")$x
-  
-  chisq.test(postFS,postFS_HI)
-  
+
   bindata = seq(-0.5,42.5,1)
   
   par(mfrow=c(1,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
@@ -1839,7 +1850,7 @@ compare_titre_changes <- function(){
 # Compare YOB
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-compare_titre_changes <- function(){
+compare_YOB <- function(){
   
   yob.dataHN = read.csv("datasets/HaNam_YOB.csv",header=FALSE)$V1 # Import age distribution HN
   yob.dataFS = read.csv("datasets/FluScape_YOB.csv",header=FALSE)$V1 # Import age distribution FS
