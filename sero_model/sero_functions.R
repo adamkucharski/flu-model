@@ -84,7 +84,7 @@ setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_year
 
 
 # - - - - - - - - - - - - - - - -
-# Set initial conditions - sensitivity analysis
+# Set initial conditions - sensitivity analysis with small number of ICs
 
 setuphistIC_SA<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_years){ # ii=participant | jj=test year
   

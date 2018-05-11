@@ -714,8 +714,10 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
   # - - - - - - - - - - - -
   # Sample from MCMC runs to get stored matrices of expected titre and estimated infection years
 
+  pick.table = sample(c(runs1:runsPOST),btstrap) %>% sort()
+  
   for(sampk in 1:btstrap){
-    pickA=sample(c(runs1:runsPOST),1)
+    pickA= pick.table[sampk]
     
     pickAhist=ceiling(pickA/hist.switch)+1 # check which history this specifies
     
@@ -815,7 +817,6 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
     # Initial history
     initial.hist = historytabCollect[((2-1)*n_part+1):(2*n_part),1:n.inf]
     
-    
     yrange1=c(-0.2,9)
     
   for(ii0 in 1:n_part){
@@ -866,7 +867,7 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       
       # PLot histogram of infections
       if(pickyr==n.test){
-        hist(rowSums(store.mcmc.hist.data[,ii0,,n.test]),breaks=seq(-0.5,inf.n,1),col="light grey",main=paste("Participant ",ii0,", |X|",sep=""))
+        hist(rowSums(store.mcmc.hist.data[,ii0,,n.test]),breaks=seq(-0.5,45,1),col="light grey",main=paste("Participant ",ii0,", |X|",sep=""))
         lines(c(sum(initial.hist[ii0,]),sum(initial.hist[ii0,])),c(-1,100),col="black",lty=1,lwd=2)
       }
       
@@ -881,6 +882,31 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
     }  # end loop over participants
       
   } # end loop over test years
+    
+    # - - - 
+    # Construct table with infection histories
+    
+    store.hist = NULL
+    pick.table = seq(runs1,runsPOST,1000) %>% sort()
+    pickN = length(pick.table)
+    
+    for(ii in 1:n_part){
+      
+    for(sampk in 1:pickN){
+      pickA= pick.table[sampk]
+      pickAhist=ceiling(pickA/hist.switch)+1 # check which history this specifies
+      
+      hist.sample=historytabCollect[((pickAhist-1)*n_part+1):(pickAhist*n_part),1:n.inf]
+      store.hist = rbind(store.hist,c(ii, pickA, sum(hist.sample[ii,] ),1))
+ 
+    }
+      
+    }
+
+    store.hist = data.frame(store.hist)
+    names(store.hist) = c("i","sampno","V1","chain")
+    
+    write.csv(store.hist,"plot_simulations/titre_compare/history_post.csv")
 
 }
 
