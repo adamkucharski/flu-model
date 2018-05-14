@@ -37,10 +37,10 @@ load.flu.map.data<-function(){
   # Plot strains vs clusters
   ag.coord=ag.coord[ag.coord$viruses!="NL/823/92",] # remove BE 89 dead end (Fonville method)
   am.spl=smooth.spline(ag.coord$AG_y,ag.coord$AG_x)
-  plot(ag.coord$AG_y,ag.coord$AG_x)
+  #plot(ag.coord$AG_y,ag.coord$AG_x)
   xx=c(330:370)
   prd1=predict(am.spl,xx)
-  lines(prd1, col = "blue")
+  #lines(prd1, col = "blue")
   save(am.spl,file="datasets/spline_fn.RData")
 }
 
@@ -493,9 +493,10 @@ convert_binary <- function(x){sum(2^(which(rev(unlist(strsplit(as.character(x), 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-ComputeProbability<-function(marg_likelihood,marg_likelihood_star){
+ComputeProbability<-function(marg_likelihood,marg_likelihood_star,theta_star, thetatabM,pmask){
   # Flat priors on theta => symmetric update probability
-  calc.lik = exp(marg_likelihood_star-marg_likelihood)
+  calc.lik = exp(marg_likelihood_star-marg_likelihood) #* (theta_star/thetatabM)
+  
   calc.lik[calc.lik>1]=1
   calc.lik
 }
@@ -524,6 +525,39 @@ SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   return(thetaS=theta_star)
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Sample theta without reflective boundary conditions
+
+SampleTheta2 <-function(theta_initial,m,covartheta,covarbasic,nparam){
+
+  # sample from multivariate normal distribution - no adaptive sampling
+  theta_star = as.numeric(mvrnorm(1,theta_initial, Sigma=covarbasic))
+  
+  names(theta_star)=names(theta_initial)
+  
+  # reflective boundary condition for max boost=10
+  # mu1=min(20-theta_star[["mu"]],theta_star[["mu"]])
+  # theta_star[["mu"]]=ifelse(mu1<0,theta_initial[["mu"]],mu1)
+  # 
+  #mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
+  #theta_star[["muShort"]]=ifelse(mu2<0,theta_initial[["muShort"]],mu2)
+  
+  # reflective boundary condition for wane function = max is 1 for now # DEBUG
+  # wane2=min(2-theta_star[["wane"]],theta_star[["wane"]])
+  # theta_star[["wane"]]=ifelse(wane2<0,theta_initial[["wane"]],wane2)
+  # 
+  # Check parameters biologically plausible
+  if(theta_star[["mu"]]<0 | theta_star[["mu"]]>10 |theta_star[["muShort"]]<0 | theta_star[["sigma"]]<0 | theta_star[["sigma2"]]<0  | theta_star[["wane"]]<0 | theta_star[["wane"]]>1 | theta_star[["error"]]<0 | theta_star[["tau1"]]<0 | theta_star[["tau2"]]<0 ){
+    likelihoodOK = 0
+  }else{
+    likelihoodOK = 1
+  }
+
+
+  return(list(thetaS=theta_star,likOK = likelihoodOK))
+  
+}
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Metropolis-Hastings algorithm
@@ -545,7 +579,8 @@ run_mcmc<-function(
   linD=F, # toggles linear/exponential cross-reactivity function
   antigenic.map.in=NULL, # define specific map structure (or initial structure if fitting)
   am.spline=NULL, # fit antigenic map along defined spline function
-  flu_type = NULL
+  flu_type = NULL,
+  turn_off_likelihood=0 # DEBUG turn off likelihood
   ){
   
   # DEBUG SIMULATION params <<<
@@ -554,7 +589,7 @@ run_mcmc<-function(
    # seedi=loadseed; antigenic.map.in = NULL; am.spline = am.spl;  flu_type = flu.type; linD=F
   
   # DEBUG set params <<<
-  # hist.true=NULL; test.yr=c(2009); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=F; pmask=NULL ; antigenic.map.in=NULL; flu_type="H3HN"
+  # hist.true=NULL; test.yr=c(2009); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=T; pmask=NULL ; antigenic.map.in=NULL; flu_type="H3HN"
   
   time.1 = Sys.time() # DEBUG TIME 1
   
@@ -663,8 +698,15 @@ run_mcmc<-function(
     # Resample parameters
 
     if(m %% switch1==0 | m==1){ # m==1 condition as have to calculate all liks on first step
-      theta_star = SampleTheta(thetatab[m,], m,cov_matrix_theta,cov_matrix_basic,nparam=sum(cov_matrix_theta0)) #resample theta
-      
+      if(m==1){
+        theta_star = thetatab[m,]
+        likelihood_sample_OK = 1 # Check parameters within boundaries
+      }else{
+        sample_theta = SampleTheta2(thetatab[m,], m,cov_matrix_theta,cov_matrix_basic,nparam=sum(cov_matrix_theta0)) #resample theta
+        theta_star = sample_theta$thetaS
+        likelihood_sample_OK = sample_theta$likOK # Check parameters within boundaries
+      }
+
       if(sum(pmask=="sigma2")>0){ theta_star[["sigma2"]]=theta_star[["sigma"]] } # Fix equal if sigma same for both 
       
       #if(sum(pmask=="map.fit")>0){ # check whether to fit antigenic map -- Not identifiable so deprecated
@@ -684,6 +726,7 @@ run_mcmc<-function(
       #age_star = age.tab #SampleAge(pickA,age.tab) #resample age (not for now)
       history_star = SampleHistory(historytab,pickA,inf.n,age_star,inf_years,age.mask) #resample history
       theta_star = thetatab[m,]
+      likelihood_sample_OK = 1 # Check parameters within boundaries
     }
 
     #time.4 = Sys.time() # DEBUG Set Time 3
@@ -700,16 +743,20 @@ run_mcmc<-function(
     # LIKELIHOOD function - Only calculate for updated history
     
     lik_val=likelihoodtab[m,]
-    for(ii in pickA){
-      # Set history to zero after test date
-      lik.ii=rep(NA,sample.n)
-      for(kk in 1:sample.n){
-        #For DEBUG: set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
-        lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,dmatrix2,theta_star,test.list,testyear_index[kk])
-        #if(lik.ii[kk]==-Inf){print(c(ii,kk))  } For DEBUG
+    
+    if((turn_off_likelihood!=1 | m==1) & likelihood_sample_OK==1){ # Only calculate if likelihood running
+      for(ii in pickA){
+        # Set history to zero after test date
+        lik.ii=rep(NA,sample.n)
+        for(kk in 1:sample.n){
+          #For DEBUG: set params <<<  ii=1;kk=2;historyii=as.numeric(history_star[ii,])
+          lik.ii[kk]=estimatelik(ii,jj_year[kk],as.numeric(history_star[ii,]),dmatrix,dmatrix2,theta_star,test.list,testyear_index[kk])
+          #if(lik.ii[kk]==-Inf){print(c(ii,kk))  } For DEBUG
+        }
+        lik_val[ii]=sum(lik.ii)
+        #if(is.na(lik_val[ii])){ lik_val[ii]=-Inf} For DEBUG
       }
-      lik_val[ii]=sum(lik.ii)
-      #if(is.na(lik_val[ii])){ lik_val[ii]=-Inf} For DEBUG
+        
     }
     
     #time.6 = Sys.time() # DEBUG Set Time 3
@@ -726,7 +773,7 @@ run_mcmc<-function(
     if( (m %% switch1 != 0) & m>1){
       
       # Calculate piecewise likelihood
-      output_prob = ComputeProbability(likelihoodtab[m,pickA],lik_val[pickA]) # Only calculate for selected
+      output_prob = ComputeProbability(likelihoodtab[m,pickA],lik_val[pickA],theta_star, thetatab[m,],pmask) # Only calculate for selected
       pickCP = pickA[runif( length(pickA) ) < output_prob]
       
       historytab[pickCP,] = history_star[pickCP,]
@@ -741,10 +788,13 @@ run_mcmc<-function(
     # Theta sample step
     if( (m %% switch1==0) | m==1){
       
-      # Estimate probability of update
-      output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val)) 
+      # Estimate probability of update  
+      output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val),theta_star, thetatab[m,],pmask) 
       if(is.na(output_prob) & m==1){stop(paste('check initial parameter values',theta_star[["error"]]))}
         
+      if(turn_off_likelihood==1){output_prob = 1} # Always accept if likelihood turned off
+      if(likelihood_sample_OK==0){output_prob = 0}
+      
       if(runif(1) < output_prob){
         
         thetatab[m+1,] = theta_star
@@ -802,10 +852,11 @@ run_mcmc<-function(
 
 data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
                        flutype="H3HN",fix.param=NULL , fit.spline=NULL, 
-                       switch0=2,linearFn=F,  vp1=0.2 # Probability resample history
+                       switch0=2,linearFn=F,  vp1=0.2, # Probability resample history
+                       turn_off_likelihood=1
                        ) {
   
-  #DEBUG  year_test=c(2007:2012); seed_i=1; vp1=0.2; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=F
+  #DEBUG  year_test=c(2007:2012); seed_i=1; vp1=0.2; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=T
   
   # INFERENCE MODEL
   # Run MCMC for specific data set
@@ -858,12 +909,13 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
     varpart_prob=vp1,
     hist.true=NULL,
     switch1=switch0, # ratio of infection history resamples to theta resamples. This is fixed
-    pmask=fix.param, #c("disp_k"), #c("wane"), #,"muShort"), # specify parameters to fix
+    pmask=c(fix.param,"disp_k"), #c("wane"), #,"muShort"), # specify parameters to fix
     seedi=paste(loadseed,"_",flutype,sep=""), # record output
     antigenic.map.in = antigenic.map.in0, # define specific map structure (or initial structure if fitting)
     am.spline = NULL, # decide whether to fit antigenic map along "am.spl" spline function
     linD=linearFn,
-    flu_type= flutype)
+    flu_type= flutype,
+    turn_off_likelihood)
   
 }
 

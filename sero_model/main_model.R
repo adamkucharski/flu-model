@@ -59,12 +59,12 @@ data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=5,flutype=flutype0,fix.par
 # >>> TESTING RUNS
 
 # Run longitudinal inference on H3 HaNam data
-foreach(kk=1:4) %dopar% {
+foreach(kk=4) %dopar% {
 
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e5,loadseed=kk,
+  data.infer(year_test=dy1,mcmc.iterations=5e3,loadseed=kk,
              flutype=flutype0,fix.param=c("tau1","vary.init"),
-             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.4) 
+             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.4,turn_off_likelihood=0) 
 
 }
 
@@ -96,7 +96,7 @@ foreach(kk=1:4) %dopar% {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Plot posteriors for longtudinal data (including attack rates - FIG 3C-D) for H3 Vietnam
-for(kk in 1){
+for(kk in 4){
   
   plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",
                   fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
@@ -173,9 +173,9 @@ plot_posterior_infection_number()
 # Generate simulated data and infer parameters -- simulation parameters are defined in sero_functions.R
 # flu.type defines which dataset format (i.e. test strains, test years) the simulated data will produce
 
-foreach(kk=1:10) %dopar% {
+foreach(kk=1:4) %dopar% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=5e4, flu.type="H3HN", strain.fix=T,
+  simulation.infer(seed_i=kk,mcmc.iterations=1e3, flu.type="H3HN", strain.fix=T,
                    fit.spline=am.spl,vp1=0.4,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
 
 }
