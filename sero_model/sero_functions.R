@@ -429,9 +429,9 @@ SampleHistory<-function(historyA,pick,inf.n,ageA,inf_years,age.mask){
     
     # Remove infection
     if(rand1<1/3){
-      infectID=infvector[(as.numeric(x)>0)]
+      infectID = infvector[(as.numeric(x)>0)]
       if(length(infectID)>0){
-        x[sample(c(infectID),1)]=0 # Why double? DEBUG
+        x[sample(c(infectID),1)]=0 # 
       }
     }
     
@@ -473,7 +473,7 @@ SampleAge<-function(pick,ageA){
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Resample antigenic location
+# Resample antigenic location -- NOTE THIS IS NOT CURRENTLY ACTIVE
 
 SampleAntigenicMap<-function(anti.map.star,epsilon.map,inf_years){
   Sigma0=(diag(1+0*inf_years))*epsilon.map
@@ -493,15 +493,28 @@ convert_binary <- function(x){sum(2^(which(rev(unlist(strsplit(as.character(x), 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-ComputeProbability<-function(marg_likelihood,marg_likelihood_star,theta_star, thetatabM,pmask){
+ComputeProbability<-function(marg_likelihood,marg_likelihood_star,theta_star, thetatabM,pmask,turn_off_likelihood){
+  
+  if(turn_off_likelihood==1){
+    marg_likelihood = -1
+    marg_likelihood_star = -1
+  }
+  
+  # Identify fitted parameters
+  match0 = match(pmask,names(theta_star)); match0 = match0[!is.na(match0)]
+  
   # Flat priors on theta => symmetric update probability
-  calc.lik = exp(marg_likelihood_star-marg_likelihood) #* (theta_star/thetatabM)
+
+  # Include comparison of values to account for lognormal resampling of theta
+  calc.lik = exp(marg_likelihood_star-marg_likelihood + sum(log(theta_star[-match0])) - sum(log(thetatabM[-match0]))) # *theta_star[-match0][3] /thetatabM[-match0][3]  #+ sum(log(thetatabM[-match0])-log(theta_star[-match0])) )
   
   calc.lik[calc.lik>1]=1
   calc.lik
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+# DEPRECATED sampling function
 
 SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   
@@ -525,39 +538,34 @@ SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
   return(thetaS=theta_star)
 }
 
+
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Sample theta without reflective boundary conditions
 
-SampleTheta2 <-function(theta_initial,m,covartheta,covarbasic,nparam){
+SampleTheta2 <-function(theta_initial,m,covartheta,covarbasic,nparam,pmask){
 
   # sample from multivariate normal distribution - no adaptive sampling
-  theta_star = as.numeric(mvrnorm(1,theta_initial, Sigma=covarbasic))
+  #theta_star = as.numeric(mvrnorm(1,theta_initial, Sigma=covarbasic))
+  theta_star = as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=covarbasic)))
   
   names(theta_star)=names(theta_initial)
-  
-  # reflective boundary condition for max boost=10
-  # mu1=min(20-theta_star[["mu"]],theta_star[["mu"]])
-  # theta_star[["mu"]]=ifelse(mu1<0,theta_initial[["mu"]],mu1)
-  # 
-  #mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
-  #theta_star[["muShort"]]=ifelse(mu2<0,theta_initial[["muShort"]],mu2)
-  
-  # reflective boundary condition for wane function = max is 1 for now # DEBUG
-  # wane2=min(2-theta_star[["wane"]],theta_star[["wane"]])
-  # theta_star[["wane"]]=ifelse(wane2<0,theta_initial[["wane"]],wane2)
-  # 
-  # Check parameters biologically plausible
-  if(theta_star[["mu"]]<0 | theta_star[["mu"]]>10 |theta_star[["muShort"]]<0 | theta_star[["sigma"]]<0 | theta_star[["sigma2"]]<0  | theta_star[["wane"]]<0 | theta_star[["wane"]]>1 | theta_star[["error"]]<0 | theta_star[["tau1"]]<0 | theta_star[["tau2"]]<0 ){
-    likelihoodOK = 0
-  }else{
-    likelihoodOK = 1
-  }
 
+  likelihoodOK = 1
+  
+  # Check parameters biologically plausible
+  if(theta_star[["wane"]]>1 & sum(pmask=="wane")==0 ){ likelihoodOK = 0 } # theta_star[["error"]]<0 | theta_star[["tau1"]]<0 | theta_star[["tau2"]]<0 theta_star[["mu"]]<0 | theta_star[["mu"]]>10 |theta_star[["muShort"]]<0 | theta_star[["sigma"]]<0 | theta_star[["sigma2"]]<0  | theta_star[["wane"]]<0 | 
+  if(theta_star[["mu"]]>10 & sum(pmask=="mu")==0 ){ likelihoodOK = 0 } # theta_star[["error"]]<0 | theta_star[["tau1"]]<0 | theta_star[["tau2"]]<0 theta_star[["mu"]]<0 | theta_star[["mu"]]>10 |theta_star[["muShort"]]<0 | theta_star[["sigma"]]<0 | theta_star[["sigma2"]]<0  | theta_star[["wane"]]<0 | 
+  if(theta_star[["muShort"]]>10 & sum(pmask=="muShort")==0 ){ likelihoodOK = 0 } # theta_star[["error"]]<0 | theta_star[["tau1"]]<0 | theta_star[["tau2"]]<0 theta_star[["mu"]]<0 | theta_star[["mu"]]>10 |theta_star[["muShort"]]<0 | theta_star[["sigma"]]<0 | theta_star[["sigma2"]]<0  | theta_star[["wane"]]<0 | 
+  if(theta_star[["error"]]>10 & sum(pmask=="error")==0 ){ likelihoodOK = 0 } # theta_star[["error"]]<0 | theta_star[["tau1"]]<0 | theta_star[["tau2"]]<0 theta_star[["mu"]]<0 | theta_star[["mu"]]>10 |theta_star[["muShort"]]<0 | theta_star[["sigma"]]<0 | theta_star[["sigma2"]]<0  | theta_star[["wane"]]<0 | 
+  if(theta_star[["sigma"]]>10 & sum(pmask=="sigma")==0 ){ likelihoodOK = 0 } # theta_star[["error"]]<0 | theta_star[["tau1"]]<0 | theta_star[["tau2"]]<0 theta_star[["mu"]]<0 | theta_star[["mu"]]>10 |theta_star[["muShort"]]<0 | theta_star[["sigma"]]<0 | theta_star[["sigma2"]]<0  | theta_star[["wane"]]<0 | 
+  if(theta_star[["sigma2"]]>10 & sum(pmask=="sigma2")==0 ){ likelihoodOK = 0 } # theta_star[["error"]]<0 | theta_star[["tau1"]]<0 | theta_star[["tau2"]]<0 theta_star[["mu"]]<0 | theta_star[["mu"]]>10 |theta_star[["muShort"]]<0 | theta_star[["sigma"]]<0 | theta_star[["sigma2"]]<0  | theta_star[["wane"]]<0 | 
+  if(theta_star[["tau2"]]>10 & sum(pmask=="tau2")==0 ){ likelihoodOK = 0 } # theta_star[["error"]]<0 | theta_star[["tau1"]]<0 | theta_star[["tau2"]]<0 theta_star[["mu"]]<0 | theta_star[["mu"]]>10 |theta_star[["muShort"]]<0 | theta_star[["sigma"]]<0 | theta_star[["sigma2"]]<0  | theta_star[["wane"]]<0 | 
 
   return(list(thetaS=theta_star,likOK = likelihoodOK))
   
 }
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Metropolis-Hastings algorithm
@@ -589,7 +597,7 @@ run_mcmc<-function(
    # seedi=loadseed; antigenic.map.in = NULL; am.spline = am.spl;  flu_type = flu.type; linD=F
   
   # DEBUG set params <<<
-  # hist.true=NULL; test.yr=c(2009); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=T; pmask=NULL ; antigenic.map.in=NULL; flu_type="H3HN"
+  # hist.true=NULL; test.yr=c(2009); runs=200; switch1=10; varpart_prob=0.05 ;   seedi=1; linD=T; antigenic.map.in=NULL; flu_type="H3HN"
   
   time.1 = Sys.time() # DEBUG TIME 1
   
@@ -648,8 +656,9 @@ run_mcmc<-function(
       histA0=histA*0
       histA0[c(age.mask[ii]:inf.n)]=histA[c(age.mask[ii]:inf.n)] # make sure no infections outside lifetime
       
-      # Constrain to max of five infections in IC
-      if( sum(histA0) > 5 ){ hist0_0 = histA0; pick_subset = sample(which(hist0_0==1),5); histA0[-pick_subset]=0}
+      # Constrain to max of X infections in IC
+      pick.X = 10
+      if( sum(histA0) > pick.X ){ hist0_0 = histA0; pick_subset = sample(which(hist0_0==1),pick.X); histA0[-pick_subset]=0}
       
       historytab[ii,]=histA0
     }
@@ -683,12 +692,12 @@ run_mcmc<-function(
     
     # Adaptive covariance matrix
     if(m==1){
-      epsilon0=0.01
+      epsilon0=0.001 # DEBUG
       #cov_matrix_theta=epsilon0*cov_matrix_thetaA
       cov_matrix_basic=epsilon0*cov_matrix_theta0
       varpart_prob0=varpart_prob
     }else{
-      epsilon0=max(0.00001,min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m)))
+      #epsilon0=max(0.00001,min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m)))
       #cov_matrix_theta=epsilon0*cov_matrix_thetaA
       cov_matrix_basic=epsilon0*cov_matrix_theta0
       #varpart_prob0=max(0.02,min(0.25,exp(log(varpart_prob0)+(accept_rateH-0.234)*0.999^m))) # resample max of 25%, min of 2%
@@ -702,7 +711,7 @@ run_mcmc<-function(
         theta_star = thetatab[m,]
         likelihood_sample_OK = 1 # Check parameters within boundaries
       }else{
-        sample_theta = SampleTheta2(thetatab[m,], m,cov_matrix_theta,cov_matrix_basic,nparam=sum(cov_matrix_theta0)) #resample theta
+        sample_theta = SampleTheta2(thetatab[m,], m,cov_matrix_theta,cov_matrix_basic,nparam=sum(cov_matrix_theta0),pmask) #resample theta
         theta_star = sample_theta$thetaS
         likelihood_sample_OK = sample_theta$likOK # Check parameters within boundaries
       }
@@ -773,7 +782,7 @@ run_mcmc<-function(
     if( (m %% switch1 != 0) & m>1){
       
       # Calculate piecewise likelihood
-      output_prob = ComputeProbability(likelihoodtab[m,pickA],lik_val[pickA],theta_star, thetatab[m,],pmask) # Only calculate for selected
+      output_prob = ComputeProbability(likelihoodtab[m,pickA],lik_val[pickA],theta_star, thetatab[m,],pmask,turn_off_likelihood) # Only calculate for selected
       pickCP = pickA[runif( length(pickA) ) < output_prob]
       
       historytab[pickCP,] = history_star[pickCP,]
@@ -783,22 +792,18 @@ run_mcmc<-function(
       
     } # end history step
       
-    
-      
     # Theta sample step
     if( (m %% switch1==0) | m==1){
       
       # Estimate probability of update  
-      output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val),theta_star, thetatab[m,],pmask) 
+      output_prob = ComputeProbability(sum(likelihoodtab[m,]),sum(lik_val),theta_star, thetatab[m,],pmask,turn_off_likelihood) 
       if(is.na(output_prob) & m==1){stop(paste('check initial parameter values',theta_star[["error"]]))}
         
-      if(turn_off_likelihood==1){output_prob = 1} # Always accept if likelihood turned off
       if(likelihood_sample_OK==0){output_prob = 0}
       
       if(runif(1) < output_prob){
         
         thetatab[m+1,] = theta_star
-        #map.tab = map_star DEPRECATED
         accepttabT=c(accepttabT,1)
         likelihoodtab[m+1,] = lik_val
         
@@ -856,7 +861,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
                        turn_off_likelihood=1
                        ) {
   
-  #DEBUG  year_test=c(2007:2012); seed_i=1; vp1=0.2; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=T
+  #DEBUG  year_test=c(2007:2012); seed_i=1; vp1=0.2; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=T; pmask=c("tau2","wane")
   
   # INFERENCE MODEL
   # Run MCMC for specific data set
@@ -874,12 +879,12 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=NA,sigma2=NA)
   theta0[["mu"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.05 # - NOT CURRENTLY USED
-  theta0[["tau2"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.02*runif(1,c(-1,1))}else{0} # suppression via AGS
-  theta0[["wane"]]= 0.5 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
-  theta0[["sigma"]]=0.2 + if(sum(fix.param=="vary.init")>0){0.04*runif(1,c(-1,1))}else{0} # cross-reaction
+  theta0[["tau2"]]=0.05 + if(sum(fix.param=="vary.init")>0){0.01*runif(1,c(-1,1))}else{0} # suppression via AGS
+  theta0[["wane"]]= 0.8 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
+  theta0[["sigma"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.04*runif(1,c(-1,1))}else{0} # cross-reaction
   theta0[["sigma2"]]=0.05 + if(sum(fix.param=="vary.init")>0){0.01*runif(1,c(-1,1))}else{0} # short-term cross-reaction
-  theta0[["muShort"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term boosting
-  theta0[["error"]]=2 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # measurement error
+  theta0[["muShort"]]=2.5 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term boosting
+  theta0[["error"]]=1.5 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # measurement error
   theta0[["disp_k"]]=1 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0
   print(theta0)
@@ -929,7 +934,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
 
   #DEBUG seed_i=1; mcmc.iterations=40; strain.fix=T; flu.type="H3HN"; fix.param ="vary.init"; linearFn= F
   
-  # Edit for cross-sectional over fitting
+  # Load data
   loadseed=paste("SIM_",seed_i,sep="")
   if(flu.type=="H3HN"){load("R_datasets/HaNam_data.RData"); npartM=69; define.year=c(2007:2012); pmask0=c("tau1")}
   if(flu.type=="H3FS"){load("R_datasets/FluScapeH3_data.RData"); npartM=151; define.year=c(2009); pmask0=c("muShort","tau1")}
@@ -940,7 +945,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   #tau1=back-boost  / tau2=suppress / disp_k=dispersion (deprecated) 
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
-  thetaSim = c(mu=2,tau1=0.02,tau2=0.05,wane=1,sigma=0.3,muShort=2,error=1,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
+  thetaSim = c(mu=2,tau1=0.02,tau2=0.05,wane=0.8,sigma=0.3,muShort=2,error=1,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
   
   if(strain.fix==T){
     strain_years0 = strain_years
@@ -982,7 +987,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   theta0[["mu"]]=2+ if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # back-boost
   theta0[["tau2"]]=0.05+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # suppression via AGS
-  theta0[["wane"]]= 1 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
+  theta0[["wane"]]= 0.8 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
   theta0[["sigma"]]=0.3+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # long-term cross-reaction
   theta0[["sigma2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.05*runif(1,c(-1,1))}else{0} # short-term cross-reaction
   theta0[["muShort"]]=2 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # short term boosting

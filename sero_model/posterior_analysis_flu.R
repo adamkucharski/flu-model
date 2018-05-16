@@ -42,9 +42,9 @@ scale.map<-function(map.pick){
 
 plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012),plotmap=F,fr.lim=F,plot.corr=F,linearFn=F){
   
-  # simDat=F;loadseed=4;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
-  
   # simDat=T;loadseed="SIM_2";year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
+  
+  # simDat=F;loadseed=4;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
   if(simDat==F){loadseed=paste(loadseed,"_",flu.type,sep="")}
   if(simDat==T){load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))}
@@ -145,7 +145,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   write.csv(ind.infN,paste("plot_simulations/infection_hist",loadseed,".csv",sep=""))
   
   # Adjust for age - DEPRECATED
-  
+
   #age.data=sort(max(test_years)-yob.data[,1])
   #years.at.risk=(max(test_years)-min(inf_years))
   #age.data[age.data > years.at.risk] =years.at.risk

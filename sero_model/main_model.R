@@ -48,25 +48,36 @@ load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD T
 # RUN INFERENCE
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-# Run cross-sectional inference on H3 HaNam data
+# Run cross-sectional inference on H3 HaNam data (test run)
 foreach(kk1=c(2007:2012)) %dopar% {
   data.infer(year_test=kk1,mcmc.iterations=20,loadseed=1,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
 }
 
-# Run cross-sectional model on full H3 HaNam data
+# Run cross-sectional model on full H3 HaNam data  (test run)
 data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=5,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
 
-# >>> TESTING RUNS
+# MAIN RUNS
 
 # Run longitudinal inference on H3 HaNam data
-foreach(kk=4) %dopar% {
+foreach(kk=1:4) %dopar% {
 
+  fix.param.in = if(kk<=2){c("tau1") } else{c("tau1","wane") }
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=5e3,loadseed=kk,
-             flutype=flutype0,fix.param=c("tau1","vary.init"),
-             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.4,turn_off_likelihood=0) 
+  data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,
+             flutype=flutype0,fix.param = fix.param.in, #choose parameters to fix
+             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5,turn_off_likelihood=0) 
 
 }
+
+# DEBUG - need to move back down
+# Plot posteriors for longtudinal data (including attack rates - FIG 3C-D) for H3 Vietnam
+for(kk in 1){
+  
+  plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",
+                  fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
+  
+}
+
 
 # Run cross-sectional inference on H3 FluScape Neut data
 flutype0="H3FS"
@@ -74,7 +85,7 @@ if(flutype0=="H3FS"){ dy1=c(2009) }
 #for(kk in 1:4){
 foreach(kk=1:4) %dopar% {
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=3e5,loadseed=kk,flutype=flutype0,
+  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,flutype=flutype0,
              fix.param=c("tau1","muShort","wane","sigma2","vary.init"),fit.spline=am.spl,switch0=2,linearFn=T) 
   
 }
@@ -95,13 +106,6 @@ foreach(kk=1:4) %dopar% {
 # PLOT POSTERIORS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-# Plot posteriors for longtudinal data (including attack rates - FIG 3C-D) for H3 Vietnam
-for(kk in 4){
-  
-  plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",
-                  fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
-  
-}
 
 # Plot posteriors for H3 FluScape Neut data
 plot.posteriors(year_test=c(2009),loadseed=1,flu.type="H3FS",fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
@@ -151,8 +155,9 @@ plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btst
 plot.posterior.titres(loadseed=1,flu.type="H3FS_HI",simDat=F,year_test=c(2009),btstrap=50,plotRes=T,linearFn=T)
 
 
+# - - Main check
 # Plot convergence for MCMC chains for H3 Vietnam
-plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:3),fr.lim=F,linearFn=T,runsPOST=5e4)
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:4),fr.lim=F,linearFn=T) #,runsPOST=2e3
 
 
 # Plot convergence for MCMC chains for H3 Neut FluScape
@@ -173,7 +178,7 @@ plot_posterior_infection_number()
 # Generate simulated data and infer parameters -- simulation parameters are defined in sero_functions.R
 # flu.type defines which dataset format (i.e. test strains, test years) the simulated data will produce
 
-foreach(kk=1:4) %dopar% {
+foreach(kk=1:10) %dopar% {
   
   simulation.infer(seed_i=kk,mcmc.iterations=1e3, flu.type="H3HN", strain.fix=T,
                    fit.spline=am.spl,vp1=0.4,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
