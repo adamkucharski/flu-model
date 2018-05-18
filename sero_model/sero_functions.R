@@ -697,7 +697,7 @@ run_mcmc<-function(
       cov_matrix_basic=epsilon0*cov_matrix_theta0
       varpart_prob0=varpart_prob
     }else{
-      #epsilon0=max(0.00001,min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m)))
+      epsilon0=max(0.00001,min(1,exp(log(epsilon0)+(accept_rateT-0.234)*0.999^m)))
       #cov_matrix_theta=epsilon0*cov_matrix_thetaA
       cov_matrix_basic=epsilon0*cov_matrix_theta0
       #varpart_prob0=max(0.02,min(0.25,exp(log(varpart_prob0)+(accept_rateH-0.234)*0.999^m))) # resample max of 25%, min of 2%

@@ -16,6 +16,7 @@ library(colorspace)
  
 library(foreach)
 library(doMC)
+library(doRNG)
 registerDoMC(4)  #change the 2 to your number of CPU cores
 getDoParWorkers()
 
@@ -48,8 +49,10 @@ load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD T
 # RUN INFERENCE
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+set.seed(10) # Set seed for reproducibility
+
 # Run cross-sectional inference on H3 HaNam data (test run)
-foreach(kk1=c(2007:2012)) %dopar% {
+foreach(kk1=c(2007:2012)) %dorng% {
   data.infer(year_test=kk1,mcmc.iterations=20,loadseed=1,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
 }
 
@@ -59,11 +62,11 @@ data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=5,flutype=flutype0,fix.par
 # MAIN RUNS
 
 # Run longitudinal inference on H3 HaNam data
-foreach(kk=1:4) %dopar% {
+foreach(kk=1:4) %dorng% {
 
-  fix.param.in = if(kk<=2){c("tau1") } else{c("tau1","wane") }
+  fix.param.in = "tau1" #if(kk<=2){c("tau1") } else{c("tau1","wane") }
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e4,loadseed=kk,
+  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,
              flutype=flutype0,fix.param = fix.param.in, #choose parameters to fix
              fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5,turn_off_likelihood=0) 
 
