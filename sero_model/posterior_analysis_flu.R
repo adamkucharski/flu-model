@@ -23,14 +23,7 @@ scale.map<-function(map.pick){
   # translate map to finish at (0,0)
   map.pick[,1]=map.pick[,1]-map.pick[f.m,1]
   map.pick[,2]=map.pick[,2]-map.pick[f.m,2]
-  
-  # rotate map so final coordinate is (0,0) and penultimate is (0,1) 
-  #r.theta=atan(map.pick[(f.m-1),1]/map.pick[(f.m-1),2]) # angle of rotation
-  #map.pick[,1]=map.pick[,1]*cos(r.theta)-map.pick[,2]*sin(r.theta)
-  #map.pick[,2]=map.pick[,1]*sin(r.theta)+map.pick[,2]*cos(r.theta)
-  
-  # flip so 3rd from last is positive
-  #map.pick[,1]=sign(map.pick[(f.m-2),1])*map.pick[,1]
+
   
   map.pick
   
@@ -109,7 +102,6 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   # for(ii in 11:18){
   #   plot(likelihoodtab_out[,ii],type="l",main=sum(hist_out[69*10000+ii,]))
   #   }
-  
   # END DEBUG output values
   
   
@@ -137,15 +129,12 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   hist.sample=length(historytabCollect[,1])/n_part # need this sample value because table is stacked
   
   ind.infN=rowSums(historytabCollect[((round(0.2*hist.sample)*n_part)+1):(hist.sample*n_part),])
-  
-  #hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col=colA,xlab="infections",prob=TRUE,main="",xlim=c(0,44)) #paste("mean/med=",signif(mean(ind.infN),2),"/",median(ind.infN),sep="")
-  
+
   print(c.text(ind.infN))
   
   write.csv(ind.infN,paste("plot_simulations/infection_hist",loadseed,".csv",sep=""))
   
   # Adjust for age - DEPRECATED
-
   #age.data=sort(max(test_years)-yob.data[,1])
   #years.at.risk=(max(test_years)-min(inf_years))
   #age.data[age.data > years.at.risk] =years.at.risk
@@ -720,6 +709,7 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
     theta.true=theta.sim.out
   }
   
+  
   load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,"_lin",linearFn,".RData",sep="")) # Note that this includes test.listPost
   
   lik.tot=rowSums(likelihoodtab)
@@ -871,7 +861,6 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
         medP=median(simtitreY)
         ciP1=quantile(simtitreY,0.025)
         ciP2=quantile(simtitreY,0.975)
-        #polygon(c(simtitreX,rev(simtitreX)),c(ciP1,rev(ciP2)),lty=0,col=rgb(0,0.3,1,0.2))
         lines(c(simtitreX[1],simtitreX[1]),c(ciP1,ciP2),pch=1,col='blue')
         points(simtitreX[1],medP,pch=19,cex=0.5,col='blue')
       }
@@ -892,9 +881,14 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       # PLot histogram of infections
       if(pickyr==n.test){
         hist(rowSums(store.mcmc.hist.data[,ii0,,n.test]),breaks=seq(-0.5,45,1),col="light grey",main=paste("Participant ",ii0,", |X|",sep=""))
-        lines(c(sum(initial.hist[ii0,]),sum(initial.hist[ii0,])),c(-1,100),col="black",lty=1,lwd=2)
+        #lines(c(sum(initial.hist[ii0,]),sum(initial.hist[ii0,])),c(-1,100),col="black",lty=1,lwd=2) # initial history for DEBUG
+        if(simDat==T){
+          lines(c(sum(historytabSim[ii0,]),sum(historytabSim[ii0,])),c(-1,100),col=rgb(0,0.6,0),lty=1,lwd=2)
+          }
+        
       }
       
+
       
       
       if(ii0 %% loopN==0 | ii0==n_part){
@@ -909,28 +903,27 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
   
   # - - - 
   # Construct table with infection histories - use to DEBUG
-  
-  store.hist = NULL
-  pick.table = seq(runs1,runsPOST,100) %>% sort()
-  pickN = length(pick.table)
-  
-  for(ii in 1:n_part){
-    
-    for(sampk in 1:pickN){
-      pickA= pick.table[sampk]
-      pickAhist=ceiling(pickA/hist.switch)+1 # check which history this specifies
-      
-      hist.sample=historytabCollect[((pickAhist-1)*n_part+1):(pickAhist*n_part),1:n.inf]
-      store.hist = rbind(store.hist,c(ii, pickA, sum(hist.sample[ii,] ),1))
-      
-    }
-    
-  }
-  
-  store.hist = data.frame(store.hist)
-  names(store.hist) = c("i","sampno","V1","chain")
-  
-  write.csv(store.hist,"plot_simulations/titre_compare/history_post.csv")
+  # store.hist = NULL
+  # pick.table = seq(runs1,runsPOST,100) %>% sort()
+  # pickN = length(pick.table)
+  # 
+  # for(ii in 1:n_part){
+  #   
+  #   for(sampk in 1:pickN){
+  #     pickA= pick.table[sampk]
+  #     pickAhist=ceiling(pickA/hist.switch)+1 # check which history this specifies
+  #     
+  #     hist.sample=historytabCollect[((pickAhist-1)*n_part+1):(pickAhist*n_part),1:n.inf]
+  #     store.hist = rbind(store.hist,c(ii, pickA, sum(hist.sample[ii,] ),1))
+  #     
+  #   }
+  #   
+  # }
+  # 
+  # store.hist = data.frame(store.hist)
+  # names(store.hist) = c("i","sampno","V1","chain")
+  # 
+  # write.csv(store.hist,"plot_simulations/titre_compare/history_post.csv")
   
 }
 
@@ -1048,10 +1041,7 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
       # Calculate credible interval for expected titres
       medP=apply(simtitreY,2,function(x){median(x)}); ciP195=apply(simtitreY,2,function(x){quantile(x,0.025)}); ciP295=apply(simtitreY,2,function(x){quantile(x,0.975)});
       ciP1=apply(simtitreY,2,function(x){quantile(x,0.25)}); ciP2=apply(simtitreY,2,function(x){quantile(x,0.75)})
-      #alpha50 = qchisq(0.5, 1); alpha95 = qchisq(0.95, 1); medP=apply(simtitreY,2,function(x){mean(x)})
-      #ciP1=(medP + alpha50/2) - sqrt(alpha50)*sqrt(medP + alpha50/4); ciP2=(medP + alpha50/2) + sqrt(alpha50)*sqrt(medP + alpha50/4) # Poisson CI
-      #ciP195=(medP + alpha95/2) - sqrt(alpha95)*sqrt(medP + alpha95/4); ciP295=(medP + alpha95/2) + sqrt(alpha95)*sqrt(medP + alpha95/4) # Poisson CI
-      
+
       polygon(c(simtitreX[1,],rev(simtitreX[1,])),c(ciP195,rev(ciP295)),lty=0,col=rgb(0,0.3,1,0.1))
       polygon(c(simtitreX[1,],rev(simtitreX[1,])),c(ciP1,rev(ciP2)),lty=0,col=rgb(0,0.3,1,0.2))
       lines(simtitreX[1,],medP,pch=1,col='blue')
@@ -1300,9 +1290,7 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN
   
   plot(year_x,titreS[1,],ylim=c(-0.1,8.5),type="l",ylab="log titre",xlab="years since infection",col=NULL,xaxs="i",yaxs="i")
   polygon(c(year_x,rev(year_x)),c(titreS[2,],rev(titreS[3,])),col=col1a,lty=0)
-  #polygon(c(year_x,rev(year_x)),c(titreM[2,],rev(titreM[3,])),col=col2,lty=0)
-  #polygon(c(year_x,rev(year_x)),c(titreL[2,],rev(titreL[3,])),col=col3,lty=0)
-  
+
   for(ii in 1:length(year_x2)){
     titreSsim = pois.gen(storetitreS[,(ii-1)*sampleX+1],btstrap) # Simulate from Poisson - sample fewer than previous
     tstore=data.frame(table(titreSsim),stringsAsFactors = F)
@@ -1311,8 +1299,7 @@ plot.antibody.changes<-function(loadseed=1,year_test=c(2007:2012),flu.type="H3HN
   }
   
   lines(year_x,titreS[1,],col=col1P ,lwd = 2)  
-  #lines(year_x,titreM[1,],col=col2P)
-  #lines(year_x,titreL[1,],col=col3P)
+
   
   title(main=LETTERS[1],adj=0)
   
@@ -1746,8 +1733,7 @@ plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),
     names(attackCI)=c("mean","CI1","CI2")
     load(paste("R_datasets/Simulated_data_",loadseedA,".RData",sep=""))
     attack.yr=colSums(historytabSim)/n_part
-    #attack.yr = read.csv(paste("datasets/sim_attackS",loadseed,".csv",sep=""))[,2] # TRUE VALUES
-    
+
     # - - - - - - - - - - - - - - - - - - 
     # Calculate and plot four fold rise in data
     sconverttab = NULL

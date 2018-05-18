@@ -25,7 +25,7 @@ rm(list=ls(all=TRUE))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Load data and functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# source("load_data_Vietnam.R") # Reformat HaNam data and save to file
+# source("load_data_Vietnam.R") # Reformat Vietnam data and save to file
 # source("load_data_China.R") # Reformat FluScape and save to file
 
 source("sero_functions.R")
@@ -41,6 +41,8 @@ if(flutype0=="H1"){ dy1=c(2009:2011) }
 load.flu.map.data()
 load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD THIS before inference run**
 
+set.seed(5) # Set seed for reproducibility
+
 
 # >>> Run code up to here to set everything up
 
@@ -49,38 +51,7 @@ load("datasets/spline_fn.RData") # load spline function for map **NEED TO LOAD T
 # RUN INFERENCE
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-set.seed(10) # Set seed for reproducibility
-
-# Run cross-sectional inference on H3 HaNam data (test run)
-foreach(kk1=c(2007:2012)) %dorng% {
-  data.infer(year_test=kk1,mcmc.iterations=20,loadseed=1,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
-}
-
-# Run cross-sectional model on full H3 HaNam data  (test run)
-data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=5,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
-
 # MAIN RUNS
-
-# Run longitudinal inference on H3 HaNam data
-foreach(kk=1:4) %dorng% {
-
-  fix.param.in = "tau1" #if(kk<=2){c("tau1") } else{c("tau1","wane") }
-  # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,
-             flutype=flutype0,fix.param = fix.param.in, #choose parameters to fix
-             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5,turn_off_likelihood=0) 
-
-}
-
-# DEBUG - need to move back down
-# Plot posteriors for longtudinal data (including attack rates - FIG 3C-D) for H3 Vietnam
-for(kk in 1){
-  
-  plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",
-                  fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
-  
-}
-
 
 # Run cross-sectional inference on H3 FluScape Neut data
 flutype0="H3FS"
@@ -105,6 +76,39 @@ foreach(kk=1:4) %dopar% {
 }
 
 
+# Run longitudinal inference on H3 Vietnam data
+foreach(kk=1:4) %dorng% {
+
+  fix.param.in = c("tau1","vary.init") #if(kk<=2){c("tau1") } else{c("tau1","wane") }
+  # Fits to spline if am.spl is defined
+  data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=kk,
+             flutype=flutype0,fix.param = fix.param.in, #choose parameters to fix
+             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5,turn_off_likelihood=0) 
+
+}
+
+# Run longitudinal inference on H3 Vietnam data -- no waning
+foreach(kk=5:8) %dorng% {
+  
+  fix.param.in = c("tau1","muShort","wane","sigma2","vary.init") #if(kk<=2){c("tau1") } else{c("tau1","wane") }
+  # Fits to spline if am.spl is defined
+  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,
+             flutype=flutype0,fix.param = fix.param.in, #choose parameters to fix
+             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5,turn_off_likelihood=0) 
+  
+}
+
+
+# Run cross-sectional inference on H3 Vietnam data (test run)
+foreach(kk1=c(2007:2012)) %dorng% {
+  data.infer(year_test=kk1,mcmc.iterations=20,loadseed=1,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
+}
+
+# Run cross-sectional model on full H3 Vietnam data  (test run)
+data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=5,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
+
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # PLOT POSTERIORS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -127,10 +131,17 @@ for(kk in c(2007:2012)){
 }
 
 
+# Plot posteriors for longtudinal data (including attack rates - FIG 3C-D) for H3 Vietnam
+for(kk in 1){
+  
+  plot.posteriors(year_test=c(2007:2012),loadseed=kk,flu.type="H3HN",
+                  fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
+  
+}
+
 # - - - - 
 # Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG SUPP) for H3 Vietnam
 plot.posterior.titres.select(loadseed=1,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=200,part_pick=c(57,31,25),year_pick=c(2008:2010),linearFn=T)
-
 
 # Plot specific titre vs estimates for H3 FluScape Neuts
 plot.posterior.titres.select(loadseed=1,year_test=c(2009),flu.type="H3FS",simDat=F,btstrap=200,part_pick=c(92,84,111),year_pick=c(2009),linearFn=T)
@@ -145,22 +156,16 @@ run.historical.landscapes(loadseed=1,ymax=6.05,linearFn=T,d.step=0.2)
 
 # - - - - - - - - - - - - - - - - - 
 # SUPPLEMENTARY FIGURES
-# Plot Vietnam titre vs estimates
 
-plot.posterior.titres(loadseed=2,flu.type="H3HN",simDat=F,
-                      year_test=c(2007:2012),btstrap=50,plotRes=T,linearFn=T) # Note linear function
-
-
-#H3 FluScape Neut titres
+# Plot H3 FluScape Neut titres
 plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btstrap=50,plotRes=T,linearFn=T)
 
-#H3 FluScape HI titres
+# Plot H3 FluScape HI titres
 plot.posterior.titres(loadseed=1,flu.type="H3FS_HI",simDat=F,year_test=c(2009),btstrap=50,plotRes=T,linearFn=T)
 
-
-# - - Main check
-# Plot convergence for MCMC chains for H3 Vietnam
-plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:4),fr.lim=F,linearFn=T) #,runsPOST=2e3
+# Plot Vietnam titre vs estimates
+plot.posterior.titres(loadseed=2,flu.type="H3HN",simDat=F,
+                      year_test=c(2007:2012),btstrap=50,plotRes=T,linearFn=T) # Note linear function
 
 
 # Plot convergence for MCMC chains for H3 Neut FluScape
@@ -169,8 +174,14 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),loadp
 # Plot convergence for MCMC chains for H3 HI FluScape
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS_HI",year_test=c(2009),loadpick=c(1:4),fr.lim=T,linearFn=T)
 
+# Plot convergence for MCMC chains for H3 Vietnam
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:4),fr.lim=F,linearFn=T) #,runsPOST=2e3
 
-# PLot posterior estimate for number of infections in H3 HI and Neut for FluScape data
+# Plot convergence for MCMC chains for H3 Vietnam -- No waning
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(5:8),fr.lim=F,linearFn=T) #,runsPOST=2e3
+
+
+# PLot posterior estimate for number of infections to compare H3 HI and Neut for FluScape data
 plot_posterior_infection_number()
 
 
@@ -184,7 +195,7 @@ plot_posterior_infection_number()
 foreach(kk=1:10) %dopar% {
   
   simulation.infer(seed_i=kk,mcmc.iterations=1e3, flu.type="H3HN", strain.fix=T,
-                   fit.spline=am.spl,vp1=0.4,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Ha Nam strains)
+                   fit.spline=am.spl,vp1=0.4,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Vietnam strains)
 
 }
 

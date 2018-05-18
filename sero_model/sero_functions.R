@@ -9,7 +9,6 @@
 load.flu.map.data<-function(){
   
   ag.coord=read.csv("datasets/antigenic_coords.csv", as.is=T,head=T)
-  #ag.coord=ag.coord[match(strain_names,ag.coord$viruses),]
   strain_names=ag.coord$viruses
   
   # Convert into years for each strain
@@ -37,54 +36,14 @@ load.flu.map.data<-function(){
   # Plot strains vs clusters
   ag.coord=ag.coord[ag.coord$viruses!="NL/823/92",] # remove BE 89 dead end (Fonville method)
   am.spl=smooth.spline(ag.coord$AG_y,ag.coord$AG_x)
-  #plot(ag.coord$AG_y,ag.coord$AG_x)
   xx=c(330:370)
   prd1=predict(am.spl,xx)
-  #lines(prd1, col = "blue")
   save(am.spl,file="datasets/spline_fn.RData")
 }
 
-# - - - - - - - - - - - - - - - -
-# Set initial condition (for infection history) as infection if titre >=X
-
-setuphistIC<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_years){ # ii=participant | jj=test year
-  
-  test.II=test.list[[ii]]
-  test.jj=test.II[[jj]]
-  
-  spyear=unique(as.numeric(test.jj[3,])) # year of samples taken
-  
-  hist0=rep(0,inf.n)   
-  #hist0[sample(c(1:inf.n),round(0.1*inf.n))]=1
-  
-  # Check test data available - may be issue if age column added too
-  if(length(test.jj[,1])>1){
-    
-    # Set up test strains
-    titredat=as.numeric(test.jj[2,]) # Define titre data
-    maxt=(titredat==max(titredat))
-    
-    # Use simple cutoff for titres -- set high titres = 1 in history
-    for(i in 1:length(spyear)){
-      if(max(titredat[(as.numeric(test.jj[3,])==spyear[i])])>=4 & runif(1)>0.2 ){
-        hist0[(inf_years==spyear[i])]=1
-      }
-    }
-    
-    
-  }
-  
-  min.range = max(1,testyear_index[1]-10) # Add infection within past 10 years
-  inf_index = inf_years-min(inf_years)+1
-  inf_pick = sample(c(1:inf.n)[inf_index>=min.range & inf_index<= testyear_index[1]],1)  # pick strain within plausible region to add
-  if(sum(hist0[inf_years < min(test_years)])==0){hist0[inf_pick]=1} # Make sure at least one infection previous to test year
-  hist0
-  
-}
-
 
 # - - - - - - - - - - - - - - - -
-# Set initial conditions - sensitivity analysis with small number of ICs
+# Set initial conditions - with small number of ICs
 
 setuphistIC_SA<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_years){ # ii=participant | jj=test year
   
@@ -94,8 +53,7 @@ setuphistIC_SA<-function(ii,jj,inf.n,test.list,testyear_index, test_years, inf_y
   spyear=unique(as.numeric(test.jj[3,])) # year of samples taken
   
   hist0=rep(0,inf.n)   
-  #hist0[sample(c(1:inf.n),round(0.1*inf.n))]=1
-  
+
   # Check test data available - may be issue if age column added too
   if(length(test.jj[,1])>1){
     
@@ -513,35 +471,6 @@ ComputeProbability<-function(marg_likelihood,marg_likelihood_star,theta_star, th
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-# DEPRECATED sampling function
-
-SampleTheta<-function(theta_initial,m,covartheta,covarbasic,nparam){
-  
-  # sample from multivariate normal distribution - no adaptive sampling
-  theta_star = as.numeric(exp(mvrnorm(1,log(theta_initial), Sigma=covarbasic)))
-  
-  names(theta_star)=names(theta_initial)
-  
-  # reflective boundary condition for max boost=10
-  mu1=min(20-theta_star[["mu"]],theta_star[["mu"]])
-  theta_star[["mu"]]=ifelse(mu1<0,theta_initial[["mu"]],mu1)
-  
-  #mu2=min(20-theta_star[["muShort"]],theta_star[["muShort"]])
-  #theta_star[["muShort"]]=ifelse(mu2<0,theta_initial[["muShort"]],mu2)
-  
-  # reflective boundary condition for wane function = max is 1 for now # DEBUG
-  wane2=min(2-theta_star[["wane"]],theta_star[["wane"]])
-  theta_star[["wane"]]=ifelse(wane2<0,theta_initial[["wane"]],wane2)
-  
-  #print(rbind(theta_initial,theta_star1,theta_star2))
-  return(thetaS=theta_star)
-}
-
-
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Sample theta without reflective boundary conditions
 
 SampleTheta2 <-function(theta_initial,m,covartheta,covarbasic,nparam,pmask){
@@ -605,8 +534,7 @@ run_mcmc<-function(
   test.n=length(test_years); inf.n=length(inf_years); nstrains=length(strain_years)
   sample.index=strain_years-min(inf_years)+1
   test.listPost=test.list
-  #historyii=rbinom(inf.n, 1, 0.1) # DEBUG dummy infection history
-  
+
   # Predefine index variables to speed up code
   jj_year=match(test.yr,test_years); testyear_index = test.yr - min(inf_years) + 1
   sample.n=length(jj_year)
@@ -618,9 +546,7 @@ run_mcmc<-function(
   }else{
     age.mask <- rep(1,n_part) # No mask if ages unknown
   }
-  
-  #print(age.mask)
-  
+
   # Make adjustments depending on what is fitted and not
   if(sum(pmask=="muShort")>0){theta[["muShort"]]=1e-10} # Set short term boosting ~ 0 if waning not fitted
   if(sum(pmask=="sigma2")>0){ theta[["sigma2"]]=theta[["sigma"]] } # Fix equal if sigma same for both 
@@ -663,21 +589,10 @@ run_mcmc<-function(
       historytab[ii,]=histA0
     }
   } else { historytab=hist.true }
-  
-  #print(historytab)
+
   
   colnames(historytab)=as.character(inf_years)
-  
-  # Add age mask?
 
-  #time.2 = Sys.time() # DEBUG TIME 2
-  #print(paste("set up variables:",time.2-time.1))
-  
-  # Plausible intial ages - based on earliest strain in history
-  #age.tab=sapply(
-  #  apply(historytab,1,function(x){min(c(inf.n:1)[x==1])}),
-  #  function(y){ sample(y:80, 1, replace=T) })
-  
   # Preallocate matrices
   likelihoodtab=matrix(-Inf,nrow=(runs+1),ncol=n_part)
   accepttabT=NULL
@@ -717,13 +632,8 @@ run_mcmc<-function(
       }
 
       if(sum(pmask=="sigma2")>0){ theta_star[["sigma2"]]=theta_star[["sigma"]] } # Fix equal if sigma same for both 
-      
-      #if(sum(pmask=="map.fit")>0){ # check whether to fit antigenic map -- Not identifiable so deprecated
-      #  map_star=SampleAntigenicMap(anti.map.star=map.tab,epsilon.map=epsilon0,inf_years) # resample antigenic map
-      #SampleAntigenicMap(anti.map.star=inf_years,epsilon.map=0.01,inf_years) # sample antigenic map
-      #}else{
+
       map_star=map.tab
-      #}
       
       #age_star = age.tab
       history_star = historytab
@@ -744,10 +654,7 @@ run_mcmc<-function(
     #print(am.spline) # DEBUG
     dmatrix =  1-theta_star[["sigma"]] *dmatrix0;  dmatrix[dmatrix<0]=0 # Arrange antigenic map into cross-reaction matrix
     dmatrix2 = 1-theta_star[["sigma2"]]*dmatrix20; dmatrix2[dmatrix2<0]=0 # Arrange antigenic map into cross-reaction matrix
-    
-    #time.5 = Sys.time() # DEBUG Set Time 3
-    #print(paste("dmatrix:",time.5-time.4))
-    
+
     # - - - - - - - - - - - - - - - -
     # LIKELIHOOD function - Only calculate for updated history
     
@@ -771,9 +678,6 @@ run_mcmc<-function(
     #time.6 = Sys.time() # DEBUG Set Time 3
     #print(paste("likelihood calc:",time.6-time.5))
 
-    #print(lik_val)
-    #print(theta_star)
-    
     # - - - - - - - - - - - - - - - -
     # Metropolis Hastings step
 
@@ -814,12 +718,7 @@ run_mcmc<-function(
       }
     } # End theta sample step
 
-    
-    #time.7 = Sys.time() # DEBUG Set Time 3
-    #print(paste("MH step:",time.7-time.6))
-    
-    
-    
+
     if(m<max(100)){
       accept_rateT=0.234 # target acceptance rate for theta
       #accept_rateH=0.234 # target acceptance rate for infection history
@@ -897,9 +796,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
   xx=scalemap(inf_years,inf_years)
   yy=predict(am.spl,xx)$y
   antigenic.map.in0=cbind(xx,yy)
-  
-  #write.csv(antigenic.map.in0,paste("Map",loadseed,".csv",sep="")) DEBUG
-  
+
   # RUN MCMC
   # Note: NEED TO RE-INITIALISE DATAFRAME IF REPEAT RUN (i.e. reload dataset above)
   run_mcmc(
@@ -996,12 +893,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   theta=theta0
 
   print(theta0)
-  
-  #lik.true=likelihood_function(theta_star=theta.sim.out,inf_years,test.yr,map_star=antigenic.map0,am.spline=am.spl,test.list=test.listSim,history_star=historytabSim,n_part)
-  #print(lik.true)
-  # browser()
-  #sim.map.in0 = 0.3*(cbind(inf_years,inf_years)-min(inf_years)) #generate.antigenic.map(inf_years.in) # Define uniform initial map to fit
-  
+
   # RUN MCMC
   # Note: NEED TO RE-INITIALISE DATAFRAME IF REPEAT RUN (i.e. reload dataset above)
   run_mcmc(
@@ -1014,7 +906,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
     theta=theta0,
     runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
-    hist.true= NULL, # True starting point # *** DEBUG *** historytabSim
+    hist.true= NULL, # True starting point?  # *** DEBUG *** historytabSim
     switch1=2, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=pmask0, # ,"map.fit" specify parameters to fix
     seedi=loadseed,
