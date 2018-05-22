@@ -757,7 +757,7 @@ run_mcmc<-function(
 data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
                        flutype="H3HN",fix.param=NULL , fit.spline=NULL, 
                        switch0=2,linearFn=F,  vp1=0.2, # Probability resample history
-                       turn_off_likelihood=1
+                       turn_off_likelihood=0
                        ) {
   
   #DEBUG  year_test=c(2007:2012); seed_i=1; vp1=0.2; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=T; pmask=c("tau2","wane")
@@ -842,7 +842,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   #tau1=back-boost  / tau2=suppress / disp_k=dispersion (deprecated) 
   #sigma1=long-term cross-reactivity / sigma 2=short-term CR
   
-  thetaSim = c(mu=2,tau1=0.02,tau2=0.05,wane=0.8,sigma=0.3,muShort=2,error=1,disp_k=1,sigma2=0.1)  # NOTE EDITED FOR SIMULATION RUNS
+  thetaSim = c(mu=2,tau1=0.02,tau2=0.05,wane=0.75,sigma=0.15,muShort=2,error=1.5,disp_k=1,sigma2=0.05)  # NOTE EDITED FOR SIMULATION RUNS
   
   if(strain.fix==T){
     strain_years0 = strain_years
@@ -885,10 +885,10 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
   theta0[["tau1"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # back-boost
   theta0[["tau2"]]=0.05+ if(sum(fix.param=="vary.init")>0){0.03*runif(1,c(-1,1))}else{0} # suppression via AGS
   theta0[["wane"]]= 0.8 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # -log(0.5)/1 # short term waning - half life of /X years
-  theta0[["sigma"]]=0.3+ if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # long-term cross-reaction
-  theta0[["sigma2"]]=0.1+ if(sum(fix.param=="vary.init")>0){0.05*runif(1,c(-1,1))}else{0} # short-term cross-reaction
+  theta0[["sigma"]]=0.15 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # long-term cross-reaction
+  theta0[["sigma2"]]=0.05+ if(sum(fix.param=="vary.init")>0){0.05*runif(1,c(-1,1))}else{0} # short-term cross-reaction
   theta0[["muShort"]]=2 + if(sum(fix.param=="vary.init")>0){runif(1,c(-1,1))}else{0} # short term boosting
-  theta0[["error"]]= 1 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # measurement error
+  theta0[["error"]]= 1.5 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # measurement error
   theta0[["disp_k"]]=0.1 # overdispersion (deprecated)
   theta=theta0
 
@@ -906,7 +906,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
     theta=theta0,
     runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
-    hist.true= NULL, # True starting point?  # *** DEBUG *** historytabSim
+    hist.true= historytabSim, # True starting point?  # *** DEBUG *** 
     switch1=2, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=pmask0, # ,"map.fit" specify parameters to fix
     seedi=loadseed,

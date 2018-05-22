@@ -2,8 +2,13 @@
 # Author: AJ Kucharski (2015-)
 # Main execution code
 
+# Set up directories
 setwd("~/Documents/flu-model/sero_model/")
 # setwd("~/Dropbox/git/flu-model/sero_model")
+
+# Set up directories
+if( !file.exists("posterior_sero_runsA") ){ dir.create("posterior_sero_runsA") }
+if( !file.exists("plot_simulations") ){ dir.create("plot_simulations") }
 
 library(reshape2)
 library(mvtnorm)
@@ -53,14 +58,26 @@ set.seed(5) # Set seed for reproducibility
 
 # MAIN RUNS
 
+
+# Run longitudinal inference on H3 Vietnam data
+foreach(kk=1:4) %dorng% {
+  
+  fix.param.in = c("tau1","vary.init") #if(kk<=2){c("tau1") } else{c("tau1","wane") }
+  # Fits to spline if am.spl is defined
+  data.infer(year_test=dy1,mcmc.iterations=2e5,loadseed=kk,
+             flutype=flutype0,fix.param = fix.param.in, #choose parameters to fix
+             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.4) 
+  
+}
+
 # Run cross-sectional inference on H3 FluScape Neut data
 flutype0="H3FS"
 if(flutype0=="H3FS"){ dy1=c(2009) }
 #for(kk in 1:4){
-foreach(kk=1:4) %dopar% {
+foreach(kk=1:4) %dorng% {
   # Fits to spline if am.spl is defined
   data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,flutype=flutype0,
-             fix.param=c("tau1","muShort","wane","sigma2","vary.init"),fit.spline=am.spl,switch0=2,linearFn=T) 
+             fix.param=c("tau1","muShort","wane","sigma2","vary.init"),fit.spline=am.spl,vp1=0.4,switch0=2,linearFn=T) 
   
 }
 
@@ -68,23 +85,11 @@ foreach(kk=1:4) %dopar% {
 flutype0="H3FS_HI"
 if(flutype0=="H3FS_HI"){ dy1=c(2009) }
 #for(kk in 1:4){
-foreach(kk=1:4) %dopar% {
-  # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=3e5,loadseed=kk,flutype=flutype0,
-             fix.param=c("tau1","muShort","wane","sigma2","vary.init"),fit.spline=am.spl,switch0=2,linearFn=T) 
-  
-}
-
-
-# Run longitudinal inference on H3 Vietnam data
 foreach(kk=1:4) %dorng% {
-
-  fix.param.in = c("tau1","vary.init") #if(kk<=2){c("tau1") } else{c("tau1","wane") }
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=kk,
-             flutype=flutype0,fix.param = fix.param.in, #choose parameters to fix
-             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5,turn_off_likelihood=0) 
-
+  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,flutype=flutype0,
+             fix.param=c("tau1","muShort","wane","sigma2","vary.init"),fit.spline=am.spl,vp1=0.4,switch0=2,linearFn=T) 
+  
 }
 
 # Run longitudinal inference on H3 Vietnam data -- no waning
@@ -92,20 +97,20 @@ foreach(kk=5:8) %dorng% {
   
   fix.param.in = c("tau1","muShort","wane","sigma2","vary.init") #if(kk<=2){c("tau1") } else{c("tau1","wane") }
   # Fits to spline if am.spl is defined
-  data.infer(year_test=dy1,mcmc.iterations=1e2,loadseed=kk,
+  data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=kk,
              flutype=flutype0,fix.param = fix.param.in, #choose parameters to fix
-             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.5,turn_off_likelihood=0) 
+             fit.spline=am.spl,switch0=2,linearFn=T,vp1=0.4) 
   
 }
 
 
 # Run cross-sectional inference on H3 Vietnam data (test run)
-foreach(kk1=c(2007:2012)) %dorng% {
-  data.infer(year_test=kk1,mcmc.iterations=20,loadseed=1,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
-}
+# foreach(kk1=c(2007:2012)) %dorng% {
+#   data.infer(year_test=kk1,mcmc.iterations=20,loadseed=1,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
+# }
 
-# Run cross-sectional model on full H3 Vietnam data  (test run)
-data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=5,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
+# Run cross-sectional model on H3 Vietnam data  (test run)
+# data.infer(year_test=dy1,mcmc.iterations=1e3,loadseed=5,flutype=flutype0,fix.param=c("tau1","wane","muShort",fit.spline=am.spl,switch0=20))
 
 
 
@@ -120,17 +125,6 @@ plot.posteriors(year_test=c(2009),loadseed=1,flu.type="H3FS",fr.lim=T,plotmap = 
 # Plot posteriors for H3 FluScape HI data
 plot.posteriors(year_test=c(2009),loadseed=2,flu.type="H3FS_HI",fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
 
-
-# - - - - - - - - - - - - - - - - - 
-# Plot posteriors for cross-sectional data
-
-for(kk in c(2007:2012)){
-  flutype0="H3HN"
-  dy1=kk
-  plot.posteriors(year_test=dy1,loadseed=1,flu.type=flutype0,fr.lim=F)
-}
-
-
 # Plot posteriors for longtudinal data (including attack rates - FIG 3C-D) for H3 Vietnam
 for(kk in 1){
   
@@ -138,6 +132,16 @@ for(kk in 1){
                   fr.lim=T,plotmap = F,plot.corr = T,linearFn=T)
   
 }
+
+# - - - - - - - - - - - - - - - - - 
+# Plot posteriors for cross-sectional data - test run
+
+# for(kk in c(2007:2012)){
+#   flutype0="H3HN"
+#   dy1=kk
+#   plot.posteriors(year_test=dy1,loadseed=1,flu.type=flutype0,fr.lim=F)
+# }
+
 
 # - - - - 
 # Plot specific titre vs estimates (FIG 1) and antibody kinetics (FIG SUPP) for H3 Vietnam
@@ -157,6 +161,8 @@ run.historical.landscapes(loadseed=1,ymax=6.05,linearFn=T,d.step=0.2)
 # - - - - - - - - - - - - - - - - - 
 # SUPPLEMENTARY FIGURES
 
+# - - - 
+# TITRE DISTRIBUTIONS
 # Plot H3 FluScape Neut titres
 plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btstrap=50,plotRes=T,linearFn=T)
 
@@ -164,10 +170,16 @@ plot.posterior.titres(loadseed=1,flu.type="H3FS",simDat=F,year_test=c(2009),btst
 plot.posterior.titres(loadseed=1,flu.type="H3FS_HI",simDat=F,year_test=c(2009),btstrap=50,plotRes=T,linearFn=T)
 
 # Plot Vietnam titre vs estimates
-plot.posterior.titres(loadseed=2,flu.type="H3HN",simDat=F,
+plot.posterior.titres(loadseed=1,flu.type="H3HN",simDat=F,
+                      year_test=c(2007:2012),btstrap=50,plotRes=T,linearFn=T) # Note linear function
+
+# Plot Vietnam titre vs estimates -- No waning
+plot.posterior.titres(loadseed=5,flu.type="H3HN",simDat=F,
                       year_test=c(2007:2012),btstrap=50,plotRes=T,linearFn=T) # Note linear function
 
 
+# - - - 
+# CONVERGENCE CHECKS
 # Plot convergence for MCMC chains for H3 Neut FluScape
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),loadpick=c(1:4),fr.lim=T,linearFn=T)
 
@@ -175,7 +187,7 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",year_test=c(2009),loadp
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS_HI",year_test=c(2009),loadpick=c(1:4),fr.lim=T,linearFn=T)
 
 # Plot convergence for MCMC chains for H3 Vietnam
-plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1:4),fr.lim=F,linearFn=T) #,runsPOST=2e3
+plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(1,4),fr.lim=F,linearFn=T) #,runsPOST=2e3
 
 # Plot convergence for MCMC chains for H3 Vietnam -- No waning
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",loadpick=c(5:8),fr.lim=F,linearFn=T) #,runsPOST=2e3
@@ -192,12 +204,16 @@ plot_posterior_infection_number()
 # Generate simulated data and infer parameters -- simulation parameters are defined in sero_functions.R
 # flu.type defines which dataset format (i.e. test strains, test years) the simulated data will produce
 
-foreach(kk=1:10) %dopar% {
+#t.check = Sys.time()
+
+foreach(kk=5:10) %dorng% {
   
-  simulation.infer(seed_i=kk,mcmc.iterations=1e3, flu.type="H3HN", strain.fix=T,
+  simulation.infer(seed_i=kk,mcmc.iterations=1e4, flu.type="H3HN", strain.fix=T,
                    fit.spline=am.spl,vp1=0.4,linearFn=T) # Generate random data and run inference (strain.fix=T -> use Vietnam strains)
 
 }
+
+#print(Sys.time() - t.check)
 
 # Plot convergence for MCMC chains for H3 Vietnam simulated data
 plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",simDat=T,year_test=c(2007:2012),
@@ -205,7 +221,7 @@ plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3HN",simDat=T,year_test=c(20
 
 
 # Plot convergence for MCMC chains for H3 China simulated data
-plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",simDat=T,year_test=2009,linearFn=T)
+#plot.multi.chain.posteriors(burnCut=0.25,flu.type="H3FS",simDat=T,year_test=2009,linearFn=T)
 
 
 # Plot simulation study posteriors and attack rate comparisons for simulation plots (Fig 3A-B)

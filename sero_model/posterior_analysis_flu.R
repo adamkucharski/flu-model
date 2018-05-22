@@ -575,7 +575,7 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
 
 plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),burnCut=0.25,year_test=c(2007:2012),plotmap=F,fr.lim=F,linearFn=F,runsPOST=NULL){
   
-  # simDat=F;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; linearFn=T
+  # simDat=F;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:2); burnCut=0.25; linearFn=T; runsPOST=NULL
   # simDat=T;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; loadseed=1; linearFn=T; runsPOST=NULL
   
   storeMu = NULL
@@ -611,6 +611,9 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
     # - - - - - - - 
     # Calculate ESS by burn-in
     runs1=ceiling(0*runsPOST)
+    runsS1=ceiling(burnCut*runsPOST/switch1)
+    runsS2=ceiling(runsPOST/switch1)
+    
     thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
     ltheta=length(thetaT[["mu"]])
     thin.theta=thetaT[seq(1,ltheta,switch1),]
@@ -638,7 +641,8 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
   Ctrue="black";Wtrue=2
   
   maxlik=max(storeLik)
-  plot(1:length(storeLik[1,]),storeLik[1,],type="l",col=col.list[[1]],xlab="iteration",ylab="likelihood",ylim=c(maxlik-ifelse(simDat==F,1000,500),maxlik+100) ); 
+  valpick = storeLik
+  plot(1:length(storeLik[1,]),storeLik[1,],type="l",ylim=c(min(valpick[,runsS1:runsS2]),max(valpick[,runsS1:runsS2] )),col=col.list[[1]],xlab="iteration",ylab="likelihood" ); 
   for(ii in 2:length(loadpick)){ lines(storeLik[ii,],type="l",col=col.list[[ii]] , ylim=c(maxlik-ifelse(simDat==F,1000,500),maxlik+100)) }
   lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(maxlik-ifelse(simDat==F,1000,500),maxlik+100),col="gray",lty=2)
   
@@ -647,35 +651,42 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
     lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,1.2),col="gray",lty=2)
     if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["wane"]],theta.true[["wane"]]),col=Ctrue,lwd=Wtrue) }
   }
-  plot(storeMu[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[1]),ylim=c(0,4)); for(ii in 2:length(loadpick)){ lines(storeMu[ii,],type="l",col=col.list[[ii]]) }
+  
+  # Long term boost
+  plot(storeMu[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[1]),ylim=c(1,3)); for(ii in 2:length(loadpick)){ lines(storeMu[ii,],type="l",col=col.list[[ii]]) }
   lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,4),col="gray",lty=2)
   if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["mu"]],theta.true[["mu"]]),col=Ctrue,lwd=Wtrue) }
   
+  # Short term boost
   if(!(flu.type=="H3FS"  | flu.type== "H3FS_HI")){ 
-    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[2]),ylim=c(0,4)); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,],type="l",col=col.list[[ii]]) }
+    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[2]),ylim=c(1,3)); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,],type="l",col=col.list[[ii]]) }
     lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,4),col="gray",lty=2)
     if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["muShort"]],theta.true[["muShort"]]),col=Ctrue,lwd=Wtrue) }
   }
   
-  plot(storeSigma[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[1]),ylim=c(0,0.4)); for(ii in 2:length(loadpick)){ lines(storeSigma[ii,],type="l",col=col.list[[ii]]) }
+  # Long term sigma
+  plot(storeSigma[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[1]),ylim=c(0.03,ifelse(simDat==T,0.2,0.15))); for(ii in 2:length(loadpick)){ lines(storeSigma[ii,],type="l",col=col.list[[ii]]) }
   lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,0.4),col="gray",lty=2)
   if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["sigma"]],theta.true[["sigma"]]),col=Ctrue,lwd=Wtrue) }
   
+  # Short term sigma
   if(!(flu.type=="H3FS"  | flu.type== "H3FS_HI")){ 
-    plot(storeSigma2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[2]),ylim=c(0,0.4)); for(ii in 2:length(loadpick)){ lines(storeSigma2[ii,],type="l",col=col.list[[ii]]) }
+    plot(storeSigma2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[2]),ylim=c(0.03,ifelse(simDat==T,0.2,0.15))); for(ii in 2:length(loadpick)){ lines(storeSigma2[ii,],type="l",col=col.list[[ii]]) }
     lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,0.4),col="gray",lty=2)
     if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["sigma2"]],theta.true[["sigma2"]]),col=Ctrue,lwd=Wtrue) }
   }
   
-  plot(storeError[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(epsilon),ylim=c(0,2.5)); for(ii in 2:length(loadpick)){ lines(storeError[ii,],type="l",col=col.list[[ii]]) }
+  # Error
+  plot(storeError[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(epsilon),ylim=c(1.2,2)); for(ii in 2:length(loadpick)){ lines(storeError[ii,],type="l",col=col.list[[ii]]) }
   lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,2.5),col="gray",lty=2)
   if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["error"]],theta.true[["error"]]),col=Ctrue,lwd=Wtrue) }
   
-  plot(storeTau2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(tau),ylim=c(0,0.15)); for(ii in 2:length(loadpick)){ lines(storeTau2[ii,],type="l",col=col.list[[ii]]) }
+  # AGS
+  plot(storeTau2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(tau),ylim=c(0.03,0.08)); for(ii in 2:length(loadpick)){ lines(storeTau2[ii,],type="l",col=col.list[[ii]]) }
   lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,0.15),col="gray",lty=2)
   if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["tau2"]],theta.true[["tau2"]]),col=Ctrue,lwd=Wtrue) }
   
-  dev.copy(png,paste("plot_simulations/MCMC_chains",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,"_lin",linearFn,".png",sep=""),units="cm",width=20,height=10,res=300)
+  dev.copy(png,paste("plot_simulations/MCMC_chains",flu.type,ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,"_lin",linearFn,".png",sep=""),units="cm",width=20,height=10,res=300)
   dev.off()
   
   
@@ -798,15 +809,16 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
     
     par(mfrow=c(1,1))
     par(mar = c(5,5,1,1))
-    breaks0=seq(round(min(c(compTab,compTabNULL)))-0.5,round(max(c(compTab,compTabNULL)))+1.5,1)
+    #breaks0=seq(round(min(c(compTab,compTabNULL)))-0.5,round(max(c(compTab,compTabNULL)))+1.5,1)
+    breaks0 = seq(-10.5,10.5,1)
     hist(compTab , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - observed titre"); #title(LETTERS[1],adj=0)
     #hist(compTabNULL , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - Pois(expected titre)"); #title(LETTERS[2],adj=0)
     
-    stats.store = rbind( c(sum( abs(compTab)<=1 )/length(compTab), sum( abs(compTab)<=2 )/length(compTab), sum( abs(compTab)<=3 )/length(compTab) ), 
-                         c(sum( abs(compTabNULL)<=1 )/length(compTabNULL), sum( abs(compTabNULL)<=2 )/length(compTabNULL), sum( abs(compTabNULL)<=3 )/length(compTabNULL)  )
+    stats.store = rbind( c(sum( abs(compTab)<=1 )/length(compTab), sum( abs(compTab)<=2 )/length(compTab), sum( abs(compTab)<=3 )/length(compTab) )
+                         #c(sum( abs(compTabNULL)<=1 )/length(compTabNULL), sum( abs(compTabNULL)<=2 )/length(compTabNULL), sum( abs(compTabNULL)<=3 )/length(compTabNULL)  )
     )
     colnames(stats.store)=c("within 1","within 2","within 3")
-    rownames(stats.store)=c("model","null")
+    rownames(stats.store)=c("model")
     write.csv(stats.store,paste("plot_simulations/titre_compare/Store_residuals_",loadseed,".csv",sep=""))
     
     dev.copy(pdf,paste("plot_simulations/titre_compare/Residuals_",loadseed,"_lin",linearFn,".pdf",sep=""),width=5,height=4)
@@ -1782,7 +1794,6 @@ plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),
   names(vals.blank0)=c("true","est","rise4","rise2")
   
   # Plot residuals
-  
   breaksN=seq(-0.31,0.31,0.02)
   hist(vals.blank0$est-vals.blank0$true,breaks = breaksN,col=rgb(1,0,0,0.5),border="grey")
   hist(vals.blank0$rise4-vals.blank0$true, breaks = breaksN,add=T,col=rgb(0,0,0,0.2),border=NULL)
@@ -1792,7 +1803,7 @@ plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),
   
   plot(density(vals.blank0$est-vals.blank0$true),col="white",frame=T,xaxs="i",yaxs="i",ylab="density",xlab="simulation residual",main="",xlim=c(-0.2,0.2),ylim=c(0,100))
   lines(c(0,0),c(0,100),col="grey")
-  lines(density(vals.blank0$est-vals.blank0$true,adjust=20),col="red",lwd=2)
+  lines(density(vals.blank0$est-vals.blank0$true,adjust=1),col="red",lwd=2)
   lines(density(vals.blank0$rise4-vals.blank0$true,adjust=1),col="black",lty=1,lwd=2)
   lines(density(vals.blank0$rise2-vals.blank0$true,adjust=1),col="black",lty=2,lwd=2)
   

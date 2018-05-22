@@ -1,8 +1,11 @@
 .Rproj.user
 *.Rhistory
 *.DS_Store
-*.RData
+sero_model/posterior_sero_runs/
+sero_model/plot_simulations/
 *.so
 *.o
 *.pdf
 *.png
+*.RData
+*.RData
