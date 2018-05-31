@@ -74,5 +74,49 @@ test.list[[ii]]=i.list
 
 }
 
-save(test_years,inf_years,strain_years,n_part,test.list,file=paste("R_datasets/HaNam_data_V.RData",sep=""))
+strain_namesA = strain_names
+save(test_years,inf_years,strain_years,strain_namesA,n_part,test.list,file=paste("R_datasets/HaNam_data_V.RData",sep=""))
+
+
+#
+# Set up list of test data for quick access
+# Minus a random 10% of data for training/test analysis
+
+data.Test=data1[,strain_names]
+test.list=list()
+
+for(ii in 1:n_part){
+  
+  subjectn=ii
+  i.list=list()
+  
+  #   [,1] [,2] [,3] [,4] [,5] [,6]
+  #   test.year    2010 2010 2010 2010 2010 2010
+  #   titredat        1    2    4    3    6    3
+  #   strain_years 1990 1994 1998 2002 2006 2010 # Year of isolate
+  #   sample.index    1    5    9   13   17   21 # Numerical index of strain isolate (start with first possible year of infection)
+  
+  for(jj in 1:test.n){
+    
+    testyr=test_years[jj]
+    dataI=data.Test[data1$Subject.number==subjectn & data1$Sample.year==testyr,]
+    
+    data_ii = dataI[,!is.na(dataI)]
+    pick_sample = sort(sample(length(data_ii),round(0.9*length(data_ii))))
+    dataI_Pick = data_ii[pick_sample]
+    
+    i.list[[jj]]=rbind(rep(testyr,nstrains),
+                       data_ii[pick_sample],
+                       (strain_years[!is.na(dataI)])[pick_sample],
+                       (strain_years[test.index[!is.na(dataI)]]-min(strain_years)+1)[pick_sample]
+    )
+    
+  }
+  
+  
+  test.list[[ii]]=i.list
+  
+}
+
+save(test_years,inf_years,strain_years,strain_namesA,n_part,test.list,file=paste("R_datasets/HaNam_data_V_minus_10.RData",sep="")) # minus 10% of data
 

@@ -7,13 +7,18 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Convert vector to median and 95% CrI
-c.text<-function(x,sigF=3){
+c.text<-function(x,sigF=2){
   bp1=signif(c(median(x),quantile(x,0.025),quantile(x,0.975)),sigF)
   paste(bp1[1]," (",bp1[2],"-",bp1[3],")",sep="")
 }
 
 c.nume<-function(x){
   bp1=c(median(x),quantile(x,0.025),quantile(x,0.975))
+  as.numeric(bp1)
+}
+
+c.nume2<-function(x){
+  bp1=c(median(x),quantile(x,0.025),quantile(x,0.975),quantile(x,0.25),quantile(x,0.75))
   as.numeric(bp1)
 }
 
@@ -37,7 +42,7 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   
   # simDat=T;loadseed="SIM_2";year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
-  # simDat=F;loadseed=4;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
+  # simDat=F;loadseed=1;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; plot.corr=F; linearFn=T
   
   if(simDat==F){loadseed=paste(loadseed,"_",flu.type,sep="")}
   if(simDat==T){load(paste("R_datasets/Simulated_data_",loadseed,".RData",sep=""))}
@@ -102,6 +107,8 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
   # for(ii in 11:18){
   #   plot(likelihoodtab_out[,ii],type="l",main=sum(hist_out[69*10000+ii,]))
   #   }
+  #write.csv(tail(historytabCollect,69),"R_datasets/hist_IC_H3.csv")
+  
   # END DEBUG output values
   
   
@@ -176,29 +183,11 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     dev.copy(png,paste("plot_simulations/CorrelationPlot_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".png",sep=""),units="cm",width=25,height=25,res=200)
     dev.off()
   }
-  
-  # Output table of parameters
-  table.param <- rbind(
-    c("mu",c.text(thin.theta[["mu"]]),ESS.label2(ESS.calc[["mu"]]) ),
-    c("muShort",c.text(thin.theta[["muShort"]]  ),ESS.label2(ESS.calc[["muShort"]]) ), # **Corrected for additional +1 in fitting code**
-    c("sigma",c.text(thin.theta[["sigma"]]) ,ESS.label2(ESS.calc[["sigma"]]) ),
-    c("sigma2",c.text(thin.theta[["sigma2"]]),ESS.label2(ESS.calc[["sigma2"]]) ),
-    c("error",c.text(thin.theta[["error"]]) ,ESS.label2(ESS.calc[["error"]])),
-    c("tau2",c.text(thin.theta[["tau2"]]),ESS.label2(ESS.calc[["tau2"]]) ),
-    c("wane",c.text(thin.theta[["wane"]]) ,ESS.label2(ESS.calc[["wane"]])),
-    c("sigmadrop",c.text(thin.theta[["mu"]]*(thin.theta[["sigma"]])),ESS.label2(ESS.calc[["sigma"]]) ),
-    c("sigma2drop",c.text(thin.theta[["muShort"]]*(thin.theta[["sigma2"]])) ,ESS.label2(ESS.calc[["sigma2"]])),
-    c("wane_yr",c.text(thin.theta[["muShort"]]*(thin.theta[["wane"]])),ESS.label2(ESS.calc[["wane"]]) ),
-    #c("errorCorrect",c.text( pnorm(ceiling(thin.theta[["mu"]]) + 1,mean=thin.theta[["mu"]],sd=thin.theta[["error"]])-pnorm(floor(thin.theta[["mu"]]),mean=thin.theta[["mu"]],sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) )
-    c("errorCorrect1",c.text( pnorm( 2,mean=1.5,sd=thin.theta[["error"]])-pnorm(1,mean=1.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) ),
-    c("errorCorrect2",c.text( pnorm( 3,mean=1.5,sd=thin.theta[["error"]])-pnorm(0,mean=1.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) )
-    
-  )
+
   
   # output posterior
   write.csv(thin.theta[["mu"]]*thin.theta[["sigma"]],paste("plot_simulations/param_post",loadseed,".csv",sep=""))
-  
-  write.csv(table.param,paste("plot_simulations/param_table",paste(year_test,collapse="_"),"_",loadseed,".csv",sep="") )
+
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Plot attack rates, scaled by proportion alive for SIMULATED DATA
@@ -244,17 +233,17 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     
     #par(mfrow=c(1,1))
     
-    # Plot comparison
-    # plot(attack.yr,attackCI$mean,pch=19,col=colG,xlim=c(0,0.6),ylim=c(0,0.6),xlab="true attack rate",ylab="estimated attack rate", xaxs="i", yaxs="i")
-    # lines(c(0,1),c(0,1),col='grey')
-    # for(kk in 1:length(inf_years)){ # Iterate across test years
-    #   if(sum(kk==match(year_test,inf_years))>0){colComp="red"}else{colComp=colG}
-    #   points(attack.yr[kk],attackCI$mean[kk],pch=19,col=colComp)
-    #   lines(c(attack.yr[kk],attack.yr[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colComp)
-    # }
-    # 
-    # dev.copy(pdf,paste("plot_simulations/postCompare",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=12)
-    # dev.off()
+    #Plot comparison
+    plot(attack.yr,attackCI$mean,pch=19,col=colG,xlim=c(0,0.6),ylim=c(0,0.6),xlab="true attack rate",ylab="estimated attack rate", xaxs="i", yaxs="i")
+    lines(c(0,1),c(0,1),col='grey')
+    for(kk in 1:length(inf_years)){ # Iterate across test years
+      if(sum(kk==match(year_test,inf_years))>0){colComp="red"}else{colComp=colG}
+      points(attack.yr[kk],attackCI$mean[kk],pch=19,col=colComp)
+      lines(c(attack.yr[kk],attack.yr[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colComp)
+    }
+
+    dev.copy(png,paste("plot_simulations/postCompare",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".png",sep=""),width=25,height=10,units="cm",res=200)
+    dev.off()
     
     # - - - - - - - - - - - - - - - - - - 
     # Calculate and plot four fold rise in data
@@ -414,8 +403,8 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     inf.samples = length(inf.individuals[,1])
     
     inf.individuals.sorted = inf.individuals[,order(colSums(inf.individuals))]
-    age.list.censored = 2012 - sapply(yob.data[,1],function(x){max(x,1968)})
-    
+    age.list.censored = 2013 - sapply(yob.data[,1],function(x){max(x,1968)})
+
     per.year=apply(inf.individuals.sorted,2,function(x){c.nume(x)})
     #plot(per.year[1,]/age.list.censored)
     
@@ -433,14 +422,15 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
       #plot(c(1,2))
     }
     
+    # Estimated attack rates
+    
     plot(inf_years,attackCI$mean,pch=19,col=colA0,ylim=c(0,1),xlab="year",ylab="estimated attack rate", yaxs="i")
     for(kk in 1:length(inf_years)){ # Iterate across test years
       lines(c(inf_years[kk],inf_years[kk]),c(attackCI$CI1[kk],attackCI$CI2[kk]),col=colA0[kk])
     }
     title(main=LETTERS[3],adj=0)
     
-    #if(flu.type=="H3HN"){
-    
+    # Comparison of isolates and infections
     
     plot(isolatetab,attackCI$mean[pick_years],pch=19,cex=1.2,col="red",ylim=c(0,1),xlim=c(0,700),xlab="H3 isolates during sample period",ylab="estimated attack rate", xaxs="i", yaxs="i")
     for(kk in 1:length(pick_years)){ # Iterate across test years
@@ -459,22 +449,53 @@ plot.posteriors<-function(simDat=F,loadseed=1,flu.type="",year_test=c(2007:2012)
     
     title(main=LETTERS[4],adj=0)
     
-    dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=7,height=4)
+    dev.copy(pdf,paste("plot_simulations/attackA",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=7,height=4)
     #dev.copy(pdf,paste("plot_simulations/attack",ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,".pdf",sep=""),width=8,height=6,useDingbats = F)
     dev.off()
     
-    # PLOT INFECTIONS
-    
-    
+    # PLOT CUMULATIVE INFECTIONS AND AGE
+
+    # Plot individual distribution
+    par(mfrow=c(1,3))
     plot(per.year[1,],pch=19,cex=0.9,col=rgb(0.25,0.25,0.25),ylim=c(0,45),xlim=c(0,n_part+1),xlab="participant",ylab="estimated number of infections", xaxs="i", yaxs="i")
     for(kk in 1:n_part){ # Iterate across test years
       lines(c(kk,kk),c(per.year[2,kk],per.year[3,kk]),col=rgb(0.25,0.25,0.25))
     }
-    
+
     ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
-    #hist(ind.infN,breaks=seq(0,max(ind.infN)+1,2),col =rgb(0.8,0.8,0.8),xlab="number of infections",prob=TRUE,xlim=c(0,50),ylim=c(0,0.1),xaxs="i",yaxs="i", main=NULL,ylab="density")
-    #abline(v=median(ind.infN),col="red",lty=2,lwd=1.5); abline(v=mean(ind.infN),col="red",lwd=1.5)
-    title(main=LETTERS[3+letN],adj=0)
+    title(main=LETTERS[1],adj=0)
+    
+    # Cumulative i(nfections
+    total_inf = 0:(length(inf_years))
+    
+    distribution_infections = NULL
+    for(ii in 1:length(inf.individuals.sorted[,1])){
+      distribution_infections = rbind(distribution_infections,sapply(total_inf,function(x){sum(x>=inf.individuals.sorted[ii,])})/n_part)
+    }
+    
+    distribution_infections_ci = apply(distribution_infections,2,c.nume)
+
+    # Two plots
+    plot(total_inf,distribution_infections_ci[1,],pch=19,cex=0.9,col="white",ylim=c(0,1),xlim=c(-0.5,45.5),xlab="estimated number of infections",ylab="cumulative distribution", xaxs="i", yaxs="i")
+    grid(nx = 0, ny = NULL, col = "lightgray", lty = "dotted",lwd = par("lwd"), equilogs = TRUE)
+    for(kk in total_inf){ # Iterate across test years
+      lines(c(kk,kk),c(distribution_infections_ci[2,kk+1],distribution_infections_ci[3,kk+1]),col=rgb(0.25,0.25,0.25))
+    }
+    ind.infN=rowSums(historytabCollect[round(0.2*hist.sample*n_part):(hist.sample*n_part),])
+    points(total_inf,distribution_infections_ci[1,],pch=19,cex=0.9,col=rgb(0.25,0.25,0.25))
+    
+
+    title(main=LETTERS[2],adj=0)
+    
+    # Age distribution
+    age_cumulative = sapply(total_inf,function(x){ sum(x>=age.list.censored) })/n_part
+    
+    plot(total_inf,age_cumulative,pch=19,cex=0.9,col="white",ylim=c(0,1.05),xlim=c(-0.5,45.5),xlab="years at risk",ylab="cumulative distribution", xaxs="i", yaxs="i")
+    grid(nx = 0, ny = NULL, col = "lightgray", lty = "dotted",lwd = par("lwd"), equilogs = TRUE)
+    points(total_inf,age_cumulative,pch=19,cex=0.9,col=rgb(0.25,0.25,0.25))
+    
+    title(main=LETTERS[3],adj=0)
+  
     
   } # END OF LOOP
   
@@ -573,10 +594,10 @@ plot.compare<-function(simDat=F,loadseed=1,define.year.vec=c(2007:2012)){
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),burnCut=0.25,year_test=c(2007:2012),plotmap=F,fr.lim=F,linearFn=F,runsPOST=NULL){
+plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),burnCut=0.25,year_test=c(2007:2012),plotmap=F,fr.lim=F,linearFn=F,runsPOST=NULL,no_wane=F){
   
-  # simDat=F;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:2); burnCut=0.25; linearFn=T; runsPOST=NULL
-  # simDat=T;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; loadseed=1; linearFn=T; runsPOST=NULL
+  # simDat=F;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; linearFn=T; runsPOST=NULL
+  # simDat=T;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN"; loadpick=c(1:4); burnCut=0.25; loadseed=1; linearFn=T; runsPOST=NULL; no_wane = NULL
   
   storeMu = NULL
   storeMu2 = NULL
@@ -586,6 +607,7 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
   storeError = NULL
   storeTau2 = NULL
   storeWane = NULL
+  storeThetaAll = NULL
   
   if(simDat==T){load(paste("R_datasets/Simulated_data_SIM_",1,".RData",sep=""))
     theta.true=theta.sim.out
@@ -629,10 +651,11 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
     storeWane = rbind(storeWane,thin.theta[["wane"]])
     storeError = rbind(storeError,thin.theta[["error"]])
     storeTau2 = rbind(storeTau2,thin.theta[["tau2"]])
+    storeThetaAll = rbind(storeThetaAll,thin.theta)
   }
   
   # Plot MCMC chains
-  if(flu.type=="H3FS" | flu.type== "H3FS_HI" ){ par(mfrow=c(2,3)) }else{ par(mfrow=c(2,4)) }
+  if(flu.type=="H3FS" | flu.type== "H3FS_HI" | no_wane == T ){ par(mfrow=c(2,3)) }else{ par(mfrow=c(2,4)) }
   
   par(xpd=F)
   par(mar = c(3.5,3.5,1,1))
@@ -646,32 +669,32 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
   for(ii in 2:length(loadpick)){ lines(storeLik[ii,],type="l",col=col.list[[ii]] , ylim=c(maxlik-ifelse(simDat==F,1000,500),maxlik+100)) }
   lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(maxlik-ifelse(simDat==F,1000,500),maxlik+100),col="gray",lty=2)
   
-  if(!(flu.type=="H3FS"  | flu.type== "H3FS_HI")){ 
+  if(!(flu.type=="H3FS"  | flu.type== "H3FS_HI" | no_wane == T )){ 
     plot(storeWane[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(omega),ylim=c(0,1.2)); for(ii in 2:length(loadpick)){ lines(storeWane[ii,],type="l",col=col.list[[ii]]) }
     lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,1.2),col="gray",lty=2)
     if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["wane"]],theta.true[["wane"]]),col=Ctrue,lwd=Wtrue) }
   }
   
   # Long term boost
-  plot(storeMu[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[1]),ylim=c(1,3)); for(ii in 2:length(loadpick)){ lines(storeMu[ii,],type="l",col=col.list[[ii]]) }
+  plot(storeMu[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[1]),ylim=c(0.5,3)); for(ii in 2:length(loadpick)){ lines(storeMu[ii,],type="l",col=col.list[[ii]]) }
   lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,4),col="gray",lty=2)
   if(simDat==T){ lines(c(-1000,runsPOST),c(theta.true[["mu"]],theta.true[["mu"]]),col=Ctrue,lwd=Wtrue) }
   
   # Short term boost
-  if(!(flu.type=="H3FS"  | flu.type== "H3FS_HI")){ 
-    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[2]),ylim=c(1,3)); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,],type="l",col=col.list[[ii]]) }
+  if(!(flu.type=="H3FS"  | flu.type== "H3FS_HI" | no_wane == T)){ 
+    plot(storeMu2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(mu[2]),ylim=c(0.5,3)); for(ii in 2:length(loadpick)){ lines(storeMu2[ii,],type="l",col=col.list[[ii]]) }
     lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,4),col="gray",lty=2)
     if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["muShort"]],theta.true[["muShort"]]),col=Ctrue,lwd=Wtrue) }
   }
   
   # Long term sigma
-  plot(storeSigma[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[1]),ylim=c(0.03,ifelse(simDat==T,0.2,0.15))); for(ii in 2:length(loadpick)){ lines(storeSigma[ii,],type="l",col=col.list[[ii]]) }
+  plot(storeSigma[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[1]),ylim=c(0,ifelse(simDat==T,0.2,0.18))); for(ii in 2:length(loadpick)){ lines(storeSigma[ii,],type="l",col=col.list[[ii]]) }
   lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,0.4),col="gray",lty=2)
   if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["sigma"]],theta.true[["sigma"]]),col=Ctrue,lwd=Wtrue) }
   
   # Short term sigma
-  if(!(flu.type=="H3FS"  | flu.type== "H3FS_HI")){ 
-    plot(storeSigma2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[2]),ylim=c(0.03,ifelse(simDat==T,0.2,0.15))); for(ii in 2:length(loadpick)){ lines(storeSigma2[ii,],type="l",col=col.list[[ii]]) }
+  if(!(flu.type=="H3FS"  | flu.type== "H3FS_HI" | no_wane == T)){ 
+    plot(storeSigma2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(sigma[2]),ylim=c(0,ifelse(simDat==T,0.2,0.18))); for(ii in 2:length(loadpick)){ lines(storeSigma2[ii,],type="l",col=col.list[[ii]]) }
     lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,0.4),col="gray",lty=2)
     if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["sigma2"]],theta.true[["sigma2"]]),col=Ctrue,lwd=Wtrue) }
   }
@@ -682,12 +705,43 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
   if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["error"]],theta.true[["error"]]),col=Ctrue,lwd=Wtrue) }
   
   # AGS
-  plot(storeTau2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(tau),ylim=c(0.03,0.08)); for(ii in 2:length(loadpick)){ lines(storeTau2[ii,],type="l",col=col.list[[ii]]) }
+  plot(storeTau2[1,],type="l",col=col.list[[1]],xlab="iteration",ylab=expression(tau),ylim=c(0,0.08)); for(ii in 2:length(loadpick)){ lines(storeTau2[ii,],type="l",col=col.list[[ii]]) }
   lines(c(burnCut*ltheta/switch1,burnCut*ltheta/switch1),c(0,0.15),col="gray",lty=2)
   if(simDat==T){ lines(c(-1000,runsPOST/switch1),c(theta.true[["tau2"]],theta.true[["tau2"]]),col=Ctrue,lwd=Wtrue) }
   
   dev.copy(png,paste("plot_simulations/MCMC_chains",flu.type,ifelse(simDat==T,"SIM",""),"_np",n_part,"_yr",paste(year_test,"_",collapse="",sep=""),loadseed,"_lin",linearFn,".png",sep=""),units="cm",width=20,height=10,res=300)
   dev.off()
+  
+  # Output table of parameters
+  # Use combined parameter estimates
+  
+  thin.theta=storeThetaAll
+  
+  calculate.ESS.multi<-function(runs1){
+    thetaT = storeThetaAll; ltheta=length(storeThetaAll[["mu"]]); thin.theta=storeThetaAll; #thetaT[seq(1,ltheta,switch1)
+    ESS.calc=effectiveSize(thin.theta); ESS.calc
+  }
+  
+  ESS.calc = calculate.ESS.multi()
+
+  table.param <- rbind(
+    c("mu",c.text(thin.theta[["mu"]]),ESS.label2(ESS.calc[["mu"]]) ),
+    c("muShort",c.text(thin.theta[["muShort"]]  ),ESS.label2(ESS.calc[["muShort"]]) ), # **Corrected for additional +1 in fitting code**
+    c("sigma",c.text(thin.theta[["sigma"]]) ,ESS.label2(ESS.calc[["sigma"]]) ),
+    c("sigma2",c.text(thin.theta[["sigma2"]]),ESS.label2(ESS.calc[["sigma2"]]) ),
+    c("error",c.text(thin.theta[["error"]]) ,ESS.label2(ESS.calc[["error"]])),
+    c("tau2",c.text(thin.theta[["tau2"]]),ESS.label2(ESS.calc[["tau2"]]) ),
+    c("wane",c.text(thin.theta[["wane"]]) ,ESS.label2(ESS.calc[["wane"]])),
+    c("sigmadrop",c.text(thin.theta[["mu"]]*(thin.theta[["sigma"]])),ESS.label2(ESS.calc[["sigma"]]) ),
+    c("sigma2drop",c.text(thin.theta[["muShort"]]*(thin.theta[["sigma2"]])) ,ESS.label2(ESS.calc[["sigma2"]])),
+    c("wane_yr",c.text(thin.theta[["muShort"]]*(thin.theta[["wane"]])),ESS.label2(ESS.calc[["wane"]]) ),
+    c("errorCorrect1",c.text( pnorm( 2,mean=1.5,sd=thin.theta[["error"]])-pnorm(1,mean=1.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) ),
+    c("errorCorrect2",c.text( pnorm( 3,mean=1.5,sd=thin.theta[["error"]])-pnorm(0,mean=1.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) )
+    
+  )
+  write.csv(table.param,paste("plot_simulations/param_table_ALL_",paste(year_test,collapse="_"),"_",flu.type,loadseed,".csv",sep="") )
+  
+  
   
   
 }
@@ -783,6 +837,7 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
   # - - - - - - - - - - - - - - - - - - - 
   # Plot histogram of estimated vs true titre
   if(plotRes==T){
+    
     compTab = NULL
     likTab = NULL
     compTabNULL = NULL
@@ -799,8 +854,17 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
         
         if(!is.na(truT[1])){likTab=c(likTab,likelihood.titre(estT,truT,theta.max))}
         
-        # store actual error and MC poisson error
-        compTab = c(compTab, floor(estT) - truT)
+        # Pick correct strain
+        if(flu.type == "H3HN"){
+          estT_matched = estT[ match(names(truT),strain_namesA) ]        # Match estimates with test strains
+        }else{
+          estT_matched = estT
+        }
+
+        error_10 = floor(estT_matched) - as.numeric(truT)         # store actual error and MC error
+
+        # store actual error and MC error
+        compTab = c(compTab, error_10 )
         compTabNULL = c(compTabNULL, estT - sapply(estT,function(x){rpois(1,lambda=x)})  )
       }
     }
@@ -824,17 +888,35 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
     dev.copy(pdf,paste("plot_simulations/titre_compare/Residuals_",loadseed,"_lin",linearFn,".pdf",sep=""),width=5,height=4)
     dev.off()
     
-    
-    # - - - - - - - - - - - - - - - - - - - 
-    # Calculate likelihood of data
+
     
     
   }
   
+  # - - -
+  # Construct table with infection histories - extra check
+  # store.hist = NULL
+  # pick.table = seq(runs1,runsPOST,100) %>% sort()
+  # pickN = length(pick.table)
+  # 
+  # for(ii in 1:n_part){
+  # 
+  #   for(sampk in 1:pickN){
+  #     pickA= pick.table[sampk]
+  #     pickAhist=ceiling(pickA/hist.switch)+1 # check which history this specifies
+  # 
+  #     hist.sample=historytabCollect[((pickAhist-1)*n_part+1):(pickAhist*n_part),1:n.inf]
+  #     store.hist = rbind(store.hist,c(ii, pickA, sum(hist.sample[ii,]) ,1))
+  # 
+  #   }
+  # }
+  # store.hist = data.frame(store.hist)
+  # names(store.hist) = c("part","iteration","total","m")
+  # 
   # - - - - - - - - - - - - - - - - - - - 
   # Plot figures from MCMC posteriors
   
-  colN=if(n.test>1){n.test+1}else{5}
+  colN=if(n.test>1){n.test+1}else{10}
   loopN=if(n.test>1){5}else{25}
   par(mfrow=c(5,colN)); 
   par(mar = c(2,2,1.5,0.2));
@@ -892,53 +974,208 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
       
       # PLot histogram of infections
       if(pickyr==n.test){
-        hist(rowSums(store.mcmc.hist.data[,ii0,,n.test]),breaks=seq(-0.5,45,1),col="light grey",main=paste("Participant ",ii0,", |X|",sep=""))
+        tally.count = rowSums(store.mcmc.hist.data[,ii0,,n.test])
+        hist(tally.count,breaks=seq(-0.5,45,1),col="light grey",main=paste("Participant ",ii0,", |X|",sep=""),ylim=c(0,max(table(tally.count)) +2 ))
         #lines(c(sum(initial.hist[ii0,]),sum(initial.hist[ii0,])),c(-1,100),col="black",lty=1,lwd=2) # initial history for DEBUG
         if(simDat==T){
           lines(c(sum(historytabSim[ii0,]),sum(historytabSim[ii0,])),c(-1,100),col=rgb(0,0.6,0),lty=1,lwd=2)
-          }
-        
+        }
+        if(flu.type!="H3HN" & simDat == F){
+          text(x=35,y=(max(table(tally.count))+1) ,label = paste("Age:",test.list[[ii0]][[1]][[5]]),col="red" ) # ADD DOB if available
+        }
       }
+      
       
 
       
+      # # Plot trace of infections - extra check
+      # if(pickyr==n.test){
+      #   plot(store.hist[store.hist$part==ii0,"total"],col="dark grey",main=paste("Part. ",ii0,", |X| trace",sep=""),type="l",ylim=c(0,20))
+      #   #lines(c(sum(initial.hist[ii0,]),sum(initial.hist[ii0,])),c(-1,100),col="black",lty=1,lwd=2) # initial history for DEBUG
+      #   if(simDat==T){
+      #     lines(c(-1,length(store.hist$part==ii0)),c(sum(historytabSim[ii0,]),sum(historytabSim[ii0,])),col=rgb(0,0.6,0),lty=1,lwd=2)
+      #   }
+      #   
+      # }
+
+      if((ii0 %% loopN==0 | ii0==n_part) & flu.type=="H3HN"){
+        dev.copy(png,paste("plot_simulations/titre_compare/sim",loadseed,"_",ii0,"P.png",sep=""),units="cm",width=30,height=15,res=150)
+        dev.off()
+      }
       
-      if(ii0 %% loopN==0 | ii0==n_part){
-        #dev.copy(pdf,paste("plot_simulations/titre_compare/sim",loadseed,"_",ii0,"P.pdf",sep=""),width=10,height=8)
-        dev.copy(png,paste("plot_simulations/titre_compare/sim",loadseed,"_",ii0,"P.png",sep=""),units="cm",width=25,height=15,res=150)
+      if((ii0 %% loopN==0 | ii0==n_part) & flu.type!="H3HN"){
+        dev.copy(png,paste("plot_simulations/titre_compare/sim",loadseed,"_",ii0,"P.png",sep=""),units="cm",width=40,height=15,res=150)
         dev.off()
       }
       
     }  # end loop over participants
     
   } # end loop over test years
-  
-  # - - - 
-  # Construct table with infection histories - use to DEBUG
-  # store.hist = NULL
-  # pick.table = seq(runs1,runsPOST,100) %>% sort()
-  # pickN = length(pick.table)
-  # 
-  # for(ii in 1:n_part){
-  #   
-  #   for(sampk in 1:pickN){
-  #     pickA= pick.table[sampk]
-  #     pickAhist=ceiling(pickA/hist.switch)+1 # check which history this specifies
-  #     
-  #     hist.sample=historytabCollect[((pickAhist-1)*n_part+1):(pickAhist*n_part),1:n.inf]
-  #     store.hist = rbind(store.hist,c(ii, pickA, sum(hist.sample[ii,] ),1))
-  #     
-  #   }
-  #   
-  # }
-  # 
-  # store.hist = data.frame(store.hist)
-  # names(store.hist) = c("i","sampno","V1","chain")
-  # 
-  # write.csv(store.hist,"plot_simulations/titre_compare/history_post.csv")
+
   
 }
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Plot expected titres using hold 10% out analysis
+# Note iterations run from 101-112
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+hold.out.analysis<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5,plotRes=F,linearFn=F){
+  
+  # simDat=F;loadseed=107;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN";  plotRes=T; linearFn=T;btstrap=50
+
+  load("R_datasets/HaNam_data.RData")
+  test.listALL = test.list
+  load("R_datasets/HaNam_data_V_minus_10.RData")
+  
+  # Find differences between datasets
+  test.listDIFF = test.listALL
+  n.test = length(year_test)
+  
+  for(ii in 1:n_part){
+    for(kk in 1:n.test){
+      len1 = length(test.listALL[[ii]][[kk]])
+      if( length(test.listALL[[ii]][[kk]][,1]) >1){
+        pickstrain = match(names(test.list[[ii]][[kk]]) ,names(test.listALL[[ii]][[kk]]) ) # Match missing strains
+        pickstrain0 = (1:len1)[-pickstrain]
+        
+        test.listDIFF[[ii]][[kk]] = test.listDIFF[[ii]][[kk]][,pickstrain0] # Define new matrix
+      }
+      
+    }
+    
+  }
+  
+  loadseed=paste(loadseed,"_",flu.type,sep="")
+  
+  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,"_lin",linearFn,".RData",sep="")) # Note that this includes test.listPost
+  
+  lik.tot=rowSums(likelihoodtab)
+  runsPOST=length(lik.tot[lik.tot!=-Inf])
+  hist.switch= runsPOST/ (length(historytabCollect[,1])/n_part - 1)
+  runs1=ceiling(0.2*runsPOST)
+  
+  # Set up matrices to store -- need btstrap >1
+  n.strains=length(strain_years) # this loads from main_model.R
+  n.test=length(test.yr)
+  n.inf=length(inf_years)
+  
+  store.mcmc.test.data=array(NA, dim=c(btstrap,n_part,n.strains,n.test,2)) # Store expected titres for each test year
+  store.mcmc.hist.data=array(NA, dim=c(btstrap,n_part,n.inf,n.test)) # Store history for each test year
+  
+  # - - - - - - - - - - - -
+  # Sample from MCMC runs to get stored matrices of expected titre and estimated infection years
+  
+  pick.table = sample(c(runs1:runsPOST),btstrap) %>% sort()
+  
+  for(sampk in 1:btstrap){
+    pickA= pick.table[sampk]
+    
+    pickAhist=ceiling(pickA/hist.switch)+1 # check which history this specifies
+    
+    hist.sample=historytabCollect[((pickAhist-1)*n_part+1):(pickAhist*n_part),1:n.inf]
+    theta.max=as.data.frame(thetatab)[pickA,]
+    
+    for(pickyr in 1:n.test){
+      
+      # Note here that inf_years and strain_years are loads from main_model.R
+      # Output expected titre - could include Poisson measurement uncertainty here?
+      #print("Need to add antigenic.map.in to SIMULATION") ?
+      simulate_data(test.yr[pickyr],historytabPost=hist.sample,
+                    inf_years,
+                    strain_years,
+                    n_part,thetastar=theta.max,p.inf=0.1,
+                    #pmask=c("sigma2"), # For old fitted data, need to specify that sigma2 wasn't fitted
+                    linD=linearFn,
+                    am.spline=am.spl)
+      
+      load("R_datasets/Simulated_dataPost_1.RData")
+      
+      # Mask infections after test year
+      for(ii0 in 1:n_part){
+        
+        sim.titre=test.listSim[[ii0]][[1]] # sort sample years - drawn from simulated data above
+        hist.sampleB=hist.sample;  hist.sampleB[,as.numeric(colnames(hist.sample))>test.yr[pickyr]]=0 # don't show infections after test year
+        store.mcmc.test.data[sampk,ii0,,pickyr,1]= min(inf_years)-1+sort(sim.titre["sample.index",]) # Sampled strain years
+        s.titre=sim.titre["titredat",order(sim.titre["sample.index",])]
+        store.mcmc.test.data[sampk,ii0,,pickyr,2]=s.titre # Sampled expected titre
+        #store.mcmc.test.data[sampk,ii0,,pickyr,2]=rpois(length(s.titre),lambda=s.titre) # Sampled expected titre - include Poisson noise
+        store.mcmc.hist.data[sampk,ii0,,pickyr]=hist.sampleB[ii0,] # Sampled history
+        
+      }  # end loop over participants
+      
+    } # end loop over test years
+  } # end bootstrap loop
+  
+  # - - - - - - - - - - - - - - - - - - - 
+  # Plot histogram of estimated vs true titre
+  if(plotRes==T){
+    
+    compTab = NULL
+    likTab = NULL
+    compTabNULL = NULL
+    for(pickyr in 1:n.test){
+      for(ii0 in 1:n_part){ # Check more than one strain per year
+        
+        if(!is.null(dim(store.mcmc.test.data[,ii0,,pickyr,2]))){
+          estT = apply(store.mcmc.test.data[,ii0,,pickyr,2],2,median)
+        }else{
+          estT = sapply(store.mcmc.test.data[,ii0,,pickyr,2],median)
+        }
+        
+        # If entries = NA it's because strains are missing
+        truT = test.listALL[[ii0]][[pickyr]][2,]
+        
+        if(!is.na(truT[1]) ){likTab=c(likTab,likelihood.titre(estT,truT,theta.max))
+        
+          # Pick correct strain
+          len1 = length(truT)
+          pickstrain = match(names(test.list[[ii0]][[pickyr]]) ,names(test.listALL[[ii0]][[pickyr]]) ) # Match missing strains
+          pickstrain0 = (1:len1)[-pickstrain] # Pick test strains
+          
+          # Match estimates with test strains
+          estPick = match(names(truT[pickstrain0]),strain_namesA)
+          estT_matched = estT[ estPick ]
+          
+          # store actual error and MC error
+          error_10 = floor(estT_matched) - as.numeric(truT[pickstrain0])
+          
+          compTab = rbind(compTab, cbind(store.mcmc.test.data[1,ii0,estPick,pickyr,1], error_10))
+          
+        }
+        
+      }
+    }
+    
+    # plot(compTab,pch=19,col=rgb(0,0,1,0.2),ylim=c(-7,7))
+    # dev.copy(pdf,paste("plot_simulations/titre_compare/Hold_out_Distribution_",loadseed,"_lin",linearFn,".pdf",sep=""),width=5,height=4)
+    # dev.off()
+    
+    compTab = compTab[,2] # Select errors only
+    compTab = as.numeric(compTab); compTab = compTab[!is.na(compTab)]; compTabNULL = compTabNULL[!is.na(compTab)]
+    
+    par(mfrow=c(1,1))
+    par(mar = c(5,5,1,1))
+    #breaks0=seq(round(min(c(compTab,compTabNULL)))-0.5,round(max(c(compTab,compTabNULL)))+1.5,1)
+    breaks0 = seq(-10.5,10.5,1)
+    hist(compTab , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - observed titre"); #title(LETTERS[1],adj=0)
+    #hist(compTabNULL , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - Pois(expected titre)"); #title(LETTERS[2],adj=0)
+    
+    stats.store = rbind( c(sum( abs(compTab)==0)/length(compTab), sum( abs(compTab)<=1 )/length(compTab), sum( abs(compTab)<=2 )/length(compTab), sum( abs(compTab)<=3 )/length(compTab) )
+                         #c(sum( abs(compTabNULL)<=1 )/length(compTabNULL), sum( abs(compTabNULL)<=2 )/length(compTabNULL), sum( abs(compTabNULL)<=3 )/length(compTabNULL)  )
+    )
+    colnames(stats.store)=c("exact","within 1","within 2","within 3")
+    rownames(stats.store)=c("model")
+    write.csv(stats.store,paste("plot_simulations/titre_compare/Hold_out_Store_residuals_",loadseed,".csv",sep=""))
+    
+    dev.copy(pdf,paste("plot_simulations/titre_compare/Hold_out_Residuals_",loadseed,"_lin",linearFn,".pdf",sep=""),width=5,height=4)
+    dev.off()
+    
+  } # end PlotRes check
+
+  
+}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # FIGURE PLOT Plot expected titres using sampled posterior estimates against true titres 
@@ -949,7 +1186,7 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   
   # year_pick=c(2008:2010);part_pick=c(31,57,25) ; simDat = F;  year_test=c(2007:2012); btstrap=50; loadseed = 1; flu.type="H3HN"; linearFn=T
   
-  # year_pick=c(2009);part_pick=c(31,57,25,1,2,3) ; simDat = F;  year_test=c(2009); btstrap=50; loadseed = 1; flu.type="H3FS_HI"; linearFn=T
+  # year_pick=c(2009); part_pick=c(27,14,111) ; simDat = F;  year_test=c(2009); btstrap=10; loadseed = 1; flu.type="H3FS_HI"; linearFn=T
   
   
   if(simDat==F){
@@ -1023,14 +1260,14 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   # - - - - - - - - - - - - 
   # Plot figures from MCMC posteriors
   
-  if(flu.type=="H3FS"){par(mfrow=c(4,3))}else{par(mfrow=c(4,3))} #layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
+  if(flu.type=="H3FS" | flu.type=="H3FS_HI"){par(mfrow=c(4,3))}else{par(mfrow=c(4,3))} #layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
   par(mgp=c(1.8,0.6,0))
   ymax=8.2
-  titleN = ifelse(flu.type=="H3FS",10,1)
+  titleN = ifelse(flu.type=="H3FS" | flu.type=="H3FS_HI" ,10,1)
   
   yrange1=c(-0.2,9)
   
-  for(ii0 in 1:n.ppart){
+  for(ii0 in 1:n.ppart){ # Already account for pick earlier
     
     for(pickyr in 1:n.test){
       
@@ -1062,6 +1299,8 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
       # Plot true titres - check select correct values
       points(min(inf_years)-1+test.list[[ part_pick[ii0] ]][[ n.testMatch[pickyr] ]][4,],test.list[[ part_pick[ii0] ]][[ n.testMatch[pickyr] ]][2,],pch=1,col='red')
       
+      if(flu.type=="H3FS" | flu.type=="H3FS_HI"){print(test.list[[ part_pick[ii0] ]][[ n.testMatch[pickyr] ]][5,1])}
+      
       text(x=1965,y=8,labels=LETTERS[titleN],adj=0,font=2,cex=1.5)
       titleN=titleN+1
       
@@ -1071,6 +1310,18 @@ plot.posterior.titres.select<-function(loadseed=1,year_test=c(2007:2012),flu.typ
   dev.copy(pdf,paste("plot_simulations/titre_compare/FIGURE_titre_plot",loadseed,".pdf",sep=""),width=6.5,height=7,useDingbats=F)
   dev.off()
   
+  # Plot individual histories
+  par(mfrow=c(1,3),mgp=c(1.5,0.5,0),mar = c(3,3,1,1))
+  
+  if(flu.type=="H3FS" | flu.type=="H3FS_HI"){ymax=0.3;xmax=20.5}else{ymax=1;xmax=10.5}
+  
+  for(ii0 in 1:n.ppart){
+    tally.count = rowSums(store.mcmc.hist.data[,ii0,,n.test])
+    hist(tally.count,breaks=seq(-0.5,23.5,1),col="light grey",main="",xaxs="i",xlim=c(0,xmax),yaxs="i",xlab="infections",freq=F,ylab="",yaxt="n")
+  }
+
+  dev.copy(png,paste("plot_simulations/titre_compare/FIGURE_Inf_hist_titre_plot",loadseed,".png",sep=""),units="cm",width=10,height=2,res=150)
+  dev.off()
   
   
 }
@@ -1795,15 +2046,15 @@ plot.multi.true.vs.estimated<-function(simDat=T,flu.type="H3HN",loadpick=c(1:4),
   
   # Plot residuals
   breaksN=seq(-0.31,0.31,0.02)
-  hist(vals.blank0$est-vals.blank0$true,breaks = breaksN,col=rgb(1,0,0,0.5),border="grey")
-  hist(vals.blank0$rise4-vals.blank0$true, breaks = breaksN,add=T,col=rgb(0,0,0,0.2),border=NULL)
-  hist(vals.blank0$rise2-vals.blank0$true, breaks = breaksN,add=T,col=rgb(0,1,0,0.2),border=NULL)
-  
+  # hist(vals.blank0$est-vals.blank0$true,breaks = breaksN,col=rgb(1,0,0,0.5),border="grey")
+  # hist(vals.blank0$rise4-vals.blank0$true, breaks = breaksN,add=T,col=rgb(0,0,0,0.2),border=NULL)
+  # hist(vals.blank0$rise2-vals.blank0$true, breaks = breaksN,add=T,col=rgb(0,1,0,0.2),border=NULL)
+  # 
   par(mar=c(3,3,1,1),mgp=c(2,0.7,0))
   
-  plot(density(vals.blank0$est-vals.blank0$true),col="white",frame=T,xaxs="i",yaxs="i",ylab="density",xlab="simulation residual",main="",xlim=c(-0.2,0.2),ylim=c(0,100))
+  plot(density(vals.blank0$est-vals.blank0$true),col="white",frame=T,xaxs="i",yaxs="i",ylab="density",xlab="simulation residual",main="",xlim=c(-0.2,0.25),ylim=c(0,80))
   lines(c(0,0),c(0,100),col="grey")
-  lines(density(vals.blank0$est-vals.blank0$true,adjust=1),col="red",lwd=2)
+  lines(density(vals.blank0$est-vals.blank0$true,adjust=2),col="red",lwd=2)
   lines(density(vals.blank0$rise4-vals.blank0$true,adjust=1),col="black",lty=1,lwd=2)
   lines(density(vals.blank0$rise2-vals.blank0$true,adjust=1),col="black",lty=2,lwd=2)
   
@@ -1911,5 +2162,88 @@ compare_YOB <- function(){
 }
 
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Plot schematic of model outputs
 
+fitted_model_schematic<-function(loadseed=1,year_test=c(2007:2012),linearFn=F,flu.type="H3HN",simDat=F,n_partSim=2,simTest.year=c(1968:2010),d.step=0.5,ymax=5,btstrap=50){
+  
+  # n_partSim=2 ; simTest.year=c(1968:2010) ; d.step = 0.5 ; flu.type="H3HN"; year_test=c(2007:2012); loadseed = 1; linearFn=T; ymax=5; btstrap = 1e4
+  load("R_datasets/HaNam_data.RData")
+  loadseed=paste(loadseed,"_",flu.type,sep="")
+  
+  load(paste("posterior_sero_runs/outputR_f",paste(year_test,"_",collapse="",sep=""),"s",loadseed,"_lin",linearFn,".RData",sep="")) # Note that this includes test.listPost
+  
+  lik.tot=rowSums(likelihoodtab)
+  runsPOST=length(lik.tot[lik.tot!=-Inf])
+  runs1=ceiling(0.2*runsPOST)
+  thetaT=as.data.frame(thetatab)[runs1:runsPOST,]
+  length_t = length(runs1:runsPOST)
+
+  pickA <- (lik.tot==max(lik.tot)) 
+  theta.max <- head(as.data.frame(thetatab)[pickA,],1)
+  
+  
+  # Set up plot
+  time.steps = seq(0,4,0.2)
+  antigenic.steps = c(0,5,10)
+  infect.steps = c(0,5,10)
+  
+  # Iterate across samples to get response to three illustrative viruses
+  virus_1_sB = NULL; virus_2_sB = NULL; virus_3_sB = NULL
+  
+  for(ii in 1:btstrap){
+    pickA = sample(length_t,1)
+    theta_p = thetaT[pickA,]
+    
+    virus_1_s = NULL; virus_2_s = NULL; virus_3_s = NULL
+    
+    for(kk in time.steps){
+      
+      virus_1 = theta_p[["mu"]] + theta_p[["muShort"]]*max(0,1-theta_p[["wane"]]*max(0,kk-infect.steps[1]))
+      virus_1 = rnorm(1,mean = virus_1, sd = theta_p[["error"]])
+      virus_1_s = c(virus_1_s,virus_1)
+      
+      virus_2 = max(0,1-theta_p[["sigma"]]*antigenic.steps[2]) * theta_p[["mu"]] + max(0,1-theta_p[["sigma2"]]*antigenic.steps[2]) * theta_p[["muShort"]]*max(0,1-theta_p[["wane"]]*(kk-infect.steps[1]))
+      virus_2 = rnorm(1,mean = virus_2, sd = theta_p[["error"]])
+      virus_2_s = c(virus_2_s,virus_2)
+      
+      virus_3 = max(0,1-theta_p[["sigma"]]*antigenic.steps[3]) * theta_p[["mu"]] + max(0,1-theta_p[["sigma2"]]*antigenic.steps[3]) * theta_p[["muShort"]]*max(0,1-theta_p[["wane"]]*(kk-infect.steps[1]))
+      virus_3 = rnorm(1,mean = virus_3, sd = theta_p[["error"]])
+      virus_3_s = c(virus_3_s,virus_3)
+      
+    }
+    
+    virus_1_sB = rbind(virus_1_sB,virus_1_s); virus_2_sB = rbind(virus_2_sB,virus_2_s); virus_3_sB = rbind(virus_3_sB,virus_3_s)
+    
+  }
+  
+  virus_1_CI = apply(virus_1_sB,2,c.nume2)
+  virus_2_CI = apply(virus_2_sB,2,c.nume2)
+  virus_3_CI = apply(virus_3_sB,2,c.nume2)
+  
+  par(mfrow=c(3,1),mar=c(3,3,1,1),mgp=c(1.5,0.5,0))
+  col.base = rgb(0,0,1,0.2)
+  col.alpha = rgb(0,0,1,0.2)
+  plot(time.steps,virus_1_CI[1,],type="l",ylim=c(0,8),yaxs="i",xaxs="i",col="blue",main="Homologous virus",xlab="years since infection",ylab="log titre")
+  polygon(c(time.steps,rev(time.steps)),c(virus_1_CI[2,],rev(virus_1_CI[3,])),col=col.alpha,lty=0)
+  polygon(c(time.steps,rev(time.steps)),c(virus_1_CI[4,],rev(virus_1_CI[5,])),col=col.alpha,lty=0)
+  title(main=LETTERS[1],adj=0)
+  
+  plot(time.steps,virus_2_CI[1,],type="l",ylim=c(0,8),yaxs="i",xaxs="i",col="blue",main="Difference of 5 antigenic units",xlab="years since infection",ylab="log titre")
+  polygon(c(time.steps,rev(time.steps)),c(virus_2_CI[2,],rev(virus_2_CI[3,])),col=col.alpha,lty=0)
+  polygon(c(time.steps,rev(time.steps)),c(virus_2_CI[4,],rev(virus_2_CI[5,])),col=col.alpha,lty=0)
+  title(main=LETTERS[2],adj=0)
+  
+  plot(time.steps,virus_3_CI[1,],type="l",ylim=c(0,8),yaxs="i",xaxs="i",col="blue",main="Difference of 10 antigenic units",xlab="years since infection",ylab="log titre")
+  polygon(c(time.steps,rev(time.steps)),c(virus_3_CI[2,],rev(virus_3_CI[3,])),col=col.alpha,lty=0)
+  polygon(c(time.steps,rev(time.steps)),c(virus_3_CI[4,],rev(virus_3_CI[5,])),col=col.alpha,lty=0)
+  title(main=LETTERS[3],adj=0)
+  
+  dev.copy(pdf,paste("plot_simulations/Response_schematic.pdf",sep=""), width=4,height=8)
+  dev.off()
+  
+  
+}
+
+  
 

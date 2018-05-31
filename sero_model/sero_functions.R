@@ -757,14 +757,16 @@ run_mcmc<-function(
 data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
                        flutype="H3HN",fix.param=NULL , fit.spline=NULL, 
                        switch0=2,linearFn=F,  vp1=0.2, # Probability resample history
-                       turn_off_likelihood=0
+                       turn_off_likelihood=0,
+                       leave_out_10 = F
                        ) {
   
-  #DEBUG  year_test=c(2007:2012); seed_i=1; vp1=0.2; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=T; pmask=c("tau2","wane")
+  #DEBUG  year_test=c(2007:2012); loadseed=1; switch0=2; vp1=0.2; mcmc.iterations=1e2; strain.fix=T; flutype="H3HN"; fix.param=NULL; linearFn=T; pmask=c("tau2"); turn_off_likelihood=0; leave_out_10 = T;
   
   # INFERENCE MODEL
   # Run MCMC for specific data set
-  if(flutype=="H3HN"){load("R_datasets/HaNam_data.RData")}
+  if(flutype=="H3HN" & leave_out_10==F){load("R_datasets/HaNam_data.RData")}
+  if(flutype=="H3HN" & leave_out_10==T){load("R_datasets/HaNam_data_V_minus_10.RData")}
   if(flutype=="H3FS"){load("R_datasets/FluScapeH3_data.RData")}
   if(flutype=="H3FS_HI"){load("R_datasets/FluScapeH3_HI_data.RData")}
     #am.spl<-load.flu.map.data() # define spline from antigenic map data
@@ -772,18 +774,18 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
   if(flutype=="H1"){load("R_datasets/HK_data.RData")}
   
   # Plot simulation data vs history
-  #source("simulation_plots.R")
+  if(flutype=="H3HN"){history_in = read.csv("R_datasets/hist_IC_H3.csv"); history_in = history_in[,-1]; colnames(history_in)=NULL; history_in= as.matrix(history_in) }else{history_in = NULL}
   
   # Set initial theta
   theta0=c(mu=NA,tau1=NA,tau2=NA,wane=NA,sigma=NA,muShort=NA,error=NA,disp_k=NA,sigma2=NA)
-  theta0[["mu"]]=2 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # basic boosting
+  theta0[["mu"]]=2 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # basic boosting
   theta0[["tau1"]]=0.05 # - NOT CURRENTLY USED
   theta0[["tau2"]]=0.05 + if(sum(fix.param=="vary.init")>0){0.01*runif(1,c(-1,1))}else{0} # suppression via AGS
-  theta0[["wane"]]= 0.8 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
-  theta0[["sigma"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.04*runif(1,c(-1,1))}else{0} # cross-reaction
-  theta0[["sigma2"]]=0.05 + if(sum(fix.param=="vary.init")>0){0.01*runif(1,c(-1,1))}else{0} # short-term cross-reaction
-  theta0[["muShort"]]=2.5 + if(sum(fix.param=="vary.init")>0){0.5*runif(1,c(-1,1))}else{0} # short term boosting
-  theta0[["error"]]=1.5 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # measurement error
+  theta0[["wane"]]= 0.8 + if(sum(fix.param=="vary.init")>0){0.05*runif(1,c(-1,1))}else{0} # short term waning - half life of /X years -- add noise to IC if fitting
+  theta0[["sigma"]]=0.1 + if(sum(fix.param=="vary.init")>0){0.02*runif(1,c(-1,1))}else{0} # cross-reaction
+  theta0[["sigma2"]]=0.05 + if(sum(fix.param=="vary.init")>0){0.005*runif(1,c(-1,1))}else{0} # short-term cross-reaction
+  theta0[["muShort"]]=2.5 + if(sum(fix.param=="vary.init")>0){0.2*runif(1,c(-1,1))}else{0} # short term boosting
+  theta0[["error"]]=1.5 + if(sum(fix.param=="vary.init")>0){0.1*runif(1,c(-1,1))}else{0} # measurement error
   theta0[["disp_k"]]=1 # dispersion parameter - NOT CURRENTLY USED
   theta=theta0
   print(theta0)
@@ -809,7 +811,7 @@ data.infer <- function(year_test,mcmc.iterations=1e3,loadseed=1,
     theta=theta0,
     runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
-    hist.true=NULL,
+    hist.true=history_in,
     switch1=switch0, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=c(fix.param,"disp_k"), #c("wane"), #,"muShort"), # specify parameters to fix
     seedi=paste(loadseed,"_",flutype,sep=""), # record output
@@ -906,7 +908,7 @@ simulation.infer <- function(seed_i,mcmc.iterations=1e3, strain.fix=T,flu.type="
     theta=theta0,
     runs=mcmc.iterations, # number of MCMC runs
     varpart_prob=vp1,
-    hist.true= historytabSim, # True starting point?  # *** DEBUG *** 
+    hist.true= NULL, # True starting point?  # *** DEBUG ***  historytabSim
     switch1=2, # ratio of infection history resamples to theta resamples. This is fixed
     pmask=pmask0, # ,"map.fit" specify parameters to fix
     seedi=loadseed,
