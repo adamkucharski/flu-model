@@ -722,14 +722,15 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
     ESS.calc=effectiveSize(thin.theta); ESS.calc
   }
   
+  ESS.label2 <- function(x){signif(as.numeric(x),3)}
   ESS.calc = calculate.ESS.multi()
 
   table.param <- rbind(
     c("mu",c.text(thin.theta[["mu"]]),ESS.label2(ESS.calc[["mu"]]) ),
-    c("muShort",c.text(thin.theta[["muShort"]]  ),ESS.label2(ESS.calc[["muShort"]]) ), # **Corrected for additional +1 in fitting code**
+    c("muShort",c.text(thin.theta[["muShort"]]  ),ESS.label2(ESS.calc[["muShort"]]) ), 
     c("sigma",c.text(thin.theta[["sigma"]]) ,ESS.label2(ESS.calc[["sigma"]]) ),
     c("sigma2",c.text(thin.theta[["sigma2"]]),ESS.label2(ESS.calc[["sigma2"]]) ),
-    c("error",c.text(thin.theta[["error"]]) ,ESS.label2(ESS.calc[["error"]])),
+    c("error",c.text(thin.theta[["error"]],sigF=3) ,ESS.label2(ESS.calc[["error"]])),
     c("tau2",c.text(thin.theta[["tau2"]]),ESS.label2(ESS.calc[["tau2"]]) ),
     c("wane",c.text(thin.theta[["wane"]]) ,ESS.label2(ESS.calc[["wane"]])),
     c("sigmadrop",c.text(thin.theta[["mu"]]*(thin.theta[["sigma"]])),ESS.label2(ESS.calc[["sigma"]]) ),
@@ -737,8 +738,9 @@ plot.multi.chain.posteriors<-function(simDat=F,flu.type="H3HN",loadpick=c(1:4),b
     c("wane_yr",c.text(thin.theta[["muShort"]]*(thin.theta[["wane"]])),ESS.label2(ESS.calc[["wane"]]) ),
     c("errorCorrect1",c.text( pnorm( 2,mean=1.5,sd=thin.theta[["error"]])-pnorm(1,mean=1.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) ),
     c("errorCorrect2",c.text( pnorm( 3,mean=1.5,sd=thin.theta[["error"]])-pnorm(0,mean=1.5,sd=thin.theta[["error"]]) ) ,ESS.label2(ESS.calc[["error"]]) )
-    
   )
+  
+  
   write.csv(table.param,paste("plot_simulations/param_table_ALL_",paste(year_test,collapse="_"),"_",flu.type,loadseed,".csv",sep="") )
   
   
@@ -861,7 +863,7 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
           estT_matched = estT
         }
 
-        error_10 = floor(estT_matched) - as.numeric(truT)         # store actual error and MC error
+        error_10 = estT_matched - as.numeric(truT)         # store actual error and MC error - add floor if want integer estimate
 
         # store actual error and MC error
         compTab = c(compTab, error_10 )
@@ -878,10 +880,10 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
     hist(compTab , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - observed titre"); #title(LETTERS[1],adj=0)
     #hist(compTabNULL , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - Pois(expected titre)"); #title(LETTERS[2],adj=0)
     
-    stats.store = rbind( c(sum( abs(compTab)<=1 )/length(compTab), sum( abs(compTab)<=2 )/length(compTab), sum( abs(compTab)<=3 )/length(compTab) )
+    stats.store = rbind( c(sqrt(mean(abs(compTab))),  sum( abs(compTab)<=1 )/length(compTab), sum( abs(compTab)<=2 )/length(compTab), sum( abs(compTab)<=3 )/length(compTab) )
                          #c(sum( abs(compTabNULL)<=1 )/length(compTabNULL), sum( abs(compTabNULL)<=2 )/length(compTabNULL), sum( abs(compTabNULL)<=3 )/length(compTabNULL)  )
     )
-    colnames(stats.store)=c("within 1","within 2","within 3")
+    colnames(stats.store)=c("rmse","within 1","within 2","within 3")
     rownames(stats.store)=c("model")
     write.csv(stats.store,paste("plot_simulations/titre_compare/Store_residuals_",loadseed,".csv",sep=""))
     
@@ -1023,7 +1025,7 @@ plot.posterior.titres<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDa
 
 hold.out.analysis<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,btstrap=5,plotRes=F,linearFn=F){
   
-  # simDat=F;loadseed=107;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN";  plotRes=T; linearFn=T;btstrap=50
+  # simDat=F;loadseed=101;year_test=c(2007:2012);plotmap=F;fr.lim=T;flu.type="H3HN";  plotRes=T; linearFn=T;btstrap=50
 
   load("R_datasets/HaNam_data.RData")
   test.listALL = test.list
@@ -1139,7 +1141,8 @@ hold.out.analysis<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,
           estT_matched = estT[ estPick ]
           
           # store actual error and MC error
-          error_10 = floor(estT_matched) - as.numeric(truT[pickstrain0])
+          #error_10 = floor(estT_matched) - as.numeric(truT[pickstrain0])
+          error_10 = estT_matched- as.numeric(truT[pickstrain0])
           
           compTab = rbind(compTab, cbind(store.mcmc.test.data[1,ii0,estPick,pickyr,1], error_10))
           
@@ -1162,10 +1165,10 @@ hold.out.analysis<-function(loadseed=1,year_test=c(2007:2012),flu.type,simDat=F,
     hist(compTab , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - observed titre"); #title(LETTERS[1],adj=0)
     #hist(compTabNULL , breaks = breaks0 , freq=F, col =rgb(0.8,0.8,0.8),main=NULL,xlab="expected titre - Pois(expected titre)"); #title(LETTERS[2],adj=0)
     
-    stats.store = rbind( c(sum( abs(compTab)==0)/length(compTab), sum( abs(compTab)<=1 )/length(compTab), sum( abs(compTab)<=2 )/length(compTab), sum( abs(compTab)<=3 )/length(compTab) )
+    stats.store = rbind(c(sqrt(mean(compTab^2)),mean(abs(compTab)),sum( abs(compTab)==0)/length(compTab), sum( abs(compTab)<=1 )/length(compTab), sum( abs(compTab)<=2 )/length(compTab), sum( abs(compTab)<=3 )/length(compTab) )
                          #c(sum( abs(compTabNULL)<=1 )/length(compTabNULL), sum( abs(compTabNULL)<=2 )/length(compTabNULL), sum( abs(compTabNULL)<=3 )/length(compTabNULL)  )
     )
-    colnames(stats.store)=c("exact","within 1","within 2","within 3")
+    colnames(stats.store)=c("rmse","mean","exact","within 1","within 2","within 3")
     rownames(stats.store)=c("model")
     write.csv(stats.store,paste("plot_simulations/titre_compare/Hold_out_Store_residuals_",loadseed,".csv",sep=""))
     

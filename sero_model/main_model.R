@@ -195,8 +195,8 @@ plot.posterior.titres(loadseed=5,flu.type="H3HN",simDat=F,
                       year_test=c(2007:2012),btstrap=50,plotRes=T,linearFn=T) 
 
 # Plot out-of-sample-performance
-hold.out.analysis(loadseed=101,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=50,plotRes=T,linearFn=T) # With waning
-hold.out.analysis(loadseed=107,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=50,plotRes=T,linearFn=T) # Without waning
+hold.out.analysis(loadseed=101,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=1e2,plotRes=T,linearFn=T) # With waning
+hold.out.analysis(loadseed=107,year_test=c(2007:2012),flu.type="H3HN",simDat=F,btstrap=1e2,plotRes=T,linearFn=T) # Without waning
 
 
 # - - - 
